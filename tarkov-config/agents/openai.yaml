@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tarkov Config"
+  short_description: "Read-only EFT settings analysis"
+  default_prompt: "Use $tarkov-config to read my Escape from Tarkov settings and explain FPS/stability risks without changing files."
+policy:
+  allow_implicit_invocation: true

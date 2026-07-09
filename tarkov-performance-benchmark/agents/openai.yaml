@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tarkov Performance Benchmark"
+  short_description: "Read-only EFT benchmark data collection"
+  default_prompt: "Use $tarkov-performance-benchmark to guide a read-only Escape from Tarkov benchmark run, infer log context when possible, parse my FPS CSV, and produce one normalized JSON record."
+policy:
+  allow_implicit_invocation: true

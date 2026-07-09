@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tarkov Tuning"
+  short_description: "Orchestrate EFT config tuning with measurements"
+  default_prompt: "Use $tarkov-tuning to tune Escape from Tarkov by coordinating config analysis and frametime measurements without editing files automatically."
+policy:
+  allow_implicit_invocation: true
