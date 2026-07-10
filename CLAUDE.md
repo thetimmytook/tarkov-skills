@@ -6,7 +6,7 @@ Inherit and follow all repository-wide rules from `AGENTS.md`. This file only ad
 
 1. Read `AGENTS.md`.
 2. Read the relevant skill's `SKILL.md`.
-3. If present, read the relevant skill's `agents/claude.md`.
+3. If present, read the relevant skill's `agents/CLAUDE.md`.
 4. Use the skill's `README.md` as the human-facing usage description.
 
 ## Claude Style

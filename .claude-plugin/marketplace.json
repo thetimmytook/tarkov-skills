@@ -1,0 +1,13 @@
+{
+  "name": "tarkov-skills",
+  "owner": {
+    "name": "Igors Levkovs"
+  },
+  "plugins": [
+    {
+      "name": "tarkov-performance",
+      "source": "./",
+      "description": "Read-only Escape from Tarkov performance analysis, benchmarking, and tuning skills"
+    }
+  ]
+}
