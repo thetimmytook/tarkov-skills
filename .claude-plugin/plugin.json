@@ -1,0 +1,8 @@
+{
+  "name": "tarkov-performance",
+  "description": "Read-only Escape from Tarkov performance skills: config analysis, FPS/frametime capture, repeatable benchmarks, and an iterative tuning loop. No game file edits, no gameplay automation.",
+  "version": "0.2.0",
+  "author": {
+    "name": "thetimmytook"
+  }
+}
