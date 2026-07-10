@@ -115,13 +115,14 @@ if ($frametimeHeader) {
     }
 
     $totalMs = 0.0
+    $sorted = [System.Collections.Generic.List[double]]::new()
     foreach ($value in $frametimes) {
         $totalMs += $value
+        $sorted.Add($value)
     }
     $totalSeconds = $totalMs / 1000.0
     $avgFps = if ($totalSeconds -gt 0) { $frametimes.Count / $totalSeconds } else { $null }
 
-    $sorted = [System.Collections.Generic.List[double]]::new($frametimes)
     $sorted.Sort()
 
     $onePercentCount = [math]::Max(1, [math]::Ceiling($sorted.Count * 0.01))
@@ -163,13 +164,14 @@ else {
         throw "Column '$fpsHeader' contains no usable numeric values: $Path"
     }
 
+    $sortedFps = [System.Collections.Generic.List[double]]::new()
     $fpsSum = 0.0
     foreach ($value in $fpsSamples) {
         $fpsSum += $value
+        $sortedFps.Add($value)
     }
     $avgFps = $fpsSum / $fpsSamples.Count
 
-    $sortedFps = [System.Collections.Generic.List[double]]::new($fpsSamples)
     $sortedFps.Sort()
 
     $onePercentCount = [math]::Max(1, [math]::Ceiling($sortedFps.Count * 0.01))
