@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Bump version in plugin manifest
+        id: bump
+        shell: pwsh
+        run: |
+          $manifestPath = ".claude-plugin/plugin.json"
+          $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+          $parts = @($manifest.version -split '\.' | ForEach-Object { [int]$_ })
+          switch ('${{ inputs.bump }}') {
+            'major' { $parts[0]++; $parts[1] = 0; $parts[2] = 0 }
+            'minor' { $parts[1]++; $parts[2] = 0 }
+            default { $parts[2]++ }
+          }
+          $version = $parts -join '.'
+          $manifest.version = $version
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build benchmark app archive
+        shell: pwsh
+        run: ./build/build-release.ps1
+
+      - name: Build codex skills archive
+        shell: pwsh
+        run: |
+          $staging = Join-Path $env:RUNNER_TEMP "tarkov-skills"
+          New-Item -ItemType Directory -Force $staging | Out-Null
+          Copy-Item -Recurse -Path skills, scripts, references, app -Destination $staging
+          Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
+          Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-codex.zip"
+
+      - name: Commit version bump and tag
+        shell: pwsh
+        run: |
+          git config user.name "thetimmytook"
+          git config user.email "timmytook.channel@gmail.com"
+          git add .claude-plugin/plugin.json
+          git commit -m "fix # BE # bump version to ${{ steps.bump.outputs.version }}"
+          git tag "v${{ steps.bump.outputs.version }}"
+          git push origin HEAD:main --tags
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.bump.outputs.version }}" `
+            "dist/TarkovBenchmarkApp.zip" `
+            "dist/tarkov-skills-codex.zip" `
+            --title "v${{ steps.bump.outputs.version }}" `
+            --generate-notes

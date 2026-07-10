@@ -9,9 +9,36 @@ if (-not (Test-Path -LiteralPath $Path)) {
     throw "CSV file not found: $Path"
 }
 
-$rows = Import-Csv -LiteralPath $Path
-if (-not $rows -or $rows.Count -eq 0) {
+$allLines = [System.IO.File]::ReadAllLines((Resolve-Path -LiteralPath $Path).Path)
+
+# CapFrameX and some tools prepend comment/metadata lines before the header.
+$startIndex = 0
+while ($startIndex -lt $allLines.Count) {
+    $trimmed = $allLines[$startIndex].TrimStart()
+    if ($trimmed.Length -gt 0 -and -not $trimmed.StartsWith("#") -and -not $trimmed.StartsWith("//")) {
+        break
+    }
+    $startIndex++
+}
+if ($startIndex -ge $allLines.Count) {
     throw "CSV file is empty or could not be parsed: $Path"
+}
+
+# European locales export semicolon- or tab-separated files with decimal commas.
+$headerLine = $allLines[$startIndex]
+$delimiter = ","
+$bestCount = ($headerLine -split ',').Count
+foreach ($candidate in @(";", "`t")) {
+    $count = ($headerLine -split [regex]::Escape($candidate)).Count
+    if ($count -gt $bestCount) {
+        $bestCount = $count
+        $delimiter = $candidate
+    }
+}
+
+$rows = @($allLines[$startIndex..($allLines.Count - 1)] | ConvertFrom-Csv -Delimiter $delimiter)
+if (-not $rows -or $rows.Count -eq 0) {
+    throw "CSV file has a header but no data rows: $Path"
 }
 
 $headers = @($rows[0].PSObject.Properties.Name)
@@ -34,18 +61,35 @@ function Find-Header {
 
 function Get-Percentile {
     param(
-        [double[]]$Values,
+        [System.Collections.Generic.List[double]]$SortedValues,
         [double]$Percentile
     )
 
-    if ($Values.Count -eq 0) {
+    if ($SortedValues.Count -eq 0) {
         return $null
     }
 
-    $sorted = @($Values | Sort-Object)
-    $index = [math]::Ceiling(($Percentile / 100.0) * $sorted.Count) - 1
-    $index = [math]::Max(0, [math]::Min($sorted.Count - 1, $index))
-    return [double]$sorted[$index]
+    $index = [math]::Ceiling(($Percentile / 100.0) * $SortedValues.Count) - 1
+    $index = [math]::Max(0, [math]::Min($SortedValues.Count - 1, $index))
+    return [double]$SortedValues[$index]
+}
+
+function Read-NumericColumn {
+    param(
+        [object[]]$Rows,
+        [string]$Header
+    )
+
+    $values = [System.Collections.Generic.List[double]]::new()
+    $invariant = [Globalization.CultureInfo]::InvariantCulture
+    foreach ($row in $Rows) {
+        $raw = [string]$row.$Header
+        $parsed = 0.0
+        if ([double]::TryParse(($raw -replace ',', '.'), [Globalization.NumberStyles]::Float, $invariant, [ref]$parsed) -and $parsed -gt 0) {
+            $values.Add($parsed)
+        }
+    }
+    return $values
 }
 
 $frametimeHeader = Find-Header -Names $headers -Patterns @(
@@ -60,39 +104,41 @@ $fpsHeader = Find-Header -Names $headers -Patterns @(
     '.*fps.*'
 )
 
-$frametimes = @()
-$fpsSamples = @()
-
-if ($frametimeHeader) {
-    foreach ($row in $rows) {
-        $value = $row.$frametimeHeader
-        $parsed = 0.0
-        if ([double]::TryParse(($value -replace ',', '.'), [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$parsed) -and $parsed -gt 0) {
-            $frametimes += $parsed
-        }
-    }
-}
-elseif ($fpsHeader) {
-    foreach ($row in $rows) {
-        $value = $row.$fpsHeader
-        $parsed = 0.0
-        if ([double]::TryParse(($value -replace ',', '.'), [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$parsed) -and $parsed -gt 0) {
-            $fpsSamples += $parsed
-        }
-    }
-}
-else {
+if (-not $frametimeHeader -and -not $fpsHeader) {
     throw "Could not find a frametime or FPS column. Headers: $($headers -join ', ')"
 }
 
-if ($frametimes.Count -gt 0) {
-    $totalSeconds = (($frametimes | Measure-Object -Sum).Sum) / 1000.0
+if ($frametimeHeader) {
+    $frametimes = Read-NumericColumn -Rows $rows -Header $frametimeHeader
+    if ($frametimes.Count -eq 0) {
+        throw "Column '$frametimeHeader' contains no usable numeric values: $Path"
+    }
+
+    $totalMs = 0.0
+    foreach ($value in $frametimes) {
+        $totalMs += $value
+    }
+    $totalSeconds = $totalMs / 1000.0
     $avgFps = if ($totalSeconds -gt 0) { $frametimes.Count / $totalSeconds } else { $null }
-    $slowest = @($frametimes | Sort-Object -Descending)
-    $onePercentCount = [math]::Max(1, [math]::Ceiling($slowest.Count * 0.01))
-    $pointOnePercentCount = [math]::Max(1, [math]::Ceiling($slowest.Count * 0.001))
-    $onePercentAvgMs = (($slowest | Select-Object -First $onePercentCount) | Measure-Object -Average).Average
-    $pointOnePercentAvgMs = (($slowest | Select-Object -First $pointOnePercentCount) | Measure-Object -Average).Average
+
+    $sorted = [System.Collections.Generic.List[double]]::new($frametimes)
+    $sorted.Sort()
+
+    $onePercentCount = [math]::Max(1, [math]::Ceiling($sorted.Count * 0.01))
+    $pointOnePercentCount = [math]::Max(1, [math]::Ceiling($sorted.Count * 0.001))
+
+    # 1%/0.1% lows: average of the slowest N frametimes (CapFrameX-style low averages).
+    $slowestSum = 0.0
+    for ($i = $sorted.Count - $onePercentCount; $i -lt $sorted.Count; $i++) {
+        $slowestSum += $sorted[$i]
+    }
+    $onePercentAvgMs = $slowestSum / $onePercentCount
+
+    $slowestSum = 0.0
+    for ($i = $sorted.Count - $pointOnePercentCount; $i -lt $sorted.Count; $i++) {
+        $slowestSum += $sorted[$i]
+    }
+    $pointOnePercentAvgMs = $slowestSum / $pointOnePercentCount
 
     $result = [ordered]@{
         source = "fps_csv"
@@ -100,21 +146,46 @@ if ($frametimes.Count -gt 0) {
         path = $Path
         captured_at = (Get-Date).ToString("o")
         detected_column = $frametimeHeader
+        detected_delimiter = if ($delimiter -eq "`t") { "tab" } else { $delimiter }
         sample_count = $frametimes.Count
         duration_sec = [math]::Round($totalSeconds, 3)
         avg_fps = [math]::Round($avgFps, 2)
         p1_low_fps = [math]::Round(1000.0 / $onePercentAvgMs, 2)
         p0_1_low_fps = [math]::Round(1000.0 / $pointOnePercentAvgMs, 2)
-        avg_frametime_ms = [math]::Round((($frametimes | Measure-Object -Average).Average), 3)
-        p95_frametime_ms = [math]::Round((Get-Percentile -Values $frametimes -Percentile 95), 3)
-        p99_frametime_ms = [math]::Round((Get-Percentile -Values $frametimes -Percentile 99), 3)
+        avg_frametime_ms = [math]::Round($totalMs / $frametimes.Count, 3)
+        p95_frametime_ms = [math]::Round((Get-Percentile -SortedValues $sorted -Percentile 95), 3)
+        p99_frametime_ms = [math]::Round((Get-Percentile -SortedValues $sorted -Percentile 99), 3)
     }
 }
 else {
-    $avgFps = ($fpsSamples | Measure-Object -Average).Average
-    $sortedFps = @($fpsSamples | Sort-Object)
+    $fpsSamples = Read-NumericColumn -Rows $rows -Header $fpsHeader
+    if ($fpsSamples.Count -eq 0) {
+        throw "Column '$fpsHeader' contains no usable numeric values: $Path"
+    }
+
+    $fpsSum = 0.0
+    foreach ($value in $fpsSamples) {
+        $fpsSum += $value
+    }
+    $avgFps = $fpsSum / $fpsSamples.Count
+
+    $sortedFps = [System.Collections.Generic.List[double]]::new($fpsSamples)
+    $sortedFps.Sort()
+
     $onePercentCount = [math]::Max(1, [math]::Ceiling($sortedFps.Count * 0.01))
     $pointOnePercentCount = [math]::Max(1, [math]::Ceiling($sortedFps.Count * 0.001))
+
+    $lowSum = 0.0
+    for ($i = 0; $i -lt $onePercentCount; $i++) {
+        $lowSum += $sortedFps[$i]
+    }
+    $onePercentLow = $lowSum / $onePercentCount
+
+    $lowSum = 0.0
+    for ($i = 0; $i -lt $pointOnePercentCount; $i++) {
+        $lowSum += $sortedFps[$i]
+    }
+    $pointOnePercentLow = $lowSum / $pointOnePercentCount
 
     $result = [ordered]@{
         source = "fps_csv"
@@ -122,11 +193,12 @@ else {
         path = $Path
         captured_at = (Get-Date).ToString("o")
         detected_column = $fpsHeader
+        detected_delimiter = if ($delimiter -eq "`t") { "tab" } else { $delimiter }
         sample_count = $fpsSamples.Count
         duration_sec = "unknown"
         avg_fps = [math]::Round($avgFps, 2)
-        p1_low_fps = [math]::Round(((($sortedFps | Select-Object -First $onePercentCount) | Measure-Object -Average).Average), 2)
-        p0_1_low_fps = [math]::Round(((($sortedFps | Select-Object -First $pointOnePercentCount) | Measure-Object -Average).Average), 2)
+        p1_low_fps = [math]::Round($onePercentLow, 2)
+        p0_1_low_fps = [math]::Round($pointOnePercentLow, 2)
         avg_frametime_ms = if ($avgFps -gt 0) { [math]::Round(1000.0 / $avgFps, 3) } else { $null }
         p95_frametime_ms = "unknown"
         p99_frametime_ms = "unknown"

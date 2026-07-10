@@ -125,6 +125,7 @@ $context = [ordered]@{
     mode = "unknown"
     server_model = "unknown"
     raid_id = "unknown"
+    game_version = "unknown"
     queue_time_sec = $null
     map_load_time_sec = $null
     started_at = ""
@@ -143,6 +144,10 @@ foreach ($folder in $logFolders) {
         $lines = Get-Content -LiteralPath $file.FullName -ErrorAction SilentlyContinue
         foreach ($line in $lines) {
             $eventTime = Get-LogEventTime -Line $line
+
+            if ($context.game_version -eq "unknown" -and $line -match '(?i)\bversion\b.*?(?<ver>\d+\.\d+\.\d+\.\d+(\.\d+)?)') {
+                $context.game_version = $Matches["ver"]
+            }
 
             if ($line -match 'scene preset path:maps\/(?<bundle>[a-zA-Z0-9_]+)\.bundle') {
                 $mapId = Convert-MapBundle -BundleName $Matches["bundle"]
@@ -210,6 +215,11 @@ foreach ($folder in $logFolders) {
 
     if ($context.log_folder) {
         $context.log_files = @($files | Select-Object -ExpandProperty FullName)
+
+        # EFT log folder names embed the game build, e.g. log_2026.07.09_21-08-15_0.16.8.1.12345.
+        if ($context.game_version -eq "unknown" -and $folder.Name -match '_(?<ver>\d+(\.\d+){3,4})$') {
+            $context.game_version = $Matches["ver"]
+        }
         break
     }
 }
