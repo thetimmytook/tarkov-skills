@@ -1,0 +1,7 @@
+*.tmp
+*.log
+captures/
+runs/
+out/
+memory/
+tools/

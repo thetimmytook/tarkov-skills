@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tarkov Frametime"
+  short_description: "Collect EFT FPS and frametime stats"
+  default_prompt: "Use $tarkov-frametime to capture or parse Escape from Tarkov FPS and frametime statistics, leaving map/settings context to benchmark or tuning skills."
+policy:
+  allow_implicit_invocation: true
