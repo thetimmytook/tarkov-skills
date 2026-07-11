@@ -84,7 +84,22 @@ Diagnosis:
 <short diagnosis>
 
 Tarkov Readiness:
-<component checks>
+Overall expectation:
+<one sentence about whether the active target is realistic and what blocks it>
+
+Component check:
+CPU:      ████████░░  Good
+GPU:      ███████░░░  Target-range
+RAM:      █████░░░░░  Borderline
+Storage:  ████████░░  Good
+Pagefile: ███░░░░░░░  Risky
+
+System position:
+Minimum ───── Entry ───── Target 60 FPS ───── High-end
+                         ▲
+                      Your PC
+
+Note: this is an expectation estimate, not a benchmark score.
 
 Recommended next changes:
 1. <change>

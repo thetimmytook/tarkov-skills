@@ -14,6 +14,8 @@ Use `tarkov-tuning` when you need an iterative tuning loop based on measured res
 
 The report includes the installed GPU driver version when Windows exposes it. Latest-driver verification is manual for now: compare the reported version with the vendor driver page shown in the report.
 
+The report uses a visual `Tarkov Readiness` block with an overall expectation, component bars, and an approximate system-position line. This is an expectation estimate, not a benchmark score.
+
 ## How To Use
 
 From this skill folder:

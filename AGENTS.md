@@ -28,6 +28,7 @@ Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPP
 
 - Skills should guide non-technical users step by step.
 - Ask simple questions and accept `unknown` when the user is unsure.
+- Before changing executable scripts, app behavior, data schemas, or skill workflow semantics, first discuss the intended change with the user and wait for explicit approval. Documentation-only clarifications and small typo fixes may proceed directly when they do not change behavior.
 - Prefer reading fields from local files/logs first; ask the user only for missing or low-confidence fields.
 - Store repeatable logic in `scripts/`.
 - Store shared reusable PowerShell logic in the repository root `scripts/` folder and call it from skills instead of duplicating parsing/system-info code.

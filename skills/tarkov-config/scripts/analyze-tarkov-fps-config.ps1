@@ -232,16 +232,83 @@ function Get-CpuTier {
 function Get-Bar {
     param([string]$Status)
 
+    $filled = [string][char]0x2588
+    $empty = [string][char]0x2591
     switch ($Status) {
-        "Good" { return "[########..]" }
-        "Target-range" { return "[#######...]" }
-        "Borderline" { return "[#####.....]" }
-        "Risky" { return "[###.......]" }
-        "Below minimum" { return "[#.........]" }
-        default { return "[..........]" }
+        "Good" { $count = 8 }
+        "Target-range" { $count = 7 }
+        "Borderline" { $count = 5 }
+        "Risky" { $count = 3 }
+        "Below minimum" { $count = 1 }
+        default { $count = 0 }
+    }
+
+    return (($filled * $count) -join '') + (($empty * (10 - $count)) -join '')
+}
+
+function Get-StatusScore {
+    param([string]$Status)
+
+    switch ($Status) {
+        "Good" { return 8 }
+        "Target-range" { return 7 }
+        "Borderline" { return 5 }
+        "Risky" { return 3 }
+        "Below minimum" { return 1 }
+        default { return 0 }
     }
 }
 
+function Get-OverallExpectation {
+    param(
+        [int]$Score,
+        [int]$TargetFps,
+        [bool]$HasRisky,
+        [bool]$HasBelowMinimum
+    )
+
+    if ($HasBelowMinimum) {
+        return "Target $TargetFps FPS is probably unrealistic until below-minimum hardware limits are addressed."
+    }
+    if ($HasRisky) {
+        return "Target $TargetFps FPS may be possible, but stutters are likely until risky system/config issues are fixed."
+    }
+    if ($Score -ge 7) {
+        return "Target $TargetFps FPS looks realistic from config/system readiness, but still needs benchmark confirmation."
+    }
+    if ($Score -ge 5) {
+        return "Target $TargetFps FPS is possible in lighter scenarios, but heavy maps may need tuning and repeated tests."
+    }
+    return "Target $TargetFps FPS is uncertain from current readiness; collect a benchmark before making strong conclusions."
+}
+
+function Get-SystemPositionLine {
+    param(
+        [int]$Score,
+        [int]$TargetFps
+    )
+
+    $dash = [string][char]0x2500
+    $caretSymbol = [string][char]0x25B2
+    $line = "Minimum $($dash * 5) Entry $($dash * 5) Target $TargetFps FPS $($dash * 5) High-end"
+    if ($Score -le 2) {
+        $caret = 0
+    }
+    elseif ($Score -le 5) {
+        $caret = 14
+    }
+    elseif ($Score -le 7) {
+        $caret = 30
+    }
+    else {
+        $caret = [Math]::Min(48, $line.Length - 1)
+    }
+
+    $caretLine = "{0}{1}" -f ''.PadLeft($caret), $caretSymbol
+    $pcLine = "{0}Your PC" -f ''.PadLeft([Math]::Max(0, $caret - 3))
+
+    return @($line, $caretLine, $pcLine)
+}
 $settings = Read-TarkovSettings -SettingsDir $SettingsDir -Files @("Graphics.ini", "PostFx.ini", "Game.ini")
 $flat = Convert-TarkovSettingsToFlatMap -Settings $settings
 # Sorted once so Find-Setting results are deterministic across runs.
@@ -391,6 +458,25 @@ $storageStatus = switch ($storageMedia) {
     default { "Unknown" }
 }
 
+$readinessScores = [ordered]@{
+    cpu = Get-StatusScore $cpuStatus
+    gpu = Get-StatusScore $gpuStatus
+    ram = Get-StatusScore $ramStatus
+    storage = Get-StatusScore $storageStatus
+    pagefile = Get-StatusScore $pageStatus
+}
+$knownReadinessScores = @($readinessScores.Values | Where-Object { $_ -gt 0 })
+$overallReadinessScore = if ($knownReadinessScores.Count -gt 0) {
+    [int][Math]::Round((($knownReadinessScores | Measure-Object -Average).Average), 0)
+}
+else {
+    0
+}
+$readinessStatuses = @($cpuStatus, $gpuStatus, $ramStatus, $storageStatus, $pageStatus)
+$hasRiskyReadiness = $readinessStatuses -contains "Risky"
+$hasBelowMinimumReadiness = $readinessStatuses -contains "Below minimum"
+$overallExpectation = Get-OverallExpectation -Score $overallReadinessScore -TargetFps $activeGoal.target_fps_min -HasRisky $hasRiskyReadiness -HasBelowMinimum $hasBelowMinimumReadiness
+
 if ($cpuStatus -eq "Below minimum") {
     Add-Finding -Findings $findings -Severity "Below minimum" -Title "CPU below minimum reference" -Message "CPU appears below the minimum reference (Ryzen 5 3600 class). Config changes will have limited effect." -Setting "CPU" -Value $cpu.Name
 }
@@ -409,6 +495,9 @@ $report = [ordered]@{
     important_settings = $importantSettings
     system = $systemInfo
     readiness = [ordered]@{
+        overall_score = $overallReadinessScore
+        overall_expectation = $overallExpectation
+        scores = $readinessScores
         cpu = $cpuStatus
         gpu = $gpuStatus
         ram = $ramStatus
@@ -448,11 +537,20 @@ else {
 [void]$lines.Add("")
 [void]$lines.Add("## Tarkov Readiness")
 [void]$lines.Add("")
+[void]$lines.Add("Overall expectation:")
+[void]$lines.Add($overallExpectation)
+[void]$lines.Add("")
+[void]$lines.Add("Component check:")
 [void]$lines.Add("CPU:      $(Get-Bar $cpuStatus)  $cpuStatus")
 [void]$lines.Add("GPU:      $(Get-Bar $gpuStatus)  $gpuStatus")
 [void]$lines.Add("RAM:      $(Get-Bar $ramStatus)  $ramStatus")
 [void]$lines.Add("Storage:  $(Get-Bar $storageStatus)  $storageStatus")
 [void]$lines.Add("Pagefile: $(Get-Bar $pageStatus)  $pageStatus")
+[void]$lines.Add("")
+[void]$lines.Add("System position:")
+foreach ($positionLine in (Get-SystemPositionLine -Score $overallReadinessScore -TargetFps $activeGoal.target_fps_min)) {
+    [void]$lines.Add($positionLine)
+}
 [void]$lines.Add("")
 [void]$lines.Add("Note: this is an expectation estimate for the active goal, not a benchmark score. CPU/GPU tiers are rough name-based estimates against the reference hardware in references/configuration-rules.md.")
 [void]$lines.Add("")
@@ -529,3 +627,4 @@ if ($MarkdownOutputPath) {
 else {
     $markdown
 }
+
