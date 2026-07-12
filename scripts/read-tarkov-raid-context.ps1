@@ -141,9 +141,13 @@ foreach ($folder in $logFolders) {
     } | Sort-Object LastWriteTime)
 
     foreach ($file in $files) {
+        $lastEventTime = ""
         $lines = Get-Content -LiteralPath $file.FullName -ErrorAction SilentlyContinue
         foreach ($line in $lines) {
             $eventTime = Get-LogEventTime -Line $line
+            if ($eventTime) {
+                $lastEventTime = $eventTime
+            }
 
             if ($context.game_version -eq "unknown" -and $line -match '(?i)\bversion\b.*?(?<ver>\d+\.\d+\.\d+\.\d+(\.\d+)?)') {
                 $context.game_version = $Matches["ver"]
@@ -194,6 +198,7 @@ foreach ($folder in $logFolders) {
 
             if ($line -match 'application\|GameStarted') {
                 $context.started_at = $eventTime
+                $context.ended_at = ""
                 $context.log_folder = $folder.FullName
                 [void]$events.Add([ordered]@{ type = "game_started"; time = $eventTime; value = ""; file = $file.Name })
             }
@@ -209,6 +214,18 @@ foreach ($folder in $logFolders) {
                 }
                 $context.log_folder = $folder.FullName
                 [void]$events.Add([ordered]@{ type = "match_over"; time = $eventTime; value = $context.raid_id; file = $file.Name })
+            }
+
+            if ($context.started_at -and $line -match 'EFT\.HideoutGameLoader:OnHideoutStart\(\)') {
+                $context.ended_at = if ($eventTime) { $eventTime } else { $lastEventTime }
+                $context.log_folder = $folder.FullName
+                [void]$events.Add([ordered]@{ type = "hideout_started"; time = $context.ended_at; value = ""; file = $file.Name })
+            }
+
+            if ($context.started_at -and $line -match 'backend\|.*?/client/hideout/(settings|areas)') {
+                $context.ended_at = $eventTime
+                $context.log_folder = $folder.FullName
+                [void]$events.Add([ordered]@{ type = "hideout_backend"; time = $eventTime; value = ""; file = $file.Name })
             }
         }
     }

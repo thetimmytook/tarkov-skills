@@ -25,8 +25,10 @@ $sharedScripts = @(
     "read-tarkov-settings.ps1",
     "collect-system-info.ps1",
     "read-tarkov-raid-context.ps1",
+    "check-presentmon.ps1",
+    "capture-presentmon.ps1",
     "parse-fps-csv.ps1",
-    "build-run-json.ps1"
+    "add-benchmark-run.ps1"
 )
 foreach ($script in $sharedScripts) {
     Copy-Item (Join-Path $repoRoot "scripts\$script") (Join-Path $staging "scripts")
@@ -43,10 +45,11 @@ foreach ($script in $sharedScripts) {
 @(
     'Tarkov Performance Benchmark App',
     '',
-    'Run Start-TarkovBenchmark.cmd and follow the steps in the window.',
+    'Run Start-TarkovBenchmark.cmd after Tarkov is running and you are in a raid.',
     'The app is read-only toward Escape from Tarkov: it never edits game files.',
-    'Results are saved as run.json under %LOCALAPPDATA%\TarkovSkills\runs\.',
-    'User names are stripped from all paths inside run.json before saving.'
+    'Install PresentMon separately under %LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe.',
+    'Results are saved as benchmark.json under %LOCALAPPDATA%\TarkovSkills\.',
+    'User names are stripped from all paths inside benchmark.json before saving.'
 ) | Set-Content -LiteralPath (Join-Path $staging "README.txt") -Encoding UTF8
 
 $zipPath = Join-Path $OutputDir "TarkovBenchmarkApp.zip"

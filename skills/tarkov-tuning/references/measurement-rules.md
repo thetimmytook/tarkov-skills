@@ -1,6 +1,6 @@
 # Measurement Rules
 
-Single source of truth for all measurement thresholds and comparison rules used by the skills in this repository. Other documents must link here instead of restating these numbers. If a number needs to change, change it here only.
+Local measurement thresholds used by this skill. Keep shared numbers aligned with the other benchmark-capable skills when they change.
 
 ## Capture
 
@@ -27,11 +27,3 @@ Priorities by goal:
 - Recommend 2-3 repeated runs per profile when results are close.
 - If measured performance is at least 15% worse than expected for similar hardware and settings, stop normal graphics tuning and switch to diagnostics (power plan, drivers, storage, pagefile, XMP/EXPO, background apps, thermal throttling checked manually with external tools).
 - Do not over-trust a single Tarkov run; server load and raid randomness are real factors.
-
-## Run Confidence
-
-Canonical tiers, implemented in `scripts/add-benchmark-run.ps1`:
-
-- `high`: duration is at least 120 seconds and map, weather, and time of day are known.
-- `medium`: duration is at least 60 seconds.
-- `low`: anything else (short capture, missing map, heavy combat randomness, unclear capture source).

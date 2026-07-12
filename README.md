@@ -10,7 +10,7 @@ Everything is read-only toward the game: no config edits, no gameplay automation
 |---|---|
 | `skills/tarkov-config` | Read current EFT settings and system context, explain FPS/stability risks |
 | `skills/tarkov-frametime` | Capture/parse FPS and frametime statistics (PresentMon or existing CSV) |
-| `skills/tarkov-performance-benchmark` | Guide one repeatable benchmark run and produce a normalized `run.json` |
+| `skills/tarkov-performance-benchmark` | Capture repeatable benchmark runs into one normalized `benchmark.json` |
 | `skills/tarkov-tuning` | Orchestrate the measure -> change -> measure tuning loop using the skills above |
 
 ## Install
@@ -22,19 +22,19 @@ Everything is read-only toward the game: no config edits, no gameplay automation
 /plugin install tarkov-performance@tarkov-skills
 ```
 
-The plugin ships all four skills together with the shared PowerShell scripts.
+The plugin ships all four self-contained skills.
 
 ### Codex / manual
 
-Download the repository archive from GitHub (Code -> Download ZIP, or a Release) and unpack it. `AGENTS.md` and the per-skill `agents/` notes drive agent behavior. Skills must stay inside the repository tree because they call shared scripts from the root `scripts/` folder.
+Download the repository archive from GitHub (Code -> Download ZIP, or a Release) and unpack it. `AGENTS.md` and the per-skill `agents/` notes drive agent behavior. Each skill keeps its executable dependencies in its own folder and can be installed or copied independently.
 
 ### Benchmark app (no agent needed)
 
-For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. It collects settings/system info, reads raid context from EFT logs, parses your FPS CSV, and builds an anonymized `run.json`.
+For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`.
 
 ## Local Data
 
-All local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data.
+All local state (goal memory, benchmark data, PresentMon binary) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data.
 
 ## Requirements
 
@@ -45,7 +45,7 @@ All local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCA
 ## Repository Layout
 
 - `skills/` — the four agent skills
-- `scripts/` — shared PowerShell logic used by all skills and the app
+- `scripts/` — PowerShell runtime for the standalone app
 - `app/` — standalone WinForms benchmark wizard
-- `references/` — shared cross-skill rules (`measurement-rules.md`)
+- `references/` — app-level benchmark rules
 - `build/` — release packaging script

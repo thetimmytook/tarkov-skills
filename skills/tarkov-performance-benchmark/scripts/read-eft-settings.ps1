@@ -1,8 +1,9 @@
 param(
-    [string]$SettingsDir = "$env:APPDATA\Battlestate Games\Escape from Tarkov\Settings"
+    [string]$SettingsDir = "$env:APPDATA\Battlestate Games\Escape from Tarkov\Settings",
+    [string[]]$Files = @("Graphics.ini", "PostFx.ini", "Game.ini")
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+. "$PSScriptRoot\TarkovCommon.ps1"
 
-& (Join-Path $repoRoot "scripts\read-tarkov-settings.ps1") -SettingsDir $SettingsDir
+Read-TarkovSettings -SettingsDir $SettingsDir -Files $Files | ConvertTo-Json -Depth 30

@@ -1,74 +1,50 @@
 ---
 name: tarkov-performance-benchmark
-description: Collect read-only Escape from Tarkov graphics performance benchmark data. Use when an agent needs to guide a user through one repeatable benchmark run, read current EFT graphics/PostFX settings, collect Windows hardware info, infer map/mode/raid context from EFT logs when available, ask only for missing weather/time/activity context, parse exported FPS CSV files from PresentMon/CapFrameX/FrameView with PowerShell, and produce one normalized JSON run record without modifying game files.
+description: Collect read-only Escape from Tarkov graphics benchmark data. Use when an agent needs to capture one fixed 2- or 4-minute FPS/frametime run with PresentMon, read current EFT settings and Windows hardware, infer map and game version from Tarkov logs, ask only for BSG servers versus Local plus weather and time of day, and append the result to one normalized benchmark.json file without modifying game files.
 ---
 
 # Tarkov Performance Benchmark
 
-Guide the user through repeatable Escape from Tarkov performance data collection. Treat the skill as a benchmark recorder, not as an optimizer.
-
-Use `tarkov-tuning` when benchmark results should drive iterative settings changes.
+Guide a player through a repeatable benchmark capture. Treat this skill as a recorder, not as an optimizer. Use `tarkov-tuning` when results should guide settings changes.
 
 Core rules:
 
-- Keep the workflow read-only toward the game. Do not edit EFT config files.
-- Do not require Python or third-party packages.
-- Prefer inline PowerShell commands or bundled `.ps1` scripts.
-- For local non-agent usage, run `app/Start-TarkovBenchmark.cmd` from the repository root, or use the standalone release zip from GitHub Releases.
-- If a field cannot be known from files or CSV, ask the user in plain language.
-- Use `unknown` instead of blocking when the user is unsure.
-- Do not optimize settings in this skill. A future analysis skill can use collected benchmark data for recommendations.
-- TODO: after `run.json` is built, offer to open a benchmark upload form and send/paste the run contents. The actual form URL and anti-spam flow are not decided yet.
-- TODO: when a bundled PowerShell script fails, create a small error report artifact and offer to open an error upload form. URL is TODO.
+- Keep all game interactions read-only.
+- Do not require Python.
+- Use PresentMon for automated capture. It needs elevation for its short ETW capture process; explain the Windows permission prompt before starting it.
+- Start capture only after Tarkov is running and the player is already in the raid.
+- Capture for 120 seconds by default. Allow 240 seconds only when requested.
+- Read the map and game version from logs. Do not ask the player to identify the map unless log parsing has failed and manual recovery is explicitly needed.
+- Ask after capture for exactly: `BSG servers` or `Local`, weather, and time of day. Do not ask for a route, activity, PvP/PvE distinction, or a separate server-model field.
+- Save all runs in `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. Store `system` once at the root and a fresh settings snapshot inside every run.
+- After a run is saved, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
+- TODO: on script failure, create an error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 
 ## Workflow
 
-1. Establish the goal:
-   - maximum FPS
-   - fewer stutters
-   - better visibility
-   - balanced visibility/performance
+1. Check readiness:
+   - Run `scripts/check-presentmon.ps1`.
+   - Check that `EscapeFromTarkov.exe` is running.
+   - If PresentMon is absent, direct the player to the official release and `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe`.
 
-2. Read current settings:
-   - Run `scripts/read-eft-settings.ps1`.
-   - It reads `%APPDATA%\Battlestate Games\Escape from Tarkov\Settings\Graphics.ini` and `PostFx.ini` when present.
+2. Capture the run:
+   - Read settings with `scripts/read-eft-settings.ps1` and system info with `scripts/collect-system-info.ps1 -IncludePagefile` at capture start.
+   - Run `scripts/capture-presentmon.ps1 -DurationSec 120 -RequestElevation` or use the app.
+   - Parse FPS and frametime output from the capture result.
 
-3. Collect system info:
-   - Run `scripts/collect-system-info.ps1`.
-   - It collects CPU, GPU, RAM, OS, and display resolution where Windows exposes it.
+3. Collect context after capture:
+   - Run `scripts/read-raid-context.ps1` for map and game version.
+   - Ask the player to choose `BSG servers` or `Local`; do not offer an unknown option for this field.
+   - Ask weather and time of day. Allow `unknown` only when the player genuinely cannot tell.
 
-4. Lead the benchmark:
-   - Read `references/benchmark-protocol.md` when planning the user-facing test flow.
-   - Ask the user to run one consistent scenario, usually 90-180 seconds.
-   - Prefer the map where the user has the problem. If they want a worst-case stress test and have no specific map, use Streets.
-   - Prefer reading map/mode/raid id/game version from logs with `scripts/read-raid-context.ps1`.
-   - Logs cannot distinguish PvP from PvE on BSG servers (both report Online); always confirm the exact mode with the user.
-   - Ask simple fallback questions after the run only when log context is missing or low-confidence:
-     - Which map was it, if logs did not identify it?
-     - Was it PvP online, PvE on BSG servers, PvE local, offline practice, hideout, or unknown, if logs did not identify it?
-     - What was the weather: clear, rain, fog, snow, cloudy, or unknown?
-     - Was it day, night, dawn/dusk, or unknown?
-     - Did they stand still, walk a route, fight, or mixed/unknown?
+4. Append the run:
+   - Run `scripts/add-benchmark-run.ps1` with settings, system, FPS JSON, map, game version, execution, weather, and time.
+   - The writer strips user and host names from paths before saving.
 
-5. Parse FPS capture:
-   - Prefer using the separate `tarkov-frametime` skill for FPS capture/stat parsing.
-   - Ask the user for the CSV path from PresentMon, CapFrameX, or FrameView when working manually.
-   - Run `scripts/parse-fps-csv.ps1 -Path <csv>`.
-   - If parsing fails, read `references/fps-csv-formats.md` and inspect the CSV headers.
-
-6. Build a normalized run JSON:
-   - Run `scripts/build-run-json.ps1` with the settings JSON, system JSON, FPS JSON, manual context parameters, and `-GameVersion` from the log context when available.
-   - The script strips user/host names from paths, so the resulting `run.json` is safe to share.
-   - Store or return the JSON as the run artifact.
-
-7. Finish the run record:
-   - Return or save the normalized JSON run.
-   - Summarize missing fields and confidence.
-   - TODO: offer to open a benchmark upload form and submit/copy the run contents.
-   - Do not recommend graphics changes here; this skill's output is input data for later analysis.
+5. Finish:
+   - Offer to open the benchmark folder or, once configured, upload `benchmark.json`.
+   - Do not recommend graphics changes in this skill.
 
 ## Quality Checks
 
-Run confidence tiers are defined in `../../references/measurement-rules.md` and computed by `build-run-json.ps1`; do not restate the numbers here.
-
-For Tarkov, do not over-trust a single run. Recommend repeated runs per profile when results are close (see the same file).
+Confidence tiers are defined in `references/measurement-rules.md` and computed by `add-benchmark-run.ps1`. Prefer repeated runs under comparable map, weather, time, settings, and capture duration.

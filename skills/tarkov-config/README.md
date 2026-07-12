@@ -14,6 +14,8 @@ Use `tarkov-tuning` when you need an iterative tuning loop based on measured res
 
 The report includes the installed GPU driver version when Windows exposes it. Latest-driver verification is manual for now: compare the reported version with the vendor driver page shown in the report.
 
+The report uses a visual `Tarkov Readiness` block with an overall expectation, component bars, and an approximate system-position line. This is an expectation estimate, not a benchmark score.
+
 ## How To Use
 
 From this skill folder:
@@ -54,10 +56,12 @@ Saved goals live in `%LOCALAPPDATA%\TarkovSkills\memory\current-goal.json`, outs
 
 - `SKILL.md` - agent workflow.
 - `scripts/analyze-tarkov-fps-config.ps1` - read settings/system info and produce a report.
+- `scripts/TarkovCommon.ps1` - local shared functions used by the analyzer.
 - `references/configuration-rules.md` - configuration rules and troubleshooting guidance.
+- `references/measurement-rules.md` - local diagnostics threshold.
 - `agents/codex.md` and `agents/CLAUDE.md` - agent-specific notes.
 
-Shared PowerShell utilities live in the repository root `scripts/` folder.
+All scripts required by this skill are bundled in its `scripts/` folder.
 
 ## Boundaries
 

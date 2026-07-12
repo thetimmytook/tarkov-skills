@@ -43,4 +43,4 @@ If only FPS samples are available, compute average and lows from FPS samples but
 - decimal commas are converted to dots before parsing;
 - non-numeric and non-positive values are dropped from the sample set.
 
-If detection still fails, inspect the raw headers and either rename the column to a recognized name or extend the header patterns in the root `scripts/parse-fps-csv.ps1`.
+If detection still fails, inspect the raw headers and either rename the column to a recognized name or extend the header patterns in this skill's `scripts/parse-fps-csv.ps1`.

@@ -3,6 +3,6 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+. "$PSScriptRoot\TarkovCommon.ps1"
 
-& (Join-Path $repoRoot "scripts\collect-system-info.ps1") -IncludePagefile:$IncludePagefile
+Get-TarkovSystemInfo -IncludePagefile:$IncludePagefile | ConvertTo-Json -Depth 20

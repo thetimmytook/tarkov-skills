@@ -12,7 +12,7 @@ Expected local locations, in check order:
 
 - a user-provided path (`-PresentMonPath`)
 - `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe` (preferred; survives plugin/repo updates)
-- repository root `tools/PresentMon/PresentMon.exe` (legacy fallback)
+- skill-local `tools/PresentMon/PresentMon.exe` (legacy fallback)
 - `PresentMon.exe` available on PATH
 
 If PresentMon is missing, give the user these choices:
