@@ -23,7 +23,7 @@ Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPP
 - Do not automate gameplay, input, anti-cheat-adjacent behavior, or game process manipulation.
 - Treat FPS capture tools as external sources. Parse their exported CSV files instead of hooking the game.
 - Artifacts intended for sharing or upload (such as `benchmark.json`) must not contain user names, host names, or user-specific paths; each relevant skill keeps its own `TarkovCommon.ps1` with `Hide-TarkovUserPath`.
-- TODO: when a `.ps1` script fails, create a small error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
+- On app capture/save failures, create a short sanitized text report under `%LOCALAPPDATA%\TarkovSkills\reports\`, copy it to the clipboard, and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`. The form should have a required multiline `Crash report` field for the pasted text.
 
 ## Skill Design
 
@@ -65,3 +65,5 @@ Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPP
 - Commit only as the repository author/user configured in Git. Do not add tool names, bot names, generated-by attribution text, or co-author trailers to commit messages, PR text, release notes, or other repository metadata unless the user explicitly asks.
 - Do not rewrite history or discard user changes.
 - Keep generated capture data, temporary outputs, and run results out of Git unless the user asks to version examples.
+- When creating or editing a PR body from PowerShell, pass multiline Markdown through a here-string variable (`@' ... '@`), not literal `\n` escapes. Verify the rendered body afterward with `gh pr view <number> --json body --jq .body`.
+- Keep commit messages and PR descriptions focused on the change summary. Do not add generic `Verification`/`Testing` sections or command lists unless the user asks for them or a meaningful test limitation needs disclosure.
