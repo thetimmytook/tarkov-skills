@@ -66,3 +66,4 @@ Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPP
 - Do not rewrite history or discard user changes.
 - Keep generated capture data, temporary outputs, and run results out of Git unless the user asks to version examples.
 - When creating or editing a PR body from PowerShell, pass multiline Markdown through a here-string variable (`@' ... '@`), not literal `\n` escapes. Verify the rendered body afterward with `gh pr view <number> --json body --jq .body`.
+- Keep commit messages and PR descriptions focused on the change summary. Do not add generic `Verification`/`Testing` sections or command lists unless the user asks for them or a meaningful test limitation needs disclosure.
