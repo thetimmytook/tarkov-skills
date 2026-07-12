@@ -317,8 +317,121 @@ function Show-PresentMonSetup {
     [void]$dialog.ShowDialog($form)
 }
 
+function Get-SafeCrashText {
+    param([string]$Text)
+
+    $safeText = Hide-TarkovUserPath -Text $Text
+    return [regex]::Replace($safeText, '(?i)\b[a-z]:[\\/][^\r\n"'']*', '<path>')
+}
+
+function Get-CrashExceptionDetails {
+    param([object]$ErrorRecord)
+
+    if (-not $ErrorRecord) {
+        return ""
+    }
+
+    $lines = New-Object System.Collections.Generic.List[string]
+    if ($ErrorRecord.FullyQualifiedErrorId) {
+        [void]$lines.Add("Error id: $($ErrorRecord.FullyQualifiedErrorId)")
+    }
+    if ($ErrorRecord.CategoryInfo) {
+        [void]$lines.Add("Category: $($ErrorRecord.CategoryInfo)")
+    }
+    if ($ErrorRecord.InvocationInfo) {
+        if ($ErrorRecord.InvocationInfo.MyCommand) {
+            [void]$lines.Add("Command: $($ErrorRecord.InvocationInfo.MyCommand)")
+        }
+        if ($ErrorRecord.InvocationInfo.PositionMessage) {
+            [void]$lines.Add("Position: $($ErrorRecord.InvocationInfo.PositionMessage)")
+        }
+    }
+    if ($ErrorRecord.ScriptStackTrace) {
+        [void]$lines.Add("PowerShell stack:`n$($ErrorRecord.ScriptStackTrace)")
+    }
+
+    $exception = if ($ErrorRecord.Exception) { $ErrorRecord.Exception } elseif ($ErrorRecord -is [System.Exception]) { $ErrorRecord } else { $null }
+    $depth = 0
+    while ($exception) {
+        $label = if ($depth -eq 0) { "Exception" } else { "Inner exception $depth" }
+        [void]$lines.Add("$label type: $($exception.GetType().FullName)")
+        if ($exception.StackTrace) {
+            [void]$lines.Add("$label stack:`n$($exception.StackTrace)")
+        }
+        $exception = $exception.InnerException
+        $depth++
+    }
+
+    return $lines -join [Environment]::NewLine
+}
+
+function New-CrashReport {
+    param(
+        [string]$Stage,
+        [string]$Message,
+        [string]$Details = ""
+    )
+
+    $raidContext = $null
+    try {
+        $raidContext = Invoke-BenchmarkScript -Name "read-tarkov-raid-context.ps1" | ConvertFrom-Json
+    }
+    catch {
+        $raidContext = $null
+    }
+
+    $presentMonStatus = if ($State.PresentMon -and $State.PresentMon.found) { "available" } else { "missing or unchecked" }
+    $report = @(
+        "Tarkov Performance Benchmark crash report"
+        "Timestamp: $((Get-Date).ToString('o'))"
+        "Stage: $Stage"
+        "Message: $(Get-SafeCrashText -Text $Message)"
+        "PowerShell: $($PSVersionTable.PSVersion)"
+        "PresentMon: $presentMonStatus"
+        "Tarkov running: $([bool](Get-TarkovProcess))"
+        "Map: $(if ($raidContext -and $raidContext.map) { $raidContext.map } else { 'unknown' })"
+        "Raid state: $(if ($raidContext -and $raidContext.ended_at) { 'ended' } elseif ($raidContext -and $raidContext.started_at) { 'active' } else { 'unknown' })"
+        $(if ($Details) { "Error details:`n$(Get-SafeCrashText -Text $Details)" })
+    ) -join [Environment]::NewLine
+
+    $report = Get-SafeCrashText -Text $report
+    $reportPath = ""
+    try {
+        $reportDirectory = Get-TarkovDataDir -SubDir "reports"
+        $reportPath = Join-Path $reportDirectory "crash_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+        Set-Content -LiteralPath $reportPath -Value $report -Encoding UTF8
+    }
+    catch {
+        $reportPath = ""
+    }
+
+    $copied = $false
+    try {
+        [System.Windows.Forms.Clipboard]::SetText($report)
+        $copied = $true
+    }
+    catch {
+        $copied = $false
+    }
+
+    return [pscustomobject]@{
+        text = $report
+        copied = $copied
+        saved = [bool]$reportPath
+    }
+}
+
 function Offer-CrashReport {
-    $choice = Show-TarkovMessage -Owner $form -Text "Open the crash report form?" -Caption "Collection failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::YesNo) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error)
+    param(
+        [string]$Stage,
+        [string]$Message,
+        [string]$Details = "",
+        [string]$Caption = "Collection failed"
+    )
+
+    $report = New-CrashReport -Stage $Stage -Message $Message -Details $Details
+    $copyStatus = if ($report.copied) { "A diagnostic report was copied to the clipboard." } else { "A diagnostic report was saved locally." }
+    $choice = Show-TarkovMessage -Owner $form -Text "$(Get-SafeCrashText -Text $Message)`n`n$copyStatus`nOpen the crash report form?" -Caption $Caption -Buttons ([System.Windows.Forms.MessageBoxButtons]::YesNo) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error)
     if ($choice -eq [System.Windows.Forms.DialogResult]::Yes) {
         Start-Process $CrashFormUrl
     }
@@ -713,6 +826,7 @@ function Complete-CaptureCollection {
     param(
         [pscustomobject]$Capture,
         [string]$ErrorText = "",
+        [string]$ErrorDetails = "",
         [switch]$Discarded
     )
 
@@ -731,7 +845,7 @@ function Complete-CaptureCollection {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ErrorText)) {
-        Show-TarkovMessage -Owner $form -Text $ErrorText -Caption "Collection failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
+        Offer-CrashReport -Stage "capture" -Message $ErrorText -Details $ErrorDetails
         Update-Readiness
         Set-Status "Collection failed: $ErrorText" -Color $Theme.Error
         return
@@ -759,7 +873,7 @@ function Complete-CaptureCollection {
         else {
             "Benchmark data could not be saved."
         }
-        Show-TarkovMessage -Owner $form -Text $errorText -Caption "Save failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
+        Offer-CrashReport -Stage "save" -Message $errorText -Details (Get-CrashExceptionDetails -ErrorRecord $_) -Caption "Save failed"
         $finalStatus = "Collection completed but could not be saved."
     }
 
@@ -788,6 +902,12 @@ $captureJobTimer.Add_Tick({
     }
     try {
         if ($job.State -ne "Completed") {
+            $jobError = @($job.ChildJobs[0].Error | Select-Object -Last 1)[0]
+            if ($jobError) {
+                $errorText = if ($jobError.Exception -and $jobError.Exception.Message) { $jobError.Exception.Message } else { "The collection helper stopped before it could finish." }
+                Complete-CaptureCollection -ErrorText $errorText -ErrorDetails (Get-CrashExceptionDetails -ErrorRecord $jobError)
+                return
+            }
             $reason = $job.ChildJobs[0].JobStateInfo.Reason
             if ($reason -and -not [string]::IsNullOrWhiteSpace($reason.Message)) {
                 throw $reason.Message
@@ -809,7 +929,7 @@ $captureJobTimer.Add_Tick({
         else {
             "The collection helper could not start."
         }
-        Complete-CaptureCollection -ErrorText $errorText
+        Complete-CaptureCollection -ErrorText $errorText -ErrorDetails (Get-CrashExceptionDetails -ErrorRecord $_)
     }
     finally {
         Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
