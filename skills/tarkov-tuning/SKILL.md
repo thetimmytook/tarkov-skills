@@ -20,7 +20,7 @@ Core rules:
 - Keep the user's active goal from `tarkov-config` as the target.
 - Use measured frametime/FPS results to decide if a change helped.
 - If PresentMon capture is needed, treat it as blocking and delegate it to a subagent/separate worker when available.
-- Noise, diagnostics-trigger, and repeat-run thresholds are defined in `../../references/measurement-rules.md`; apply them, do not restate them.
+- Noise, diagnostics-trigger, and repeat-run thresholds are defined in `references/measurement-rules.md`; apply them, do not restate them.
 
 ## Loop
 
@@ -49,14 +49,14 @@ Core rules:
    - If average FPS improves but 1% low/stutters worsen, treat the change as risky.
    - If quality goal is active, accept lower FPS only if it remains above target and user-visible quality improves.
    - If results are worse, recommend reverting the last manual change.
-   - Apply the noise and diagnostics thresholds from `../../references/measurement-rules.md`: below-noise deltas need a repeat, a large miss versus a relevant baseline is a diagnostic trigger, not a normal tuning result.
+   - Apply the noise and diagnostics thresholds from `references/measurement-rules.md`: below-noise deltas need a repeat, a large miss versus a relevant baseline is a diagnostic trigger, not a normal tuning result.
 
 7. Continue or stop:
    - Continue until the active goal is met, results plateau, or diagnostics are more appropriate.
 
 ## Comparison Heuristics
 
-Metric priorities by goal and all numeric thresholds live in `../../references/measurement-rules.md`. Summary: stability goals weigh 1% low first, max-FPS goals weigh average FPS first, better-graphics goals accept lower FPS only above the target minimum.
+Metric priorities by goal and all numeric thresholds live in `references/measurement-rules.md`. Summary: stability goals weigh 1% low first, max-FPS goals weigh average FPS first, better-graphics goals accept lower FPS only above the target minimum.
 
 ## Output
 

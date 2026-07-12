@@ -104,7 +104,7 @@ Start with Quality, then Balanced. Avoid Performance mode unless the system is s
 
 ## Baseline Mismatch Guardrail
 
-The diagnostics threshold is defined in `../../../references/measurement-rules.md`. If hardware, resolution, map, and settings are close to a known good baseline but FPS misses it, stop normal graphics tuning and check:
+The diagnostics threshold is defined in `measurement-rules.md`. If hardware, resolution, map, and settings are close to a known good baseline but FPS misses it, stop normal graphics tuning and check:
 
 - manual/external thermal throttling check with tools such as HWiNFO or MSI Afterburner; not collected automatically by this skill
 - laptop power mode / Windows power plan
@@ -131,4 +131,4 @@ When local settings files are unavailable (different PC, permissions, unusual in
 
 ## Missing Settings And Script Errors
 
-If settings are missing or key names differ by Tarkov version, continue with `unknown`, lower confidence, and include a TODO support-report step. Future flow should create an error report artifact and open a report/upload form; the form URL is TODO.
+If settings are missing or key names differ by Tarkov version, continue with `unknown`, lower confidence, and include a TODO support-report step. Future flow should create an error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.

@@ -1,6 +1,6 @@
 param(
     [string]$SettingsDir = "$env:APPDATA\Battlestate Games\Escape from Tarkov\Settings",
-    [string[]]$Files = @("Graphics.ini", "PostFx.ini", "Game.ini", "Control.ini", "Sound.ini")
+    [string[]]$Files = @("Graphics.ini", "PostFx.ini", "Game.ini")
 )
 
 $ErrorActionPreference = "Stop"

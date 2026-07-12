@@ -1,6 +1,6 @@
 # Measurement Rules
 
-Single source of truth for all measurement thresholds and comparison rules used by the skills in this repository. Other documents must link here instead of restating these numbers. If a number needs to change, change it here only.
+Local measurement thresholds used by this skill. Keep shared numbers aligned with the other benchmark-capable skills when they change.
 
 ## Capture
 

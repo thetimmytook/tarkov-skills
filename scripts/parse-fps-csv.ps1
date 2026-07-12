@@ -144,7 +144,6 @@ if ($frametimeHeader) {
     $result = [ordered]@{
         source = "fps_csv"
         method = "frametime_ms"
-        path = $Path
         captured_at = (Get-Date).ToString("o")
         detected_column = $frametimeHeader
         detected_delimiter = if ($delimiter -eq "`t") { "tab" } else { $delimiter }
@@ -192,7 +191,6 @@ else {
     $result = [ordered]@{
         source = "fps_csv"
         method = "fps_samples"
-        path = $Path
         captured_at = (Get-Date).ToString("o")
         detected_column = $fpsHeader
         detected_delimiter = if ($delimiter -eq "`t") { "tab" } else { $delimiter }

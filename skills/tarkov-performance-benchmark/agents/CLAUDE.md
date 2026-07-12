@@ -7,23 +7,17 @@ Use these notes together with `../SKILL.md`.
 - Behave like a patient benchmark recorder.
 - Keep instructions short and sequential.
 - Use the user's language / the language of the conversation.
-- Do not assume the user knows terms like frametime, percentile, or BSG server.
+- Do not assume the user knows terms like frametime or ETW.
 - Convert technical choices into simple questions.
 
 ## Benchmark Collection
 
-- First clarify what the user wants to measure: average FPS, stutters, visibility-related performance, or a general baseline.
-- Ask the user to perform one repeatable test and return when done.
-- After the run, read log context first when possible. Ask only for fields that are missing or low-confidence:
-  - map, if logs did not identify it
-  - PvP online, PvE on BSG servers, PvE local, offline practice, hideout, or unknown, if logs did not identify it
-  - weather
-  - time of day
-  - route or activity
-  - unusual stutters or background load
-- Ask for the FPS CSV path and use the PowerShell parser when available.
-- TODO: after `run.json` is built, offer to open a benchmark upload form. URL is TODO.
-- TODO: if a script fails, keep the error and offer an error-report form. URL is TODO.
+- Ask the user to enter the raid, then capture one fixed 120-second run. Use 240 seconds only on request.
+- Read map and game version from logs after capture.
+- Ask only for BSG servers versus Local, weather, and time of day. Do not ask for a route, activity, PvP/PvE distinction, or CSV path in the app flow.
+- BSG servers versus Local is mandatory; weather and time can be recorded as unknown.
+- After `benchmark.json` is updated, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
+- TODO: if a script fails, keep the error and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 - Do not recommend settings changes from this skill; produce clean benchmark data for later analysis.
 
 ## Boundaries
@@ -31,4 +25,3 @@ Use these notes together with `../SKILL.md`.
 - Do not write to game configuration files.
 - Do not automate gameplay or interact with the game process.
 - Do not require Python.
-- When data is missing, continue with `unknown` and lower confidence instead of blocking.

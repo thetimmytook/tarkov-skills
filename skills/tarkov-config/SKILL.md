@@ -58,7 +58,7 @@ The active goal is stored in `%LOCALAPPDATA%\TarkovSkills\memory\current-goal.js
    - visibility/PostFX notes
    - suggested next manual checks
 
-4. If the system appears near a known-good baseline but performance misses the diagnostics threshold from `../../references/measurement-rules.md` (15% worse than expected), switch from graphics tuning to diagnostics:
+4. If the system appears near a known-good baseline but performance misses the diagnostics threshold from `references/measurement-rules.md` (15% worse than expected), switch from graphics tuning to diagnostics:
    - manual/external thermal throttling check with tools such as HWiNFO or MSI Afterburner; this skill does not collect temperatures automatically
    - power plan
    - installed GPU driver version and whether it is current for AMD/NVIDIA

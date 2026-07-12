@@ -1,6 +1,6 @@
 # Tuning Loop
 
-Numeric thresholds (noise, diagnostics trigger, repeat-run guidance) are defined in `../../../references/measurement-rules.md`.
+Numeric thresholds (noise, diagnostics trigger, repeat-run guidance) are defined in `measurement-rules.md`.
 
 ## State To Track
 

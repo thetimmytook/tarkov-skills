@@ -31,4 +31,4 @@ Use this skill to run an iterative tuning loop:
 
 - Use `tarkov-config` when you need to know what setting to change.
 - Use `tarkov-frametime` when you need measured performance.
-- Use `tarkov-performance-benchmark` when you need a normalized `run.json`.
+- Use `tarkov-performance-benchmark` when you need a normalized `benchmark.json`.

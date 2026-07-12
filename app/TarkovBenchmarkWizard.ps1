@@ -2,38 +2,52 @@ $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class TarkovWindowChrome {
+    [DllImport("user32.dll")]
+    public static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int message, IntPtr wParam, IntPtr lParam);
+}
+'@
 
 $RootDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $ScriptsDir = Join-Path $RootDir "scripts"
 . (Join-Path $ScriptsDir "TarkovCommon.ps1")
-$RunsDir = Get-TarkovDataDir -SubDir "runs"
-
-$State = [ordered]@{
-    RunDir = $null
-    SettingsJsonPath = $null
-    SystemJsonPath = $null
-    FpsCsvPath = $null
-    FpsJsonPath = $null
-    RunJsonPath = $null
-    GameVersion = "unknown"
+$PerformanceFormUrl = "https://forms.gle/D692T2Umd5ktD5wj8"
+$CrashFormUrl = "https://forms.gle/yvKPPWkzGVFrtGjG7"
+$Theme = @{
+    Background = [System.Drawing.Color]::FromArgb(20, 21, 20)
+    Surface = [System.Drawing.Color]::FromArgb(38, 38, 36)
+    SurfaceRaised = [System.Drawing.Color]::FromArgb(48, 48, 45)
+    Border = [System.Drawing.Color]::FromArgb(12, 12, 12)
+    Text = [System.Drawing.Color]::FromArgb(211, 205, 184)
+    Muted = [System.Drawing.Color]::FromArgb(150, 143, 121)
+    Accent = [System.Drawing.Color]::FromArgb(171, 158, 111)
+    AccentDark = [System.Drawing.Color]::FromArgb(103, 94, 68)
+    Ready = [System.Drawing.Color]::FromArgb(92, 154, 90)
+    Warning = [System.Drawing.Color]::FromArgb(191, 151, 68)
+    Error = [System.Drawing.Color]::FromArgb(163, 77, 71)
 }
 
-function New-RunDirectory {
-    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $path = Join-Path $RunsDir $stamp
-    New-Item -ItemType Directory -Force $path | Out-Null
-    $State.RunDir = $path
-    $State.SettingsJsonPath = Join-Path $path "settings.json"
-    $State.SystemJsonPath = Join-Path $path "system.json"
-    $State.FpsJsonPath = Join-Path $path "fps.json"
-    $State.RunJsonPath = Join-Path $path "run.json"
+$State = [ordered]@{
+    BenchmarkPath = Join-Path (Get-TarkovDataDir) "benchmark.json"
+    CaptureStartedAt = $null
+    CaptureDurationSec = 120
+    CaptureJob = $null
+    CaptureCanceled = $false
+    Collecting = $false
+    PresentMon = $null
 }
 
 function Invoke-BenchmarkScript {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [string[]]$Arguments = @()
+        [hashtable]$Parameters = @{}
     )
 
     $scriptPath = Join-Path $ScriptsDir $Name
@@ -41,415 +55,885 @@ function Invoke-BenchmarkScript {
         throw "Script not found: $scriptPath"
     }
 
-    & $scriptPath @Arguments
+    & $scriptPath @Parameters
 }
 
-function Get-ComboValue {
-    param([System.Windows.Forms.ComboBox]$Combo)
-
-    if ([string]::IsNullOrWhiteSpace($Combo.Text)) {
-        return "unknown"
-    }
-
-    return $Combo.Text.Trim()
+function Get-TarkovProcess {
+    return Get-Process -Name "EscapeFromTarkov" -ErrorAction SilentlyContinue | Select-Object -First 1
 }
 
-function Add-Log {
-    param([string]$Message)
-
-    $timestamp = Get-Date -Format "HH:mm:ss"
-    $txtLog.AppendText("[$timestamp] $Message`r`n")
-    $txtLog.SelectionStart = $txtLog.TextLength
-    $txtLog.ScrollToCaret()
+function Test-TarkovRunning {
+    return $null -ne (Get-TarkovProcess)
 }
 
 function Set-Status {
-    param([string]$Message)
-    $lblStatus.Text = $Message
+    param(
+        [string]$Text,
+        [System.Drawing.Color]$Color
+    )
+
+    $lblStatus.Text = $Text
+    $lblStatus.ForeColor = if ($Color.IsEmpty) { $Theme.Text } else { $Color }
 }
 
-function Set-UiEnabled {
-    param([bool]$Enabled)
+function Set-TarkovForm {
+    param([System.Windows.Forms.Form]$Dialog)
 
-    foreach ($control in @($btnCollect, $btnReadLogs, $btnBrowseCsv, $btnParseCsv, $btnBuildRun, $btnOpenRunFolder, $btnOpenRunJson, $btnUploadTodo)) {
-        $control.Enabled = $Enabled
+    $Dialog.BackColor = $Theme.Background
+    $Dialog.ForeColor = $Theme.Text
+}
+
+function Set-TarkovLabel {
+    param(
+        [System.Windows.Forms.Control]$Control,
+        [switch]$Muted
+    )
+
+    $Control.ForeColor = if ($Muted) { $Theme.Muted } else { $Theme.Text }
+    $Control.BackColor = [System.Drawing.Color]::Transparent
+}
+
+function Set-TarkovGroup {
+    param([System.Windows.Forms.GroupBox]$Group)
+
+    $Group.BackColor = $Theme.Surface
+    $Group.ForeColor = $Theme.Accent
+}
+
+function Update-TarkovButtonAppearance {
+    param([System.Windows.Forms.Button]$Button)
+
+    if (-not $Button.Enabled) {
+        $Button.BackColor = $Theme.Surface
+        $Button.ForeColor = $Theme.Muted
+        $Button.FlatAppearance.BorderColor = $Theme.Border
+        $Button.FlatAppearance.MouseOverBackColor = $Theme.Surface
+        $Button.FlatAppearance.MouseDownBackColor = $Theme.Surface
+        return
+    }
+
+    if ($Button.Tag -eq "primary") {
+        $Button.BackColor = $Theme.Accent
+        $Button.ForeColor = $Theme.Background
+        $Button.FlatAppearance.BorderColor = $Theme.Accent
+        $Button.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(194, 180, 128)
+        $Button.FlatAppearance.MouseDownBackColor = $Theme.AccentDark
+    }
+    else {
+        $Button.BackColor = $Theme.SurfaceRaised
+        $Button.ForeColor = $Theme.Text
+        $Button.FlatAppearance.BorderColor = $Theme.AccentDark
+        $Button.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(63, 62, 57)
+        $Button.FlatAppearance.MouseDownBackColor = $Theme.Border
+    }
+}
+
+function Set-TarkovButton {
+    param(
+        [System.Windows.Forms.Button]$Button,
+        [switch]$Primary
+    )
+
+    $Button.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $Button.FlatAppearance.BorderSize = 1
+    $Button.UseVisualStyleBackColor = $false
+    $Button.Tag = if ($Primary) { "primary" } else { "secondary" }
+    $Button.Add_EnabledChanged({ Update-TarkovButtonAppearance -Button $this })
+    Update-TarkovButtonAppearance -Button $Button
+}
+
+function Set-TarkovTextInput {
+    param([System.Windows.Forms.Control]$Control)
+
+    $Control.BackColor = $Theme.Background
+    $Control.ForeColor = $Theme.Text
+}
+
+function Show-TarkovMessage {
+    param(
+        [System.Windows.Forms.IWin32Window]$Owner,
+        [string]$Text,
+        [string]$Caption,
+        [System.Windows.Forms.MessageBoxButtons]$Buttons,
+        [System.Windows.Forms.MessageBoxIcon]$Icon
+    )
+
+    return [System.Windows.Forms.MessageBox]::Show($Owner, $Text, $Caption, $Buttons, $Icon)
+}
+
+function Test-ActiveRaidContext {
+    param(
+        [pscustomobject]$Context,
+        [object]$ProcessStartedAt
+    )
+
+    if (-not $Context -or -not $Context.found -or [string]::IsNullOrWhiteSpace($Context.started_at)) {
+        return $false
+    }
+
+    $startedAt = [datetime]::MinValue
+    if (-not [datetime]::TryParse($Context.started_at, [ref]$startedAt)) {
+        return $false
+    }
+    if ($ProcessStartedAt -and $startedAt -lt $ProcessStartedAt) {
+        return $false
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Context.ended_at)) {
+        $endedAt = [datetime]::MinValue
+        if ([datetime]::TryParse($Context.ended_at, [ref]$endedAt) -and $endedAt -ge $startedAt) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
+function Show-RaidRequired {
+    param([string]$Message)
+
+    Show-TarkovMessage -Owner $form -Text $Message -Caption "Ready when you are" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+}
+
+function Update-Readiness {
+    if ($State.Collecting) {
+        return
+    }
+
+    $State.PresentMon = Invoke-BenchmarkScript -Name "check-presentmon.ps1" | ConvertFrom-Json
+    $chkPresentMon.Checked = [bool]$State.PresentMon.found
+    $chkPresentMon.Text = if ($State.PresentMon.found) { "PresentMon ready" } else { "PresentMon required" }
+    $chkPresentMon.ForeColor = if ($State.PresentMon.found) { [System.Drawing.Color]::ForestGreen } else { [System.Drawing.Color]::Firebrick }
+    if (-not $State.PresentMon.found) {
+        $btnStart.Enabled = $false
+        $lblAvailability.Text = "Install PresentMon first"
+        Set-Status "PresentMon is needed for FPS capture." -Color $Theme.Warning
+        return
+    }
+
+    $tarkovProcess = Get-TarkovProcess
+    if (-not $tarkovProcess) {
+        $btnStart.Enabled = $true
+        $lblAvailability.Text = "Next: run Tarkov"
+        Set-Status "Run Tarkov, then enter a raid to collect performance data." -Color $Theme.Warning
+        return
+    }
+
+    try {
+        $raidContext = Invoke-BenchmarkScript -Name "read-tarkov-raid-context.ps1" | ConvertFrom-Json
+    }
+    catch {
+        $raidContext = $null
+    }
+    if (-not (Test-ActiveRaidContext -Context $raidContext -ProcessStartedAt $tarkovProcess.StartTime)) {
+        $btnStart.Enabled = $true
+        $lblAvailability.Text = "Next: start a raid"
+        Set-Status "Enter a raid to collect performance data." -Color $Theme.Warning
+        return
+    }
+
+    $btnStart.Enabled = $true
+    $lblAvailability.Text = "Ready"
+    Set-Status "Raid detected. Ready to collect performance data." -Color $Theme.Ready
+}
+
+function Show-PresentMonSetup {
+    $installDir = Get-TarkovDataDir -SubDir "tools\PresentMon"
+    $presentMon = Invoke-BenchmarkScript -Name "check-presentmon.ps1" | ConvertFrom-Json
+    $dialog = New-Object System.Windows.Forms.Form
+    $dialog.Text = if ($presentMon.found) { "PresentMon ready" } else { "Install PresentMon" }
+    $dialog.StartPosition = "CenterParent"
+    $dialog.FormBorderStyle = "FixedDialog"
+    $dialog.MaximizeBox = $false
+    $dialog.MinimizeBox = $false
+    $dialog.ClientSize = New-Object System.Drawing.Size(520, 250)
+    $dialog.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+    Set-TarkovForm -Dialog $dialog
+
+    $linkDownload = New-Object System.Windows.Forms.LinkLabel
+    $linkDownload.Text = if ($presentMon.found) { "Open the official PresentMon GitHub Releases page." } else { "1. Download PresentMon from its official GitHub Releases page." }
+    $linkDownload.Location = New-Object System.Drawing.Point(18, 18)
+    $linkDownload.Size = New-Object System.Drawing.Size(480, 22)
+    $linkDownload.LinkColor = $Theme.Accent
+    $linkDownload.ActiveLinkColor = $Theme.Warning
+    $linkDownload.VisitedLinkColor = $Theme.Accent
+    $dialog.Controls.Add($linkDownload)
+
+    $lblDestination = New-Object System.Windows.Forms.Label
+    $lblDestination.Text = if ($presentMon.found) { "PresentMon.exe was found in this folder:" } else { "2. Extract PresentMon.exe into this folder:" }
+    $lblDestination.Location = New-Object System.Drawing.Point(18, 52)
+    $lblDestination.Size = New-Object System.Drawing.Size(480, 22)
+    Set-TarkovLabel -Control $lblDestination -Muted
+    $dialog.Controls.Add($lblDestination)
+
+    $txtInstallDir = New-Object System.Windows.Forms.TextBox
+    $txtInstallDir.Text = $installDir
+    $txtInstallDir.ReadOnly = $true
+    $txtInstallDir.Location = New-Object System.Drawing.Point(18, 78)
+    $txtInstallDir.Size = New-Object System.Drawing.Size(480, 24)
+    Set-TarkovTextInput -Control $txtInstallDir
+    $dialog.Controls.Add($txtInstallDir)
+
+    $lblPermission = New-Object System.Windows.Forms.Label
+    $lblPermission.Text = "PresentMon starts without elevation. Windows asks for permission only if it is required."
+    $lblPermission.Location = New-Object System.Drawing.Point(18, 116)
+    $lblPermission.Size = New-Object System.Drawing.Size(480, 38)
+    Set-TarkovLabel -Control $lblPermission -Muted
+    $dialog.Controls.Add($lblPermission)
+
+    $btnOpenFolder = New-Object System.Windows.Forms.Button
+    $btnOpenFolder.Text = "Open folder"
+    $btnOpenFolder.Location = New-Object System.Drawing.Point(18, 184)
+    $btnOpenFolder.Size = New-Object System.Drawing.Size(105, 32)
+    Set-TarkovButton -Button $btnOpenFolder
+    $dialog.Controls.Add($btnOpenFolder)
+
+    $btnCopyPath = New-Object System.Windows.Forms.Button
+    $btnCopyPath.Text = "Copy folder path"
+    $btnCopyPath.Location = New-Object System.Drawing.Point(135, 184)
+    $btnCopyPath.Size = New-Object System.Drawing.Size(120, 32)
+    Set-TarkovButton -Button $btnCopyPath
+    $dialog.Controls.Add($btnCopyPath)
+
+    $btnClose = New-Object System.Windows.Forms.Button
+    $btnClose.Text = "Close"
+    $btnClose.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+    $btnClose.Location = New-Object System.Drawing.Point(424, 184)
+    $btnClose.Size = New-Object System.Drawing.Size(74, 32)
+    Set-TarkovButton -Button $btnClose
+    $dialog.Controls.Add($btnClose)
+
+    $linkDownload.Add_LinkClicked({ Start-Process "https://github.com/GameTechDev/PresentMon/releases" })
+    $btnOpenFolder.Add_Click({
+        New-Item -ItemType Directory -Force $installDir | Out-Null
+        Start-Process explorer.exe -ArgumentList $installDir
+    })
+    $btnCopyPath.Add_Click({
+        [System.Windows.Forms.Clipboard]::SetText($installDir)
+        $txtInstallDir.SelectAll()
+        $txtInstallDir.Focus()
+    })
+
+    [void]$dialog.ShowDialog($form)
+}
+
+function Offer-CrashReport {
+    $choice = Show-TarkovMessage -Owner $form -Text "Open the crash report form?" -Caption "Collection failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::YesNo) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error)
+    if ($choice -eq [System.Windows.Forms.DialogResult]::Yes) {
+        Start-Process $CrashFormUrl
+    }
+}
+
+function Get-ContextAnswers {
+    param([pscustomobject]$RaidContext)
+
+    $dialog = New-Object System.Windows.Forms.Form
+    $dialog.Text = "Benchmark details"
+    $dialog.StartPosition = "CenterParent"
+    $dialog.FormBorderStyle = "FixedDialog"
+    $dialog.MaximizeBox = $false
+    $dialog.MinimizeBox = $false
+    $dialog.ClientSize = New-Object System.Drawing.Size(430, 290)
+    $dialog.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+    Set-TarkovForm -Dialog $dialog
+
+    $map = if ($RaidContext.map -and $RaidContext.map -ne "unknown") { $RaidContext.map } else { "Could not identify map from Tarkov logs" }
+    $lblMap = New-Object System.Windows.Forms.Label
+    $lblMap.Text = "Map: $map"
+    $lblMap.Location = New-Object System.Drawing.Point(18, 18)
+    $lblMap.Size = New-Object System.Drawing.Size(395, 22)
+    Set-TarkovLabel -Control $lblMap -Muted
+    $dialog.Controls.Add($lblMap)
+
+    $grpExecution = New-Object System.Windows.Forms.GroupBox
+    $grpExecution.Text = "Where did you play?"
+    $grpExecution.Location = New-Object System.Drawing.Point(18, 52)
+    $grpExecution.Size = New-Object System.Drawing.Size(395, 58)
+    Set-TarkovGroup -Group $grpExecution
+    $dialog.Controls.Add($grpExecution)
+
+    $radioBsg = New-Object System.Windows.Forms.RadioButton
+    $radioBsg.Text = "BSG servers"
+    $radioBsg.Location = New-Object System.Drawing.Point(16, 24)
+    $radioBsg.Size = New-Object System.Drawing.Size(145, 22)
+    $radioBsg.BackColor = $Theme.Surface
+    $radioBsg.ForeColor = $Theme.Text
+    $grpExecution.Controls.Add($radioBsg)
+
+    $radioLocal = New-Object System.Windows.Forms.RadioButton
+    $radioLocal.Text = "Local"
+    $radioLocal.Location = New-Object System.Drawing.Point(195, 24)
+    $radioLocal.Size = New-Object System.Drawing.Size(145, 22)
+    $radioLocal.BackColor = $Theme.Surface
+    $radioLocal.ForeColor = $Theme.Text
+    $grpExecution.Controls.Add($radioLocal)
+
+    $lblWeather = New-Object System.Windows.Forms.Label
+    $lblWeather.Text = "Weather"
+    $lblWeather.Location = New-Object System.Drawing.Point(18, 126)
+    $lblWeather.Size = New-Object System.Drawing.Size(180, 18)
+    Set-TarkovLabel -Control $lblWeather -Muted
+    $dialog.Controls.Add($lblWeather)
+
+    $cmbWeather = New-Object System.Windows.Forms.ComboBox
+    $cmbWeather.DropDownStyle = "DropDownList"
+    [void]$cmbWeather.Items.AddRange(@("Choose weather", "Clear", "Cloudy", "Rain", "Fog", "Snow", "Not sure"))
+    $cmbWeather.SelectedIndex = 0
+    $cmbWeather.Location = New-Object System.Drawing.Point(18, 146)
+    $cmbWeather.Size = New-Object System.Drawing.Size(185, 24)
+    Set-TarkovTextInput -Control $cmbWeather
+    $dialog.Controls.Add($cmbWeather)
+
+    $lblTime = New-Object System.Windows.Forms.Label
+    $lblTime.Text = "Time of day"
+    $lblTime.Location = New-Object System.Drawing.Point(228, 126)
+    $lblTime.Size = New-Object System.Drawing.Size(180, 18)
+    Set-TarkovLabel -Control $lblTime -Muted
+    $dialog.Controls.Add($lblTime)
+
+    $cmbTime = New-Object System.Windows.Forms.ComboBox
+    $cmbTime.DropDownStyle = "DropDownList"
+    [void]$cmbTime.Items.AddRange(@("Choose time", "Day", "Night", "Dawn / dusk", "Not sure"))
+    $cmbTime.SelectedIndex = 0
+    $cmbTime.Location = New-Object System.Drawing.Point(228, 146)
+    $cmbTime.Size = New-Object System.Drawing.Size(185, 24)
+    Set-TarkovTextInput -Control $cmbTime
+    $dialog.Controls.Add($cmbTime)
+
+    $btnSave = New-Object System.Windows.Forms.Button
+    $btnSave.Text = "Save benchmark"
+    $btnSave.Location = New-Object System.Drawing.Point(282, 234)
+    $btnSave.Size = New-Object System.Drawing.Size(131, 32)
+    $btnSave.Enabled = $false
+    Set-TarkovButton -Button $btnSave -Primary
+    $dialog.Controls.Add($btnSave)
+
+    $updateSaveButton = {
+        $btnSave.Enabled = ($radioBsg.Checked -or $radioLocal.Checked) -and $cmbWeather.SelectedIndex -gt 0 -and $cmbTime.SelectedIndex -gt 0
+    }
+    $radioBsg.Add_CheckedChanged($updateSaveButton)
+    $radioLocal.Add_CheckedChanged($updateSaveButton)
+    $cmbWeather.Add_SelectedIndexChanged($updateSaveButton)
+    $cmbTime.Add_SelectedIndexChanged($updateSaveButton)
+
+    $btnSave.Add_Click({
+        if (-not $radioBsg.Checked -and -not $radioLocal.Checked) {
+            Show-TarkovMessage -Owner $dialog -Text "Choose BSG servers or Local." -Caption "Benchmark details" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+            return
+        }
+        if ($cmbWeather.SelectedIndex -eq 0 -or $cmbTime.SelectedIndex -eq 0) {
+            Show-TarkovMessage -Owner $dialog -Text "Choose weather and time of day, or choose Not sure." -Caption "Benchmark details" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+            return
+        }
+        $dialog.DialogResult = [System.Windows.Forms.DialogResult]::OK
+        $dialog.Close()
+    })
+
+    if ($dialog.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) {
+        return $null
+    }
+
+    $weatherMap = @{ "Clear" = "clear"; "Cloudy" = "cloudy"; "Rain" = "rain"; "Fog" = "fog"; "Snow" = "snow"; "Not sure" = "unknown" }
+    $timeMap = @{ "Day" = "day"; "Night" = "night"; "Dawn / dusk" = "dawn_dusk"; "Not sure" = "unknown" }
+    return [pscustomobject]@{
+        execution = if ($radioBsg.Checked) { "bsg_servers" } else { "local" }
+        weather = $weatherMap[$cmbWeather.SelectedItem]
+        time_of_day = $timeMap[$cmbTime.SelectedItem]
+    }
+}
+
+function Save-BenchmarkRun {
+    param(
+        [pscustomobject]$Capture,
+        [pscustomobject]$Context,
+        [pscustomobject]$Answers
+    )
+
+    $sessionDir = Join-Path ([System.IO.Path]::GetTempPath()) "TarkovSkills-$([guid]::NewGuid().ToString('N'))"
+    New-Item -ItemType Directory -Force $sessionDir | Out-Null
+    try {
+        $settingsPath = Join-Path $sessionDir "settings.json"
+        $systemPath = Join-Path $sessionDir "system.json"
+        $fpsPath = Join-Path $sessionDir "fps.json"
+        $Capture.settings_json | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+        $Capture.system_json | Set-Content -LiteralPath $systemPath -Encoding UTF8
+        $Capture.fps_json | Set-Content -LiteralPath $fpsPath -Encoding UTF8
+
+        $resultJson = Invoke-BenchmarkScript -Name "add-benchmark-run.ps1" -Parameters @{
+            SettingsJsonPath = $settingsPath
+            SystemJsonPath = $systemPath
+            FpsJsonPath = $fpsPath
+            Execution = $Answers.execution
+            Weather = $Answers.weather
+            TimeOfDay = $Answers.time_of_day
+            Map = $Context.map
+            GameVersion = $Context.game_version
+            BenchmarkPath = $State.BenchmarkPath
+        }
+        return $resultJson | ConvertFrom-Json
+    }
+    finally {
+        Remove-Item -LiteralPath $sessionDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Tarkov Performance Benchmark"
 $form.StartPosition = "CenterScreen"
-$form.Size = New-Object System.Drawing.Size(820, 680)
-$form.MinimumSize = New-Object System.Drawing.Size(760, 620)
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+$form.ShowIcon = $false
+$form.ClientSize = New-Object System.Drawing.Size(680, 330)
+$form.MinimumSize = New-Object System.Drawing.Size(680, 330)
+$form.MaximumSize = New-Object System.Drawing.Size(680, 330)
+$form.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+Set-TarkovForm -Dialog $form
 
-$font = New-Object System.Drawing.Font("Segoe UI", 9)
-$form.Font = $font
+$windowHeader = New-Object System.Windows.Forms.Panel
+$windowHeader.BackColor = $Theme.Surface
+$windowHeader.Location = New-Object System.Drawing.Point(0, 0)
+$windowHeader.Size = New-Object System.Drawing.Size(680, 40)
+$form.Controls.Add($windowHeader)
+
+$windowHeaderTitle = New-Object System.Windows.Forms.Label
+$windowHeaderTitle.Text = "TARKOV PERFORMANCE BENCHMARK"
+$windowHeaderTitle.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$windowHeaderTitle.ForeColor = $Theme.Accent
+$windowHeaderTitle.BackColor = $Theme.Surface
+$windowHeaderTitle.Location = New-Object System.Drawing.Point(18, 11)
+$windowHeaderTitle.Size = New-Object System.Drawing.Size(360, 20)
+$windowHeader.Controls.Add($windowHeaderTitle)
+
+$btnWindowClose = New-Object System.Windows.Forms.Button
+$btnWindowClose.Text = "X"
+$btnWindowClose.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$btnWindowClose.FlatAppearance.BorderSize = 0
+$btnWindowClose.FlatAppearance.MouseOverBackColor = $Theme.Error
+$btnWindowClose.FlatAppearance.MouseDownBackColor = $Theme.Border
+$btnWindowClose.BackColor = $Theme.Surface
+$btnWindowClose.ForeColor = $Theme.Text
+$btnWindowClose.Location = New-Object System.Drawing.Point(636, 5)
+$btnWindowClose.Size = New-Object System.Drawing.Size(34, 30)
+$windowHeader.Controls.Add($btnWindowClose)
+
+$startWindowDrag = {
+    param($sender, $eventArgs)
+    if ($eventArgs.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+        [TarkovWindowChrome]::ReleaseCapture() | Out-Null
+        [void][TarkovWindowChrome]::SendMessage($form.Handle, 0xA1, [IntPtr]2, [IntPtr]::Zero)
+    }
+}
+$windowHeader.Add_MouseDown($startWindowDrag)
+$windowHeaderTitle.Add_MouseDown($startWindowDrag)
+$btnWindowClose.Add_Click({ $form.Close() })
 
 $lblTitle = New-Object System.Windows.Forms.Label
 $lblTitle.Text = "Tarkov Performance Benchmark"
 $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
-$lblTitle.Location = New-Object System.Drawing.Point(16, 14)
-$lblTitle.Size = New-Object System.Drawing.Size(520, 28)
+$lblTitle.Location = New-Object System.Drawing.Point(18, 16)
+$lblTitle.Size = New-Object System.Drawing.Size(500, 30)
+Set-TarkovLabel -Control $lblTitle
+$lblTitle.ForeColor = $Theme.Accent
+$lblTitle.Visible = $false
 $form.Controls.Add($lblTitle)
 
 $lblStatus = New-Object System.Windows.Forms.Label
-$lblStatus.Text = "Ready. Start by collecting settings and system info."
-$lblStatus.Location = New-Object System.Drawing.Point(18, 48)
-$lblStatus.Size = New-Object System.Drawing.Size(760, 24)
+$lblStatus.Location = New-Object System.Drawing.Point(20, 52)
+$lblStatus.Size = New-Object System.Drawing.Size(635, 22)
+Set-TarkovLabel -Control $lblStatus -Muted
 $form.Controls.Add($lblStatus)
 
-$grpCollect = New-Object System.Windows.Forms.GroupBox
-$grpCollect.Text = "1. Local snapshot"
-$grpCollect.Location = New-Object System.Drawing.Point(18, 82)
-$grpCollect.Size = New-Object System.Drawing.Size(760, 82)
-$form.Controls.Add($grpCollect)
+$statusLine = New-Object System.Windows.Forms.Panel
+$statusLine.BackColor = $Theme.AccentDark
+$statusLine.Location = New-Object System.Drawing.Point(18, 78)
+$statusLine.Size = New-Object System.Drawing.Size(644, 2)
+$form.Controls.Add($statusLine)
 
-$btnCollect = New-Object System.Windows.Forms.Button
-$btnCollect.Text = "Collect EFT settings and system info"
-$btnCollect.Location = New-Object System.Drawing.Point(16, 32)
-$btnCollect.Size = New-Object System.Drawing.Size(250, 30)
-$grpCollect.Controls.Add($btnCollect)
+$grpCollection = New-Object System.Windows.Forms.GroupBox
+$grpCollection.Text = "Collection"
+$grpCollection.Location = New-Object System.Drawing.Point(18, 88)
+$grpCollection.Size = New-Object System.Drawing.Size(644, 112)
+Set-TarkovGroup -Group $grpCollection
+$form.Controls.Add($grpCollection)
 
-$lblCollectResult = New-Object System.Windows.Forms.Label
-$lblCollectResult.Text = "Not collected yet."
-$lblCollectResult.Location = New-Object System.Drawing.Point(282, 37)
-$lblCollectResult.Size = New-Object System.Drawing.Size(455, 22)
-$grpCollect.Controls.Add($lblCollectResult)
+$lblDuration = New-Object System.Windows.Forms.Label
+$lblDuration.Text = "Capture duration"
+$lblDuration.Location = New-Object System.Drawing.Point(16, 30)
+$lblDuration.Size = New-Object System.Drawing.Size(120, 20)
+Set-TarkovLabel -Control $lblDuration -Muted
+$grpCollection.Controls.Add($lblDuration)
 
-$grpContext = New-Object System.Windows.Forms.GroupBox
-$grpContext.Text = "2. Raid context"
-$grpContext.Location = New-Object System.Drawing.Point(18, 176)
-$grpContext.Size = New-Object System.Drawing.Size(760, 172)
-$form.Controls.Add($grpContext)
+$radioTwoMinutes = New-Object System.Windows.Forms.RadioButton
+$radioTwoMinutes.Text = "2 minutes"
+$radioTwoMinutes.Checked = $true
+$radioTwoMinutes.Location = New-Object System.Drawing.Point(16, 56)
+$radioTwoMinutes.Size = New-Object System.Drawing.Size(100, 24)
+$radioTwoMinutes.BackColor = $Theme.Surface
+$radioTwoMinutes.ForeColor = $Theme.Text
+$grpCollection.Controls.Add($radioTwoMinutes)
 
-$labels = @(
-    @{ Text = "Map"; X = 16; Y = 32 },
-    @{ Text = "Mode"; X = 266; Y = 32 },
-    @{ Text = "Server model"; X = 516; Y = 32 },
-    @{ Text = "Weather"; X = 16; Y = 88 },
-    @{ Text = "Time of day"; X = 266; Y = 88 },
-    @{ Text = "Activity"; X = 516; Y = 88 }
-)
+$radioFourMinutes = New-Object System.Windows.Forms.RadioButton
+$radioFourMinutes.Text = "4 minutes"
+$radioFourMinutes.Location = New-Object System.Drawing.Point(130, 56)
+$radioFourMinutes.Size = New-Object System.Drawing.Size(100, 24)
+$radioFourMinutes.BackColor = $Theme.Surface
+$radioFourMinutes.ForeColor = $Theme.Text
+$grpCollection.Controls.Add($radioFourMinutes)
 
-foreach ($item in $labels) {
-    $label = New-Object System.Windows.Forms.Label
-    $label.Text = $item.Text
-    $label.Location = New-Object System.Drawing.Point($item.X, $item.Y)
-    $label.Size = New-Object System.Drawing.Size(210, 18)
-    $grpContext.Controls.Add($label)
+$btnStart = New-Object System.Windows.Forms.Button
+$btnStart.Text = "Start collection"
+$btnStart.Location = New-Object System.Drawing.Point(420, 29)
+$btnStart.Size = New-Object System.Drawing.Size(128, 34)
+$btnStart.Enabled = $false
+Set-TarkovButton -Button $btnStart -Primary
+$grpCollection.Controls.Add($btnStart)
+
+$btnCancel = New-Object System.Windows.Forms.Button
+$btnCancel.Text = "Cancel"
+$btnCancel.Location = New-Object System.Drawing.Point(558, 29)
+$btnCancel.Size = New-Object System.Drawing.Size(62, 34)
+$btnCancel.Enabled = $false
+Set-TarkovButton -Button $btnCancel
+$grpCollection.Controls.Add($btnCancel)
+
+$chkPresentMon = New-Object System.Windows.Forms.CheckBox
+$chkPresentMon.AutoCheck = $false
+$chkPresentMon.TabStop = $false
+$chkPresentMon.Text = "PresentMon required"
+$chkPresentMon.ForeColor = [System.Drawing.Color]::Firebrick
+$chkPresentMon.Location = New-Object System.Drawing.Point(280, 29)
+$chkPresentMon.Size = New-Object System.Drawing.Size(130, 22)
+$chkPresentMon.BackColor = $Theme.Surface
+$grpCollection.Controls.Add($chkPresentMon)
+
+$lblAvailability = New-Object System.Windows.Forms.Label
+$lblAvailability.Location = New-Object System.Drawing.Point(420, 69)
+$lblAvailability.Size = New-Object System.Drawing.Size(200, 22)
+Set-TarkovLabel -Control $lblAvailability -Muted
+$grpCollection.Controls.Add($lblAvailability)
+
+$linkPresentMon = New-Object System.Windows.Forms.LinkLabel
+$linkPresentMon.Text = "PresentMon setup"
+$linkPresentMon.Location = New-Object System.Drawing.Point(280, 58)
+$linkPresentMon.Size = New-Object System.Drawing.Size(110, 24)
+$linkPresentMon.LinkColor = $Theme.Accent
+$linkPresentMon.ActiveLinkColor = $Theme.Warning
+$linkPresentMon.VisitedLinkColor = $Theme.Accent
+$grpCollection.Controls.Add($linkPresentMon)
+
+$grpResult = New-Object System.Windows.Forms.GroupBox
+$grpResult.Text = "Benchmark data"
+$grpResult.Location = New-Object System.Drawing.Point(18, 214)
+$grpResult.Size = New-Object System.Drawing.Size(644, 86)
+Set-TarkovGroup -Group $grpResult
+$form.Controls.Add($grpResult)
+
+$bottomLine = New-Object System.Windows.Forms.Panel
+$bottomLine.BackColor = $Theme.Border
+$bottomLine.Location = New-Object System.Drawing.Point(18, 315)
+$bottomLine.Size = New-Object System.Drawing.Size(644, 1)
+$form.Controls.Add($bottomLine)
+
+$lblResult = New-Object System.Windows.Forms.Label
+$lblResult.Text = "No benchmark data saved yet."
+$lblResult.Location = New-Object System.Drawing.Point(16, 30)
+$lblResult.Size = New-Object System.Drawing.Size(360, 22)
+Set-TarkovLabel -Control $lblResult -Muted
+$grpResult.Controls.Add($lblResult)
+
+$btnOpenFolder = New-Object System.Windows.Forms.Button
+$btnOpenFolder.Text = "Open folder"
+$btnOpenFolder.Location = New-Object System.Drawing.Point(390, 25)
+$btnOpenFolder.Size = New-Object System.Drawing.Size(105, 30)
+$btnOpenFolder.Enabled = $false
+Set-TarkovButton -Button $btnOpenFolder
+$grpResult.Controls.Add($btnOpenFolder)
+
+$btnUpload = New-Object System.Windows.Forms.Button
+$btnUpload.Text = "Upload"
+$btnUpload.Location = New-Object System.Drawing.Point(510, 25)
+$btnUpload.Size = New-Object System.Drawing.Size(110, 30)
+$btnUpload.Enabled = $false
+Set-TarkovButton -Button $btnUpload -Primary
+$grpResult.Controls.Add($btnUpload)
+
+function Update-BenchmarkDataAvailability {
+    $btnOpenFolder.Enabled = Test-Path -LiteralPath $State.BenchmarkPath
+    $btnUpload.Enabled = $false
+    if (-not $btnOpenFolder.Enabled) {
+        return
+    }
+
+    try {
+        $benchmark = Get-Content -Raw -LiteralPath $State.BenchmarkPath | ConvertFrom-Json
+        $runs = @($benchmark.runs)
+        if ($runs.Count -eq 0) {
+            return
+        }
+
+        $btnUpload.Enabled = $true
+        $latestRun = $runs[-1]
+        if ($latestRun.fps.avg_fps -and $latestRun.fps.p1_low_fps) {
+            $lblResult.Text = "Saved $($runs.Count) runs. Latest avg $($latestRun.fps.avg_fps) FPS, 1% low $($latestRun.fps.p1_low_fps)."
+        }
+        else {
+            $lblResult.Text = "Saved $($runs.Count) benchmark runs."
+        }
+    }
+    catch {
+        $lblResult.Text = "Benchmark data file found."
+    }
 }
 
-function New-Combo {
+$captureClock = New-Object System.Windows.Forms.Timer
+$captureClock.Interval = 1000
+$captureClock.Add_Tick({
+    if (-not $State.Collecting -or -not $State.CaptureStartedAt) {
+        return
+    }
+    $elapsed = [math]::Min([int]((Get-Date) - $State.CaptureStartedAt).TotalSeconds, $State.CaptureDurationSec)
+    $elapsedText = [TimeSpan]::FromSeconds($elapsed).ToString("mm\:ss")
+    $totalText = [TimeSpan]::FromSeconds($State.CaptureDurationSec).ToString("mm\:ss")
+    Set-Status "Collecting FPS data in the background: $elapsedText / $totalText" -Color $Theme.Accent
+})
+
+$readinessTimer = New-Object System.Windows.Forms.Timer
+$readinessTimer.Interval = 2000
+$readinessTimer.Add_Tick({
+    try {
+        Update-Readiness
+    }
+    catch {
+        $btnStart.Enabled = $false
+        $lblAvailability.Text = "Check failed"
+        Set-Status "Could not check collection readiness." -Color $Theme.Error
+    }
+})
+
+function Complete-CaptureCollection {
     param(
-        [int]$X,
-        [int]$Y,
-        [string[]]$Items
+        [pscustomobject]$Capture,
+        [string]$ErrorText = "",
+        [switch]$Discarded
     )
 
-    $combo = New-Object System.Windows.Forms.ComboBox
-    $combo.Location = New-Object System.Drawing.Point($X, $Y)
-    $combo.Size = New-Object System.Drawing.Size(210, 24)
-    $combo.DropDownStyle = "DropDown"
-    [void]$combo.Items.AddRange($Items)
-    if ($Items.Count -gt 0) {
-        $combo.Text = $Items[0]
+    $State.Collecting = $false
+    $State.CaptureCanceled = $false
+    $captureClock.Stop()
+    $readinessTimer.Start()
+    $radioTwoMinutes.Enabled = $true
+    $radioFourMinutes.Enabled = $true
+    $btnCancel.Enabled = $false
+
+    if ($Discarded) {
+        Update-Readiness
+        Set-Status "Collection discarded." -Color $Theme.Warning
+        return
     }
-    $grpContext.Controls.Add($combo)
-    return $combo
+
+    if (-not [string]::IsNullOrWhiteSpace($ErrorText)) {
+        Show-TarkovMessage -Owner $form -Text $ErrorText -Caption "Collection failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
+        Update-Readiness
+        Set-Status "Collection failed: $ErrorText" -Color $Theme.Error
+        return
+    }
+
+    $answers = Get-ContextAnswers -RaidContext $capture.context
+    if (-not $answers) {
+        Set-Status "Collection completed but was not saved."
+        Update-Readiness
+        return
+    }
+
+    try {
+        $saved = Save-BenchmarkRun -Capture $capture -Context $capture.context -Answers $answers
+        $metrics = $saved.run.fps
+        $lblResult.Text = "Saved $($saved.run_count) runs. Avg $($metrics.avg_fps) FPS, 1% low $($metrics.p1_low_fps)."
+        $btnOpenFolder.Enabled = $true
+        $btnUpload.Enabled = $true
+        $finalStatus = "Benchmark data saved."
+    }
+    catch {
+        $errorText = if ($_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) {
+            $_.Exception.Message
+        }
+        else {
+            "Benchmark data could not be saved."
+        }
+        Show-TarkovMessage -Owner $form -Text $errorText -Caption "Save failed" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
+        $finalStatus = "Collection completed but could not be saved."
+    }
+
+    Update-Readiness
+    Set-Status $finalStatus -Color $(if ($finalStatus -eq "Benchmark data saved.") { $Theme.Ready } else { $Theme.Error })
 }
 
-$cmbMap = New-Combo -X 16 -Y 52 -Items @("unknown", "Streets of Tarkov", "Customs", "Woods", "Shoreline", "Interchange", "Reserve", "Lighthouse", "Factory", "Ground Zero", "The Lab", "Hideout")
-$cmbMode = New-Combo -X 266 -Y 52 -Items @("unknown", "PvP online BSG", "PvE BSG server", "PvE local", "Offline practice", "Hideout")
-$cmbServer = New-Combo -X 516 -Y 52 -Items @("unknown", "BSG server", "local", "offline", "hideout")
-$cmbWeather = New-Combo -X 16 -Y 108 -Items @("unknown", "clear", "cloudy", "rain", "fog", "snow")
-$cmbTime = New-Combo -X 266 -Y 108 -Items @("unknown", "day", "night", "dawn/dusk")
-$cmbActivity = New-Combo -X 516 -Y 108 -Items @("unknown", "standing still", "walking route", "mixed", "combat")
+$captureJobTimer = New-Object System.Windows.Forms.Timer
+$captureJobTimer.Interval = 500
+$captureJobTimer.Add_Tick({
+    $job = $State.CaptureJob
+    if (-not $job) {
+        $captureJobTimer.Stop()
+        return
+    }
+    if ($job.State -notin @("Completed", "Failed", "Stopped")) {
+        return
+    }
 
-$lblRoute = New-Object System.Windows.Forms.Label
-$lblRoute.Text = "Route / notes"
-$lblRoute.Location = New-Object System.Drawing.Point(16, 136)
-$lblRoute.Size = New-Object System.Drawing.Size(110, 18)
-$grpContext.Controls.Add($lblRoute)
-
-$txtRoute = New-Object System.Windows.Forms.TextBox
-$txtRoute.Location = New-Object System.Drawing.Point(128, 132)
-$txtRoute.Size = New-Object System.Drawing.Size(470, 24)
-$txtRoute.Text = "unknown"
-$grpContext.Controls.Add($txtRoute)
-
-$btnReadLogs = New-Object System.Windows.Forms.Button
-$btnReadLogs.Text = "Read latest logs"
-$btnReadLogs.Location = New-Object System.Drawing.Point(612, 132)
-$btnReadLogs.Size = New-Object System.Drawing.Size(124, 28)
-$grpContext.Controls.Add($btnReadLogs)
-
-$grpCsv = New-Object System.Windows.Forms.GroupBox
-$grpCsv.Text = "3. FPS CSV"
-$grpCsv.Location = New-Object System.Drawing.Point(18, 360)
-$grpCsv.Size = New-Object System.Drawing.Size(760, 102)
-$form.Controls.Add($grpCsv)
-
-$txtCsvPath = New-Object System.Windows.Forms.TextBox
-$txtCsvPath.Location = New-Object System.Drawing.Point(16, 30)
-$txtCsvPath.Size = New-Object System.Drawing.Size(585, 24)
-$grpCsv.Controls.Add($txtCsvPath)
-
-$btnBrowseCsv = New-Object System.Windows.Forms.Button
-$btnBrowseCsv.Text = "Browse"
-$btnBrowseCsv.Location = New-Object System.Drawing.Point(612, 28)
-$btnBrowseCsv.Size = New-Object System.Drawing.Size(124, 28)
-$grpCsv.Controls.Add($btnBrowseCsv)
-
-$btnParseCsv = New-Object System.Windows.Forms.Button
-$btnParseCsv.Text = "Parse FPS CSV"
-$btnParseCsv.Location = New-Object System.Drawing.Point(16, 64)
-$btnParseCsv.Size = New-Object System.Drawing.Size(140, 28)
-$grpCsv.Controls.Add($btnParseCsv)
-
-$lblFpsResult = New-Object System.Windows.Forms.Label
-$lblFpsResult.Text = "No CSV parsed yet."
-$lblFpsResult.Location = New-Object System.Drawing.Point(172, 69)
-$lblFpsResult.Size = New-Object System.Drawing.Size(560, 20)
-$grpCsv.Controls.Add($lblFpsResult)
-
-$grpOutput = New-Object System.Windows.Forms.GroupBox
-$grpOutput.Text = "4. Output"
-$grpOutput.Location = New-Object System.Drawing.Point(18, 474)
-$grpOutput.Size = New-Object System.Drawing.Size(760, 72)
-$form.Controls.Add($grpOutput)
-
-$btnBuildRun = New-Object System.Windows.Forms.Button
-$btnBuildRun.Text = "Build run.json"
-$btnBuildRun.Location = New-Object System.Drawing.Point(16, 28)
-$btnBuildRun.Size = New-Object System.Drawing.Size(130, 30)
-$grpOutput.Controls.Add($btnBuildRun)
-
-$btnOpenRunFolder = New-Object System.Windows.Forms.Button
-$btnOpenRunFolder.Text = "Open run folder"
-$btnOpenRunFolder.Location = New-Object System.Drawing.Point(160, 28)
-$btnOpenRunFolder.Size = New-Object System.Drawing.Size(130, 30)
-$grpOutput.Controls.Add($btnOpenRunFolder)
-
-$btnOpenRunJson = New-Object System.Windows.Forms.Button
-$btnOpenRunJson.Text = "Open run.json"
-$btnOpenRunJson.Location = New-Object System.Drawing.Point(304, 28)
-$btnOpenRunJson.Size = New-Object System.Drawing.Size(130, 30)
-$grpOutput.Controls.Add($btnOpenRunJson)
-
-$btnUploadTodo = New-Object System.Windows.Forms.Button
-$btnUploadTodo.Text = "Upload form TODO"
-$btnUploadTodo.Location = New-Object System.Drawing.Point(448, 28)
-$btnUploadTodo.Size = New-Object System.Drawing.Size(130, 30)
-$grpOutput.Controls.Add($btnUploadTodo)
-
-$lblOutput = New-Object System.Windows.Forms.Label
-$lblOutput.Text = "No run.json yet."
-$lblOutput.Location = New-Object System.Drawing.Point(592, 34)
-$lblOutput.Size = New-Object System.Drawing.Size(144, 20)
-$grpOutput.Controls.Add($lblOutput)
-
-$txtLog = New-Object System.Windows.Forms.TextBox
-$txtLog.Multiline = $true
-$txtLog.ReadOnly = $true
-$txtLog.ScrollBars = "Vertical"
-$txtLog.Location = New-Object System.Drawing.Point(18, 558)
-$txtLog.Size = New-Object System.Drawing.Size(760, 72)
-$txtLog.Anchor = "Left,Right,Bottom"
-$form.Controls.Add($txtLog)
-
-$btnCollect.Add_Click({
+    $captureJobTimer.Stop()
+    $State.CaptureJob = $null
+    if ($State.CaptureCanceled) {
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        Complete-CaptureCollection -Discarded
+        return
+    }
     try {
-        Set-UiEnabled $false
-        Set-Status "Collecting EFT settings and system info..."
-        if (-not $State.RunDir) {
-            New-RunDirectory
-            Add-Log "Created run folder: $($State.RunDir)"
+        if ($job.State -ne "Completed") {
+            $reason = $job.ChildJobs[0].JobStateInfo.Reason
+            if ($reason -and -not [string]::IsNullOrWhiteSpace($reason.Message)) {
+                throw $reason.Message
+            }
+            throw "The collection helper stopped before it could finish."
         }
 
-        Invoke-BenchmarkScript -Name "read-tarkov-settings.ps1" | Set-Content -LiteralPath $State.SettingsJsonPath -Encoding UTF8
-        Invoke-BenchmarkScript -Name "collect-system-info.ps1" -Arguments @("-IncludePagefile") | Set-Content -LiteralPath $State.SystemJsonPath -Encoding UTF8
-
-        $lblCollectResult.Text = "Saved settings.json and system.json"
-        Add-Log "Collected settings and system info."
-        Set-Status "Snapshot collected. Select an FPS CSV after your capture."
+        $result = @(Receive-Job -Job $job -ErrorAction Stop)
+        if ($result.Count -ne 1 -or [string]::IsNullOrWhiteSpace([string]$result[0])) {
+            throw "The collection helper returned no benchmark data."
+        }
+        $capture = $result[0] | ConvertFrom-Json -ErrorAction Stop
+        Complete-CaptureCollection -Capture $capture
     }
     catch {
-        Add-Log "ERROR: $($_.Exception.Message)"
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "Collection failed", "OK", "Error") | Out-Null
-        Set-Status "Collection failed."
+        $errorText = if ($_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) {
+            $_.Exception.Message
+        }
+        else {
+            "The collection helper could not start."
+        }
+        Complete-CaptureCollection -ErrorText $errorText
     }
     finally {
-        Set-UiEnabled $true
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
     }
 })
 
-$btnBrowseCsv.Add_Click({
-    $dialog = New-Object System.Windows.Forms.OpenFileDialog
-    $dialog.Title = "Select FPS CSV"
-    $dialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
-    $dialog.CheckFileExists = $true
-    if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        $txtCsvPath.Text = $dialog.FileName
+$btnStart.Add_Click({
+    if (-not $State.PresentMon -or -not $State.PresentMon.found) {
+        Show-PresentMonSetup
+        Update-Readiness
+        return
     }
-})
+    $tarkovProcess = Get-TarkovProcess
+    if (-not $tarkovProcess) {
+        $lblAvailability.Text = "Next: run Tarkov"
+        Set-Status "Run Tarkov, enter a raid, then press Start collection." -Color $Theme.Warning
+        Show-RaidRequired -Message "Run Tarkov, enter a raid, then press Start collection."
+        return
+    }
 
-$btnReadLogs.Add_Click({
     try {
-        Set-UiEnabled $false
-        Set-Status "Reading latest Tarkov logs..."
-        $contextJson = Invoke-BenchmarkScript -Name "read-tarkov-raid-context.ps1"
-        $context = $contextJson | ConvertFrom-Json
-
-        if (-not $context.found) {
-            throw $context.message
-        }
-
-        if ($context.map -and $context.map -ne "unknown") {
-            $cmbMap.Text = $context.map
-        }
-        # Logs cannot distinguish PvP from PvE on BSG servers (both report RaidMode
-        # Online), so the precise mode selection stays with the user.
-        if ($context.server_model -and $context.server_model -ne "unknown") {
-            $cmbServer.Text = $context.server_model
-        }
-        if ($context.game_version -and $context.game_version -ne "unknown") {
-            $State.GameVersion = $context.game_version
-        }
-
-        $logNote = "logs: confidence=$($context.confidence)"
-        if ($context.mode -and $context.mode -ne "unknown") {
-            $logNote += ", link=$($context.mode)"
-        }
-        if ($State.GameVersion -ne "unknown") {
-            $logNote += ", version=$($State.GameVersion)"
-        }
-        if ($context.raid_id -and $context.raid_id -ne "unknown") {
-            $logNote += ", raid_id=$($context.raid_id)"
-        }
-        if ($context.queue_time_sec -ne $null) {
-            $logNote += ", queue=$($context.queue_time_sec)s"
-        }
-        if ($context.started_at) {
-            $logNote += ", started=$($context.started_at)"
-        }
-        $txtRoute.Text = $logNote
-
-        Add-Log "Read raid context from logs: map=$($context.map), mode=$($context.mode), version=$($State.GameVersion), confidence=$($context.confidence)"
-        Set-Status "Raid context loaded from logs. Select the exact mode (PvP/PvE) and weather/time/activity manually."
+        $raidContext = Invoke-BenchmarkScript -Name "read-tarkov-raid-context.ps1" | ConvertFrom-Json
     }
     catch {
-        Add-Log "ERROR: $($_.Exception.Message)"
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "Log context failed", "OK", "Warning") | Out-Null
-        Set-Status "Could not read raid context from logs."
+        $raidContext = $null
     }
-    finally {
-        Set-UiEnabled $true
+    if (-not (Test-ActiveRaidContext -Context $raidContext -ProcessStartedAt $tarkovProcess.StartTime)) {
+        $lblAvailability.Text = "Now start the raid"
+        Set-Status "Now start the raid, then press Start collection." -Color $Theme.Warning
+        Show-RaidRequired -Message "Now start the raid, then press Start collection."
+        return
     }
-})
 
-$btnParseCsv.Add_Click({
+    $State.CaptureDurationSec = if ($radioFourMinutes.Checked) { 240 } else { 120 }
+    $State.CaptureStartedAt = Get-Date
+    $State.CaptureCanceled = $false
+    $State.Collecting = $true
+    $btnStart.Enabled = $false
+    $btnCancel.Enabled = $true
+    $radioTwoMinutes.Enabled = $false
+    $radioFourMinutes.Enabled = $false
+    $readinessTimer.Stop()
+    $captureClock.Start()
+    $lblAvailability.Text = "Collecting"
+    Set-Status "Starting PresentMon. Windows asks for permission only when it is required." -Color $Theme.Accent
     try {
-        Set-UiEnabled $false
-        if (-not $State.RunDir) {
-            New-RunDirectory
-            Add-Log "Created run folder: $($State.RunDir)"
-        }
+        $State.CaptureJob = Start-Job -ArgumentList $ScriptsDir, $State.CaptureDurationSec -ScriptBlock {
+            param(
+                [string]$JobScriptsDir,
+                [int]$DurationSec
+            )
 
-        $csvPath = $txtCsvPath.Text.Trim()
-        if (-not $csvPath) {
-            throw "Select an FPS CSV first."
+            $ErrorActionPreference = "Stop"
+            $sessionDir = Join-Path ([System.IO.Path]::GetTempPath()) "TarkovSkills-capture-$([guid]::NewGuid().ToString('N'))"
+            New-Item -ItemType Directory -Force $sessionDir | Out-Null
+            try {
+                $settingsJson = & (Join-Path $JobScriptsDir "read-tarkov-settings.ps1")
+                $systemJson = & (Join-Path $JobScriptsDir "collect-system-info.ps1") -IncludePagefile
+                $captureJson = & (Join-Path $JobScriptsDir "capture-presentmon.ps1") -DurationSec $DurationSec -OutputDir $sessionDir -RequestElevation
+                $capture = $captureJson | ConvertFrom-Json
+                $contextJson = & (Join-Path $JobScriptsDir "read-tarkov-raid-context.ps1")
+                $context = $contextJson | ConvertFrom-Json
+                [ordered]@{
+                    settings_json = $settingsJson
+                    system_json = $systemJson
+                    fps_json = ($capture.parsed | ConvertTo-Json -Depth 20)
+                    context = $context
+                } | ConvertTo-Json -Depth 30 -Compress
+            }
+            finally {
+                Remove-Item -LiteralPath $sessionDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
         }
-
-        $State.FpsCsvPath = $csvPath
-        Set-Status "Parsing FPS CSV..."
-        Invoke-BenchmarkScript -Name "parse-fps-csv.ps1" -Arguments @("-Path", $csvPath) | Set-Content -LiteralPath $State.FpsJsonPath -Encoding UTF8
-        $fps = Get-Content -Raw -LiteralPath $State.FpsJsonPath | ConvertFrom-Json
-        $lblFpsResult.Text = "Avg $($fps.avg_fps) FPS, 1% low $($fps.p1_low_fps), method $($fps.method)"
-        Add-Log "Parsed FPS CSV: $csvPath"
-        Set-Status "FPS CSV parsed. Fill raid context and build run.json."
+        $captureJobTimer.Start()
     }
     catch {
-        Add-Log "ERROR: $($_.Exception.Message)"
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "CSV parsing failed", "OK", "Error") | Out-Null
-        Set-Status "CSV parsing failed."
-    }
-    finally {
-        Set-UiEnabled $true
-    }
-})
-
-$btnBuildRun.Add_Click({
-    try {
-        Set-UiEnabled $false
-        if (-not $State.SettingsJsonPath -or -not (Test-Path -LiteralPath $State.SettingsJsonPath)) {
-            throw "Collect settings and system info first."
+        $errorText = if ($_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) {
+            $_.Exception.Message
         }
-        if (-not $State.FpsJsonPath -or -not (Test-Path -LiteralPath $State.FpsJsonPath)) {
-            throw "Parse an FPS CSV first."
+        else {
+            "The collection helper could not start."
         }
-
-        $route = if ([string]::IsNullOrWhiteSpace($txtRoute.Text)) { "unknown" } else { $txtRoute.Text.Trim() }
-        $notes = $route
-
-        $buildArgs = @(
-            "-SettingsJsonPath", $State.SettingsJsonPath,
-            "-SystemJsonPath", $State.SystemJsonPath,
-            "-FpsJsonPath", $State.FpsJsonPath,
-            "-Map", (Get-ComboValue $cmbMap),
-            "-Mode", (Get-ComboValue $cmbMode),
-            "-ServerModel", (Get-ComboValue $cmbServer),
-            "-Weather", (Get-ComboValue $cmbWeather),
-            "-TimeOfDay", (Get-ComboValue $cmbTime),
-            "-Route", $route,
-            "-RaidActivity", (Get-ComboValue $cmbActivity),
-            "-GameVersion", $State.GameVersion,
-            "-Notes", $notes,
-            "-OutputPath", $State.RunJsonPath
-        )
-
-        Set-Status "Building run.json..."
-        Invoke-BenchmarkScript -Name "build-run-json.ps1" -Arguments $buildArgs | Out-Null
-        $lblOutput.Text = "Saved: $($State.RunJsonPath)"
-        Add-Log "Built run.json: $($State.RunJsonPath)"
-        Set-Status "Done. run.json is ready."
-    }
-    catch {
-        Add-Log "ERROR: $($_.Exception.Message)"
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "Build failed", "OK", "Error") | Out-Null
-        Set-Status "Build failed."
-    }
-    finally {
-        Set-UiEnabled $true
+        Complete-CaptureCollection -ErrorText $errorText
     }
 })
 
-$btnOpenRunFolder.Add_Click({
-    if ($State.RunDir -and (Test-Path -LiteralPath $State.RunDir)) {
-        Start-Process explorer.exe -ArgumentList $State.RunDir
+$btnCancel.Add_Click({
+    if (-not $State.Collecting) {
+        return
     }
-    else {
-        Start-Process explorer.exe -ArgumentList $RunsDir
+
+    $State.CaptureCanceled = $true
+    $btnCancel.Enabled = $false
+    $lblAvailability.Text = "Discarding"
+    Set-Status "Stopping collection. This run will be discarded." -Color $Theme.Warning
+    if ($State.CaptureJob) {
+        Stop-Job -Job $State.CaptureJob -ErrorAction SilentlyContinue
     }
 })
 
-$btnOpenRunJson.Add_Click({
-    if ($State.RunJsonPath -and (Test-Path -LiteralPath $State.RunJsonPath)) {
-        Start-Process notepad.exe -ArgumentList $State.RunJsonPath
-    }
-    else {
-        [System.Windows.Forms.MessageBox]::Show("No run.json has been created yet.", "Nothing to open", "OK", "Information") | Out-Null
+$linkPresentMon.Add_LinkClicked({ Show-PresentMonSetup })
+
+$btnOpenFolder.Add_Click({
+    $directory = Split-Path -Parent $State.BenchmarkPath
+    New-Item -ItemType Directory -Force $directory | Out-Null
+    Start-Process explorer.exe -ArgumentList $directory
+})
+
+$btnUpload.Add_Click({
+    Start-Process $PerformanceFormUrl
+})
+
+$form.Add_Shown({
+    Update-BenchmarkDataAvailability
+    Update-Readiness
+    $readinessTimer.Start()
+})
+$form.Add_FormClosed({
+    $captureClock.Stop()
+    $readinessTimer.Stop()
+    if ($State.CaptureJob) {
+        Stop-Job -Job $State.CaptureJob -ErrorAction SilentlyContinue
+        Remove-Job -Job $State.CaptureJob -Force -ErrorAction SilentlyContinue
     }
 })
 
-$btnUploadTodo.Add_Click({
-    if ($State.RunJsonPath -and (Test-Path -LiteralPath $State.RunJsonPath)) {
-        Add-Log "Upload form is TODO. run.json is ready: $($State.RunJsonPath)"
-        [System.Windows.Forms.MessageBox]::Show("Upload form URL is TODO. For now, keep run.json ready for manual sharing.", "Upload form TODO", "OK", "Information") | Out-Null
-    }
-    else {
-        [System.Windows.Forms.MessageBox]::Show("Build run.json first. Upload form URL is TODO.", "Upload form TODO", "OK", "Information") | Out-Null
-    }
-})
-
-Add-Log "Wizard started from $RootDir"
 [void]$form.ShowDialog()

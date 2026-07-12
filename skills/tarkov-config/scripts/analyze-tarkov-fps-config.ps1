@@ -11,8 +11,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$repoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
-. (Join-Path $repoRoot "scripts\TarkovCommon.ps1")
+. (Join-Path $PSScriptRoot "TarkovCommon.ps1")
 
 if (-not $GoalMemoryPath) {
     $GoalMemoryPath = Join-Path (Get-TarkovDataDir -SubDir "memory") "current-goal.json"
@@ -488,7 +487,6 @@ $report = [ordered]@{
     schema = "tarkov-config-analysis/v1"
     created_at = (Get-Date).ToString("o")
     active_goal = $activeGoal
-    settings_dir = $SettingsDir
     install_location = $installLocation
     install_drive_media = $storageMedia
     files = $settings.files
