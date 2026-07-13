@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   release:
@@ -56,15 +57,32 @@ jobs:
           Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
           Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-codex.zip"
 
-      - name: Commit version bump and tag
+      - name: Open and merge version bump PR
+        id: merge
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ steps.bump.outputs.version }}"
+          $branch = "chore/release-v$version"
+
+          # main is protected (PR required, no direct push, even for admins), so the
+          # bump lands through a normal PR merge instead of a direct push.
           git config user.name "thetimmytook"
           git config user.email "timmytook.channel@gmail.com"
+          git checkout -b $branch
           git add .claude-plugin/plugin.json
-          git commit -m "fix # BE # bump version to ${{ steps.bump.outputs.version }}"
-          git tag "v${{ steps.bump.outputs.version }}"
-          git push origin HEAD:main --tags
+          git commit -m "fix # BE # bump version to $version"
+          git push origin $branch
+
+          gh pr create --base main --head $branch --title "fix # BE # bump version to $version" --body ""
+          gh pr merge $branch --squash --delete-branch
+
+          git checkout main
+          git pull --ff-only origin main
+          git tag "v$version"
+          git push origin "v$version"
 
       - name: Create GitHub release
         shell: pwsh
