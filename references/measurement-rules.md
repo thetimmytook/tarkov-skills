@@ -1,6 +1,6 @@
 # Measurement Rules
 
-Benchmark measurement rules for the standalone app. Keep aligned with the per-skill copies when numbers change.
+Measurement thresholds shared by the Tarkov skills and the standalone benchmark app. The master copy is `references/measurement-rules.md` in the repository root; skill copies are vendored from it by `build/sync-skills.ps1` — edit the master, not the copies.
 
 ## Capture
 

@@ -1,0 +1,36 @@
+{
+  "scripts/TarkovCommon.ps1": [
+    "skills/tarkov-config/scripts/TarkovCommon.ps1",
+    "skills/tarkov-frametime/scripts/TarkovCommon.ps1",
+    "skills/tarkov-performance-benchmark/scripts/TarkovCommon.ps1"
+  ],
+  "scripts/parse-fps-csv.ps1": [
+    "skills/tarkov-frametime/scripts/parse-fps-csv.ps1",
+    "skills/tarkov-performance-benchmark/scripts/parse-fps-csv.ps1"
+  ],
+  "scripts/capture-presentmon.ps1": [
+    "skills/tarkov-frametime/scripts/capture-presentmon.ps1",
+    "skills/tarkov-performance-benchmark/scripts/capture-presentmon.ps1"
+  ],
+  "scripts/check-presentmon.ps1": [
+    "skills/tarkov-frametime/scripts/check-presentmon.ps1",
+    "skills/tarkov-performance-benchmark/scripts/check-presentmon.ps1"
+  ],
+  "scripts/add-benchmark-run.ps1": [
+    "skills/tarkov-performance-benchmark/scripts/add-benchmark-run.ps1"
+  ],
+  "scripts/collect-system-info.ps1": [
+    "skills/tarkov-performance-benchmark/scripts/collect-system-info.ps1"
+  ],
+  "scripts/read-tarkov-settings.ps1": [
+    "skills/tarkov-performance-benchmark/scripts/read-eft-settings.ps1"
+  ],
+  "scripts/read-tarkov-raid-context.ps1": [
+    "skills/tarkov-performance-benchmark/scripts/read-raid-context.ps1"
+  ],
+  "references/measurement-rules.md": [
+    "skills/tarkov-config/references/measurement-rules.md",
+    "skills/tarkov-performance-benchmark/references/measurement-rules.md",
+    "skills/tarkov-tuning/references/measurement-rules.md"
+  ]
+}
