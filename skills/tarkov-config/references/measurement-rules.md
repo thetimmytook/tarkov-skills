@@ -4,7 +4,8 @@ Local measurement thresholds used by this skill. Keep shared numbers aligned wit
 
 ## Capture
 
-- Preferred capture duration: 90-180 seconds. Minimum useful duration: 60 seconds.
+- Automated PresentMon capture through this toolkit is fixed-duration: 120 seconds by default, 240 seconds for longer runs.
+- Manual CSV imports from external tools (PresentMon, CapFrameX, FrameView): at least 60 seconds to be useful, 120 or more preferred.
 - Use the same map, similar route, and similar activity when comparing runs.
 - Prefer the user's problem map. If the user wants a worst-case stress test and has no specific problem map, use Streets.
 
@@ -27,3 +28,11 @@ Priorities by goal:
 - Recommend 2-3 repeated runs per profile when results are close.
 - If measured performance is at least 15% worse than expected for similar hardware and settings, stop normal graphics tuning and switch to diagnostics (power plan, drivers, storage, pagefile, XMP/EXPO, background apps, thermal throttling checked manually with external tools).
 - Do not over-trust a single Tarkov run; server load and raid randomness are real factors.
+
+## Run Confidence
+
+Canonical tiers, computed by `add-benchmark-run.ps1` (benchmark skill and standalone app):
+
+- `high`: duration is at least 120 seconds and map, weather, and time of day are known.
+- `medium`: duration is at least 60 seconds.
+- `low`: anything else (short capture, missing map, heavy combat randomness, unclear capture source).

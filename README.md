@@ -22,7 +22,7 @@ Everything is read-only toward the game: no config edits, no gameplay automation
 /plugin install tarkov-performance@tarkov-skills
 ```
 
-The plugin ships all four self-contained skills.
+The plugin ships all four self-contained skills. After install, just ask the agent in plain words, for example: "analyze my Tarkov settings", "capture a 2-minute FPS benchmark", or "help me tune Tarkov performance".
 
 ### Codex / manual
 
@@ -30,7 +30,7 @@ Download the repository archive from GitHub (Code -> Download ZIP, or a Release)
 
 ### Benchmark app (no agent needed)
 
-For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`.
+For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and which folder to place it in.
 
 ## Local Data
 
@@ -40,7 +40,7 @@ All local state (goal memory, benchmark data, PresentMon binary) lives in `%LOCA
 
 - Windows 10/11 with PowerShell 5.1+
 - Escape from Tarkov installed (for settings/log reading)
-- PresentMon (optional, for automated capture) — elevation is required for capture; everything else runs without admin rights
+- PresentMon (optional, for automated FPS capture) — the tools first try without admin rights and show a Windows permission prompt only when it is actually required
 
 ## Repository Layout
 

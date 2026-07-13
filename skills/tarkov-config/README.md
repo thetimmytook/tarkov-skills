@@ -27,7 +27,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\analyze-tarkov-fps
 Optional JSON output:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\analyze-tarkov-fps-config.ps1 -JsonOutputPath .\out\config-analysis.json
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\analyze-tarkov-fps-config.ps1 -JsonOutputPath "$env:LOCALAPPDATA\TarkovSkills\out\config-analysis.json"
 ```
 
 Update and save the local tuning goal:

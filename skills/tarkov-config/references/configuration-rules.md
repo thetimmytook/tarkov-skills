@@ -131,4 +131,4 @@ When local settings files are unavailable (different PC, permissions, unusual in
 
 ## Missing Settings And Script Errors
 
-If settings are missing or key names differ by Tarkov version, continue with `unknown`, lower confidence, and include a TODO support-report step. Future flow should create an error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
+If settings are missing or key names differ by Tarkov version, continue with `unknown` and lower confidence. If a script fails, create a sanitized error report artifact (no user paths or host names) and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.

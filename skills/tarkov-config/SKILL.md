@@ -16,7 +16,7 @@ Core rules:
 - Do not promise perfect FPS or stutter-free gameplay.
 - Prefer the user's active goal. Default to stable minimum FPS, reduced stutters, and practical visibility over pretty graphics only when no custom goal is saved.
 - If the user changes the target FPS or asks for a different tradeoff such as lower FPS for better quality, save the new goal in local memory and follow it in later analysis.
-- If settings are missing or key names differ by Tarkov version, report `unknown`, lower confidence, continue, and mention the TODO error-report/upload flow.
+- If settings are missing or key names differ by Tarkov version, report `unknown`, lower confidence, continue; on script failure offer the Crash form from `references/configuration-rules.md`.
 - Manual mode must work: if files are unavailable, ask for screenshots/settings text.
 
 ## Primary Script

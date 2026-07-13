@@ -34,14 +34,16 @@ $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)
 $isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
- $process = Start-Process -FilePath $check.path -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+$process = Start-Process -FilePath $check.path -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
 if ($process.ExitCode -ne 0 -and $RequestElevation -and -not $isElevated) {
     # Most user-mode captures work without UAC. Retry elevated only after a failed attempt.
     Remove-Item -LiteralPath $csvPath -Force -ErrorAction SilentlyContinue
     $process = Start-Process -FilePath $check.path -ArgumentList $arguments -Verb RunAs -Wait -PassThru
 }
 
-if ($process.ExitCode -ne 0) {
+# After an elevated retry, ExitCode can be unreadable ($null) from a non-elevated
+# parent process; the CSV existence check below remains the success guarantee.
+if ($null -ne $process.ExitCode -and $process.ExitCode -ne 0) {
     throw "PresentMon exited with code $($process.ExitCode)."
 }
 if (-not (Test-Path -LiteralPath $csvPath)) {
