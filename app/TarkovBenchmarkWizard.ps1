@@ -1036,7 +1036,30 @@ $btnOpenFolder.Add_Click({
 })
 
 $btnUpload.Add_Click({
-    Start-Process $PerformanceFormUrl
+    try {
+        $upload = Invoke-BenchmarkScript -Name "get-benchmark-upload.ps1" -Parameters @{ BenchmarkPath = $State.BenchmarkPath } | ConvertFrom-Json
+        if ($upload.new_run_count -eq 0) {
+            $choice = Show-TarkovMessage -Owner $form -Text "All $($upload.total_run_count) saved runs were already submitted. Copy all of them again?" -Caption "Nothing new to upload" -Buttons ([System.Windows.Forms.MessageBoxButtons]::YesNo) -Icon ([System.Windows.Forms.MessageBoxIcon]::Question)
+            if ($choice -ne [System.Windows.Forms.DialogResult]::Yes) {
+                return
+            }
+            $upload = Invoke-BenchmarkScript -Name "get-benchmark-upload.ps1" -Parameters @{ BenchmarkPath = $State.BenchmarkPath; IncludeAll = $true } | ConvertFrom-Json
+        }
+
+        [System.Windows.Forms.Clipboard]::SetText($upload.payload_json)
+        Invoke-BenchmarkScript -Name "get-benchmark-upload.ps1" -Parameters @{ BenchmarkPath = $State.BenchmarkPath; MarkUploaded = $true } | Out-Null
+        Set-Status "Copied $($upload.new_run_count) run(s) to the clipboard. Paste them into the form." -Color $Theme.Ready
+        Start-Process $PerformanceFormUrl
+    }
+    catch {
+        $errorText = if ($_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) {
+            $_.Exception.Message
+        }
+        else {
+            "Upload preparation failed."
+        }
+        Offer-CrashReport -Stage "upload" -Message $errorText -Details (Get-CrashExceptionDetails -ErrorRecord $_) -Caption "Upload failed"
+    }
 })
 
 $form.Add_Shown({

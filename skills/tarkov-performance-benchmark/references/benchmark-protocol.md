@@ -36,6 +36,8 @@ Ask after the run:
 
 After `benchmark.json` is updated, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`. Google Forms cannot receive the JSON automatically through this short link; the player supplies the data in the form.
 
+Build the paste payload with `scripts/get-benchmark-upload.ps1`: it returns only runs added since the last submission, and `-MarkUploaded` records `uploaded_run_count`/`last_uploaded_at` in `benchmark.json` afterwards, so repeated submissions do not create duplicates in the database.
+
 If a PowerShell script fails, create or reference a small error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 
 ## Confidence

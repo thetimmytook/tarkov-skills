@@ -5,9 +5,10 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 ## Repository Layout
 
 - `skills/` - the four agent skills (`tarkov-config`, `tarkov-frametime`, `tarkov-performance-benchmark`, `tarkov-tuning`).
-- `scripts/` - PowerShell runtime used by the standalone app and its release package.
+- `scripts/` - master copies of shared PowerShell logic; used directly by the standalone app and vendored into skills.
 - Each skill owns its executable PowerShell dependencies under its own `scripts/` folder and its measurement rules under `references/`.
-- `references/measurement-rules.md` - app-level copy of the benchmark rules.
+- `references/measurement-rules.md` - master copy of the benchmark rules; skill copies are vendored from it.
+- `build/sync-map.json` and `build/sync-skills.ps1` - vendoring manifest and sync script; CI fails when vendored copies drift from their masters.
 - `app/` - standalone WinForms benchmark wizard for non-agent users; packaged into a release zip by `build/build-release.ps1`.
 - `.claude-plugin/` - Claude Code plugin and marketplace manifests.
 
@@ -33,9 +34,9 @@ Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPP
 - Prefer reading fields from local files/logs first; ask the user only for missing or low-confidence fields.
 - Store repeatable logic in `scripts/`.
 - Keep each skill portable: scripts it executes must live inside that skill's `scripts/` folder and must not depend on a repository-relative path outside the skill.
-- The root `scripts/` folder is reserved for the standalone app/release. When app and skill behavior intentionally match, update their local copies together.
+- Shared logic is mastered in the root `scripts/` folder and vendored into skills by `build/sync-skills.ps1` per `build/sync-map.json`. Edit the master and run the sync; never edit vendored copies directly. To let a copy intentionally diverge, remove it from `sync-map.json` in the same change.
 - Store detailed procedural notes in `references/` inside the skill.
-- Each skill that applies benchmark thresholds keeps its own `references/measurement-rules.md` so it remains portable.
+- Each skill that applies benchmark thresholds keeps its own `references/measurement-rules.md` so it remains portable; the copies are vendored from the root master by the same sync.
 - Store agent-specific notes in `agents/`, for example `agents/codex.md`, `agents/CLAUDE.md`, and later `agents/gemini.md`.
 - Every skill directory should include a `README.md` for humans.
 - Keep `SKILL.md` focused on the agent workflow.

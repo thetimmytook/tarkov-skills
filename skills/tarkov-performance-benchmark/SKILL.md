@@ -17,7 +17,7 @@ Core rules:
 - Read the map and game version from logs. Do not ask the player to identify the map unless log parsing has failed and manual recovery is explicitly needed.
 - Ask after capture for exactly: `BSG servers` or `Local`, weather, and time of day. Do not ask for a route, activity, PvP/PvE distinction, or a separate server-model field.
 - Save all runs in `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. Store `system` once at the root and a fresh settings snapshot inside every run.
-- After a run is saved, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
+- After a run is saved, build the upload payload with `scripts/get-benchmark-upload.ps1` — it returns only runs not submitted yet (tracked via `uploaded_run_count` inside `benchmark.json`) — then offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
 - On script failure, create a short sanitized error report (no user paths or host names), save it under %LOCALAPPDATA%\TarkovSkills\reports\, and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 
 ## Workflow
@@ -42,7 +42,7 @@ Core rules:
    - The writer strips user and host names from paths before saving.
 
 5. Finish:
-   - Offer to open the benchmark folder or, once configured, upload `benchmark.json`.
+   - Offer the benchmark folder or the upload: run `scripts/get-benchmark-upload.ps1`, give the player the payload, and after they submit it run the script again with `-MarkUploaded` so the same runs are not offered twice.
    - Do not recommend graphics changes in this skill.
 
 ## Quality Checks

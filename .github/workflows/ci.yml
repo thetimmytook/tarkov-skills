@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vendored copies match masters
+        shell: pwsh
+        run: ./build/sync-skills.ps1 -Check
+
+      - name: PowerShell syntax check
+        shell: pwsh
+        run: |
+          $bad = 0
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) {
+              $bad++
+              "PARSE ERRORS: $($_.FullName)"
+              $errors | ForEach-Object { "  line $($_.Extent.StartLineNumber): $($_.Message)" }
+            }
+          }
+          if ($bad) { exit 1 }
+          "All scripts parse clean."
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $findings = @(Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error)
+          if ($findings.Count -gt 0) {
+            $findings | Format-Table -AutoSize | Out-String
+            exit 1
+          }
+          "No PSScriptAnalyzer errors."

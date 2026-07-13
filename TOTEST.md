@@ -22,7 +22,13 @@
 - [ ] Вызвать `scripts/add-benchmark-run.ps1` напрямую с `-Map ""` (остальные параметры валидные).
 - [ ] В сохранённом прогоне `map` = `unknown` (не пустая строка), `confidence` НЕ `high`.
 
-## 5. Кодекс-архив без scripts/references/app
+## 5. Дедуп загрузки (Upload)
+
+- [ ] После первого сохранённого прогона нажать Upload: в буфере payload со всеми прогонами, открылась форма, в `benchmark.json` появились `uploaded_run_count` и `last_uploaded_at`.
+- [ ] Нажать Upload повторно без новых прогонов: приложение сообщает «уже отправлено» и предлагает скопировать всё заново (Yes/No).
+- [ ] Сделать ещё один прогон и нажать Upload: в буфере payload только с новым прогоном.
+
+## 6. Кодекс-архив без scripts/references/app
 
 - [ ] Запустить релиз (GitHub Action **Release**) и распаковать `tarkov-skills-codex.zip`.
 - [ ] Внутри архива только `skills/` + `AGENTS.md`, `CLAUDE.md`, `README.md`, `LICENSE`.
