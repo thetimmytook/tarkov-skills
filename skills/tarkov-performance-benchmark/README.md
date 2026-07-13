@@ -8,7 +8,7 @@ This skill records read-only Tarkov performance data. It combines Windows hardwa
 
 For a local user, run `app\Start-TarkovBenchmark.cmd` from the repository root, or use the standalone `TarkovBenchmarkApp.zip` release. Enter a raid, choose a 2- or 4-minute capture, and start collection. The app reads settings and system data automatically, then asks only for `BSG servers` or `Local`, weather, and time of day.
 
-Each completed capture is appended to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`.
+Each completed capture is appended to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. The Upload button copies only runs that were not submitted before and opens the Performance form.
 
 The file contains one top-level `system` object and a `runs` array. Each run keeps its own EFT settings snapshot so later tuning changes remain comparable.
 
@@ -28,6 +28,7 @@ PresentMon needs a Windows elevation prompt for its short ETW capture. The app n
 - `scripts/read-raid-context.ps1` - Tarkov log context reader.
 - `scripts/capture-presentmon.ps1` - fixed-duration FPS capture.
 - `scripts/add-benchmark-run.ps1` - appends a normalized run to `benchmark.json`.
+- `scripts/get-benchmark-upload.ps1` - builds the upload payload from not-yet-submitted runs and tracks `uploaded_run_count`.
 - `references/benchmark-protocol.md` - measurement protocol.
 - `references/measurement-rules.md` - local benchmark confidence rules.
 - `agents/codex.md` and `agents/CLAUDE.md` - agent-specific notes.

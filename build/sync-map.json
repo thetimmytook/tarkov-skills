@@ -19,6 +19,9 @@
   "scripts/add-benchmark-run.ps1": [
     "skills/tarkov-performance-benchmark/scripts/add-benchmark-run.ps1"
   ],
+  "scripts/get-benchmark-upload.ps1": [
+    "skills/tarkov-performance-benchmark/scripts/get-benchmark-upload.ps1"
+  ],
   "scripts/collect-system-info.ps1": [
     "skills/tarkov-performance-benchmark/scripts/collect-system-info.ps1"
   ],
