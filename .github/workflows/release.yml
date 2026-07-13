@@ -64,6 +64,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = "Stop"
+
+          # $ErrorActionPreference does not catch failures from native commands
+          # (git, gh): a non-zero exit code alone does not stop the script, so
+          # every step that must succeed is checked explicitly.
+          function Invoke-Checked {
+              param([string]$Description)
+              if ($LASTEXITCODE -ne 0) {
+                  throw "$Description failed with exit code $LASTEXITCODE"
+              }
+          }
+
           $version = "${{ steps.bump.outputs.version }}"
           $branch = "chore/release-v$version"
 
@@ -72,17 +83,35 @@ jobs:
           git config user.name "thetimmytook"
           git config user.email "timmytook.channel@gmail.com"
           git checkout -b $branch
+          Invoke-Checked "git checkout -b $branch"
           git add .claude-plugin/plugin.json
           git commit -m "fix # BE # bump version to $version"
+          Invoke-Checked "git commit"
           git push origin $branch
+          Invoke-Checked "git push $branch"
 
           gh pr create --base main --head $branch --title "fix # BE # bump version to $version" --body ""
+          Invoke-Checked "gh pr create"
           gh pr merge $branch --squash --delete-branch
+          Invoke-Checked "gh pr merge"
 
           git checkout main
+          Invoke-Checked "git checkout main"
           git pull --ff-only origin main
+          Invoke-Checked "git pull main"
+
+          # Belt-and-braces: refuse to tag/release a commit that does not
+          # actually carry the version bump, even if every command above
+          # reported success.
+          $mergedVersion = (Get-Content -Raw ".claude-plugin/plugin.json" | ConvertFrom-Json).version
+          if ($mergedVersion -ne $version) {
+              throw "main is at version '$mergedVersion' after the merge, expected '$version'. The bump PR was not merged into main; refusing to tag."
+          }
+
           git tag "v$version"
+          Invoke-Checked "git tag"
           git push origin "v$version"
+          Invoke-Checked "git push tag"
 
       - name: Create GitHub release
         shell: pwsh
