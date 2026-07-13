@@ -28,7 +28,8 @@ $sharedScripts = @(
     "check-presentmon.ps1",
     "capture-presentmon.ps1",
     "parse-fps-csv.ps1",
-    "add-benchmark-run.ps1"
+    "add-benchmark-run.ps1",
+    "get-benchmark-upload.ps1"
 )
 foreach ($script in $sharedScripts) {
     Copy-Item (Join-Path $repoRoot "scripts\$script") (Join-Path $staging "scripts")
