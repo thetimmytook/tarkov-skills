@@ -30,7 +30,7 @@ Download the repository archive from GitHub (Code -> Download ZIP, or a Release)
 
 ### Benchmark app (no agent needed)
 
-For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and which folder to place it in.
+For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and which folder to place it in. The Upload button copies only runs that were not submitted before.
 
 ## Local Data
 
