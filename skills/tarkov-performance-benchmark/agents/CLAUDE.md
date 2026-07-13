@@ -17,7 +17,7 @@ Use these notes together with `../SKILL.md`.
 - Ask only for BSG servers versus Local, weather, and time of day. Do not ask for a route, activity, PvP/PvE distinction, or CSV path in the app flow.
 - BSG servers versus Local is mandatory; weather and time can be recorded as unknown.
 - After `benchmark.json` is updated, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
-- TODO: if a script fails, keep the error and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
+- If a script fails, keep the sanitized error (no user paths) and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 - Do not recommend settings changes from this skill; produce clean benchmark data for later analysis.
 
 ## Boundaries

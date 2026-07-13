@@ -52,7 +52,7 @@ jobs:
         run: |
           $staging = Join-Path $env:RUNNER_TEMP "tarkov-skills"
           New-Item -ItemType Directory -Force $staging | Out-Null
-          Copy-Item -Recurse -Path skills, scripts, references, app -Destination $staging
+          Copy-Item -Recurse -Path skills -Destination $staging
           Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
           Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-codex.zip"
 

@@ -1,69 +1,29 @@
 # TOTEST — проверка на Windows
 
-Изменения написаны на macOS без PowerShell: прогнаны только эвристические проверки синтаксиса и грепы. Перед релизом пройти этот список на игровой машине. Все команды выполняются из корня репозитория.
+## 1. Ретро-анонимизация benchmark.json
 
-## 1. PresentMon: флаги и самозавершение
+- [ ] Взять существующий `benchmark.json`, у старых runs вручную добавить в `settings` поле `settings_dir` и в `fps` поле `path`.
+- [ ] Добавить новый прогон через приложение (или `scripts/add-benchmark-run.ps1`).
+- [ ] Проверить, что у СТАРЫХ записей эти поля удалены (фикс порядка загрузки в `add-benchmark-run.ps1`: очистка старых runs теперь выполняется после загрузки `$benchmark`, а не до неё).
 
-```powershell
-PresentMon.exe -process_name EscapeFromTarkov.exe -timed 10 -terminate_after_timed -output_file test.csv
-```
+## 2. Обычный прогон приложения end-to-end
 
-- [ ] Процесс PresentMon сам завершается после 10 секунд (не висит).
-- [ ] Твоя версия PresentMon принимает эти флаги без ошибки.
-- [ ] Из **не**-админской консоли выдаётся понятная ошибка про elevation (скрипт `capture-presentmon.ps1` должен её подсказать).
+- [ ] Пройти полный цикл сбора в `TarkovBenchmarkWizard.ps1` (capture → context → save).
+- [ ] После сохранения строка результата (`$lblResult`) показывает актуальные Avg FPS / 1% low.
+- [ ] Кнопки Open folder и Upload становятся активны сразу после сохранения (регрессия после правки `Complete-CaptureCollection`, которая теперь делегирует обновление UI в `Update-BenchmarkDataAvailability`).
 
-## 2. Flat map настроек (фикс 2.1)
+## 3. UAC-ретрай захвата (фикс ExitCode = $null)
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File skills\tarkov-config\scripts\analyze-tarkov-fps-config.ps1
-```
+- [ ] На машине, где непривилегированный запуск PresentMon падает, запустить `scripts/capture-presentmon.ps1 -DurationSec 120 -RequestElevation` и принять UAC-запрос.
+- [ ] Захват завершается успешно, БЕЗ ложной ошибки вида «PresentMon exited with code .» (после элевированного ретрая код выхода может быть нечитаем — теперь гарантия успеха это наличие CSV).
 
-- [ ] Секция **Important Settings** показывает реальные значения из Graphics.ini/PostFx.ini, а не сплошные `unknown`.
-- [ ] Секция **Tarkov Readiness**: CPU/GPU/Storage больше не всегда `Unknown` (тиры по названию железа и типу диска).
-- [ ] Цель сохраняется и читается из `%LOCALAPPDATA%\TarkovSkills\memory\current-goal.json` (запусти с `-Goal better-graphics -TargetFpsMin 45 -SaveGoal`, потом без параметров).
+## 4. Пустой контекст логов → `unknown` (фикс нормализации)
 
-## 3. VRAM и тип диска (фикс 2.3)
+- [ ] Вызвать `scripts/add-benchmark-run.ps1` напрямую с `-Map ""` (остальные параметры валидные).
+- [ ] В сохранённом прогоне `map` = `unknown` (не пустая строка), `confidence` НЕ `high`.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\collect-system-info.ps1 -IncludePagefile
-```
+## 5. Кодекс-архив без scripts/references/app
 
-- [ ] `vram_gb` больше 4 на современной карте, `vram_source` = `registry`.
-- [ ] `drive_media_type` у pagefile = `SSD` или `HDD`, а не `unknown`.
-
-## 4. Версия игры из логов (5.1)
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\read-tarkov-raid-context.ps1
-```
-
-- [ ] Поле `game_version` заполнено (формат вида `0.16.x.x.xxxxx`).
-- [ ] Если версия `unknown` — прислать пример имени лог-папки и первых строк `application.log`, поправим regex.
-
-## 5. Визард end-to-end
-
-```text
-app\Start-TarkovBenchmark.cmd
-```
-
-- [ ] Кнопка Collect собирает settings.json + system.json.
-- [ ] «Read latest logs» подставляет карту/server model/версию, но НЕ выбирает режим PvP/PvE автоматически.
-- [ ] CSV парсится (включая CSV с `;`-разделителем, если есть под рукой).
-- [ ] `run.json` сохраняется в `%LOCALAPPDATA%\TarkovSkills\runs\<timestamp>\`.
-- [ ] В `run.json` нигде нет имени пользователя Windows и имени компьютера (поиск по файлу).
-- [ ] `schema` = `tarkov-performance-run/v2`, поле `game_version` присутствует.
-
-## 6. Парсер CSV (3.6)
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\parse-fps-csv.ps1 -Path <путь к капче>
-```
-
-- [ ] Метрики совпадают по порядку величины с тем, что показывает сам PresentMon/CapFrameX.
-- [ ] Парс 2-3-минутной капчи занимает секунды, а не десятки секунд.
-
-## 7. Плагин и релиз
-
-- [ ] `/plugin marketplace add thetimmytook/tarkov-skills` + `/plugin install tarkov-performance@tarkov-skills` — скилы видны в Claude Code.
-- [ ] GitHub Action **Release** (ручной запуск) собирает оба архива, бампает версию и публикует Release.
-- [ ] Скачанный `TarkovBenchmarkApp.zip` работает на чистой папке без репозитория.
+- [ ] Запустить релиз (GitHub Action **Release**) и распаковать `tarkov-skills-codex.zip`.
+- [ ] Внутри архива только `skills/` + `AGENTS.md`, `CLAUDE.md`, `README.md`, `LICENSE`.
+- [ ] Папок `scripts/`, `references/`, `app/` в архиве нет.

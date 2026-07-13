@@ -18,7 +18,7 @@ Core rules:
 - Ask after capture for exactly: `BSG servers` or `Local`, weather, and time of day. Do not ask for a route, activity, PvP/PvE distinction, or a separate server-model field.
 - Save all runs in `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. Store `system` once at the root and a fresh settings snapshot inside every run.
 - After a run is saved, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
-- TODO: on script failure, create an error report artifact and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
+- On script failure, create a short sanitized error report (no user paths or host names), save it under %LOCALAPPDATA%\TarkovSkills\reports\, and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 
 ## Workflow
 

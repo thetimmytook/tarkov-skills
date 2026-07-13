@@ -4,7 +4,8 @@ Local measurement thresholds used by this skill. Keep shared numbers aligned wit
 
 ## Capture
 
-- Preferred capture duration: 90-180 seconds. Minimum useful duration: 60 seconds.
+- Automated PresentMon capture through this toolkit is fixed-duration: 120 seconds by default, 240 seconds for longer runs.
+- Manual CSV imports from external tools (PresentMon, CapFrameX, FrameView): at least 60 seconds to be useful, 120 or more preferred.
 - Use the same map, similar route, and similar activity when comparing runs.
 - Prefer the user's problem map. If the user wants a worst-case stress test and has no specific problem map, use Streets.
 
@@ -30,7 +31,7 @@ Priorities by goal:
 
 ## Run Confidence
 
-Canonical tiers, implemented in `scripts/add-benchmark-run.ps1`:
+Canonical tiers, computed by `add-benchmark-run.ps1` (benchmark skill and standalone app):
 
 - `high`: duration is at least 120 seconds and map, weather, and time of day are known.
 - `medium`: duration is at least 60 seconds.

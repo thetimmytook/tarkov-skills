@@ -859,11 +859,8 @@ function Complete-CaptureCollection {
     }
 
     try {
-        $saved = Save-BenchmarkRun -Capture $capture -Context $capture.context -Answers $answers
-        $metrics = $saved.run.fps
-        $lblResult.Text = "Saved $($saved.run_count) runs. Avg $($metrics.avg_fps) FPS, 1% low $($metrics.p1_low_fps)."
-        $btnOpenFolder.Enabled = $true
-        $btnUpload.Enabled = $true
+        Save-BenchmarkRun -Capture $capture -Context $capture.context -Answers $answers | Out-Null
+        Update-BenchmarkDataAvailability
         $finalStatus = "Benchmark data saved."
     }
     catch {

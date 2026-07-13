@@ -31,7 +31,7 @@ Recommended local layout (outside the skill tree, so updates never remove it):
 
 After placing `PresentMon.exe` there, run the check command below. If the executable is somewhere else, pass its path to the scripts with `-PresentMonPath`.
 
-PresentMon capture requires an elevated (Run as administrator) console because it starts an ETW trace session. Parsing existing CSV files does not.
+PresentMon starts an ETW trace session. The capture script first tries without elevation and, when started with `-RequestElevation`, retries once through a Windows UAC prompt if needed. Parsing existing CSV files never needs elevation.
 
 ## How To Use
 
@@ -50,15 +50,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-presentmon.p
 Capture with PresentMon:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\capture-presentmon.ps1 -DurationSec 120
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\capture-presentmon.ps1 -DurationSec 120 -RequestElevation
 ```
 
-PresentMon capture is blocking by design: the command waits until `-DurationSec` finishes. Use a short test capture first, then 90-180 seconds for real data. Captured CSVs land in `%LOCALAPPDATA%\TarkovSkills\captures\`.
+PresentMon capture is blocking by design: the command waits until `-DurationSec` finishes. Only 120 or 240 seconds are accepted; start with 120. Captured CSVs land in `%LOCALAPPDATA%\TarkovSkills\captures\`.
 
 Capture with a custom PresentMon path:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\capture-presentmon.ps1 -DurationSec 120 -PresentMonPath "C:\Tools\PresentMon\PresentMon.exe"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\capture-presentmon.ps1 -DurationSec 120 -RequestElevation -PresentMonPath "C:\Tools\PresentMon\PresentMon.exe"
 ```
 
 Parse an existing CSV:

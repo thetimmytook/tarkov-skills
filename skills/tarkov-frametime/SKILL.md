@@ -27,8 +27,8 @@ Core rules:
    - If they already have a CSV exported from PresentMon, CapFrameX, or FrameView, use manual CSV mode. If they have no capture tool and no CSV, stop and guide them to install/export first.
 
 2. Capture FPS stats when PresentMon is available:
-   - Run `scripts/capture-presentmon.ps1 -DurationSec 120`.
-   - PresentMon needs an elevated session for ETW capture. Explain this and ask the user to run the capture from an elevated console; everything else stays non-admin.
+   - Run `scripts/capture-presentmon.ps1 -DurationSec 120 -RequestElevation`. Only 120 or 240 seconds are accepted.
+   - With `-RequestElevation`, the script first tries a non-elevated capture and retries once through a Windows UAC prompt only if that fails. Explain the possible permission prompt before starting; everything else stays non-admin.
    - Captured CSVs are written to `%LOCALAPPDATA%\TarkovSkills\captures\` by default.
    - Ask the user to start the raid/gameplay scenario before capture.
    - Treat PresentMon capture as blocking by design because the script waits until the requested duration finishes.
@@ -46,7 +46,7 @@ Core rules:
 
 ## Blocking Capture Rule
 
-PresentMon capture is blocking by design. For real captures of 90-180 seconds, delegate the capture step to a subagent/separate thread when available. The delegated worker should return only:
+PresentMon capture is blocking by design. For real captures of 120 or 240 seconds, delegate the capture step to a subagent/separate thread when available. The delegated worker should return only:
 
 - CSV path
 - parsed FPS JSON

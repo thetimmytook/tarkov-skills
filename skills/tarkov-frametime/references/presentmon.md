@@ -26,7 +26,7 @@ Keep download/install automation explicit. Do not silently download binaries.
 
 ## Elevation
 
-PresentMon starts an ETW trace session, which normally requires an elevated (Run as administrator) console or membership in the Performance Log Users group. This is the one documented admin exception in this repository (see `AGENTS.md`). Explain the reason to the user before asking them to elevate. CSV parsing never needs elevation.
+PresentMon starts an ETW trace session, which normally requires elevation (or membership in the Performance Log Users group). `capture-presentmon.ps1` first tries without elevation; with `-RequestElevation` it retries once through a Windows UAC prompt after a failed non-elevated attempt. This is the one documented admin exception in this repository (see `AGENTS.md`). Explain the possible permission prompt to the user before capture. CSV parsing never needs elevation.
 
 ## CLI Flags
 

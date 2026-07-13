@@ -27,5 +27,5 @@ Use `-ExecutionPolicy Bypass` only for the current process invocation. Do not ch
 - Ask after capture for BSG servers versus Local, weather, and time of day only.
 - BSG servers versus Local is mandatory; weather and time may be `unknown` when the player cannot tell.
 - After appending `benchmark.json`, offer the Performance form: `https://forms.gle/D692T2Umd5ktD5wj8`.
-- TODO: when a PowerShell script fails, preserve the error and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
+- When a PowerShell script fails, preserve the sanitized error (no user paths) and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`.
 - Do not recommend setting changes from this skill; produce clean benchmark JSON data.

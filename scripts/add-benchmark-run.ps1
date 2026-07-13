@@ -30,6 +30,15 @@ if (-not $BenchmarkPath) {
     $BenchmarkPath = Join-Path (Get-TarkovDataDir) "benchmark.json"
 }
 
+# A failed log read upstream yields empty strings instead of "unknown"; empty
+# values would wrongly count as known context in the confidence calculation.
+if ([string]::IsNullOrWhiteSpace($Map)) {
+    $Map = "unknown"
+}
+if ([string]::IsNullOrWhiteSpace($GameVersion)) {
+    $GameVersion = "unknown"
+}
+
 $settings = Get-Content -Raw -LiteralPath $SettingsJsonPath | ConvertFrom-Json
 $system = Get-Content -Raw -LiteralPath $SystemJsonPath | ConvertFrom-Json
 $fps = Get-Content -Raw -LiteralPath $FpsJsonPath | ConvertFrom-Json
@@ -77,10 +86,6 @@ else {
     $confidence = "low"
 }
 
-foreach ($existingRun in @($benchmark.runs)) {
-    Remove-PrivateCaptureMetadata -Settings $existingRun.settings -Fps $existingRun.fps
-}
-
 if (Test-Path -LiteralPath $BenchmarkPath) {
     $benchmark = Get-Content -Raw -LiteralPath $BenchmarkPath | ConvertFrom-Json
     if ($benchmark.schema -ne "tarkov-performance-benchmark/v1") {
@@ -95,6 +100,10 @@ else {
         system = $system
         runs = @()
     }
+}
+
+foreach ($existingRun in @($benchmark.runs)) {
+    Remove-PrivateCaptureMetadata -Settings $existingRun.settings -Fps $existingRun.fps
 }
 
 $run = [ordered]@{
