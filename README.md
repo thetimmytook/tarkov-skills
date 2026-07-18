@@ -30,11 +30,11 @@ Download the repository archive from GitHub (Code -> Download ZIP, or a Release)
 
 ### Benchmark app (no agent needed)
 
-For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and which folder to place it in. The Upload button copies only runs that were not submitted before.
+For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and lets the player install it either under the portable app's `tools\PresentMon\` folder or the shared `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\` folder used by skills. The Upload button copies only runs that were not submitted before.
 
 ## Local Data
 
-All local state (goal memory, benchmark data, PresentMon binary) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data.
+Persistent local state (goal memory and benchmark data) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data. PresentMon may live there as a shared tool or inside a standalone app's portable `tools\PresentMon\` folder.
 
 ## Requirements
 

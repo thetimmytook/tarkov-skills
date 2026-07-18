@@ -11,9 +11,9 @@ https://github.com/GameTechDev/PresentMon/releases
 Expected local locations, in check order:
 
 - a user-provided path (`-PresentMonPath`)
-- `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe` (preferred; survives plugin/repo updates)
-- skill-local `tools/PresentMon/PresentMon.exe` (legacy fallback)
 - `PresentMon.exe` available on PATH
+- skill/app-local `tools/PresentMon/PresentMon.exe` (portable installation)
+- `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe` (shared skill installation; survives plugin/repo updates)
 
 If PresentMon is missing, give the user these choices:
 

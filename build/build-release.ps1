@@ -48,7 +48,7 @@ foreach ($script in $sharedScripts) {
     '',
     'Run Start-TarkovBenchmark.cmd after Tarkov is running and you are in a raid.',
     'The app is read-only toward Escape from Tarkov: it never edits game files.',
-    'Install PresentMon separately under %LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe.',
+    'Install PresentMon under tools\PresentMon\PresentMon.exe beside this app, or share the skill installation at %LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe.',
     'Results are saved as benchmark.json under %LOCALAPPDATA%\TarkovSkills\.',
     'User names are stripped from all paths inside benchmark.json before saving.'
 ) | Set-Content -LiteralPath (Join-Path $staging "README.txt") -Encoding UTF8
