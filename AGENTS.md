@@ -12,7 +12,7 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - `app/` - standalone WinForms benchmark wizard for non-agent users; packaged into a release zip by `build/build-release.ps1`.
 - `.claude-plugin/` - Claude Code plugin and marketplace manifests.
 
-Local state (goal memory, captures, runs, PresentMon binary) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository or plugin tree, so updates cannot destroy user data.
+Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository or plugin tree, so updates cannot destroy user data. PresentMon may live in the shared `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\` folder or in a standalone app's portable `tools\PresentMon\` folder.
 
 ## Core Rules
 

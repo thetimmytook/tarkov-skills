@@ -238,7 +238,8 @@ function Update-Readiness {
 }
 
 function Show-PresentMonSetup {
-    $installDir = Get-TarkovDataDir -SubDir "tools\PresentMon"
+    $portableInstallDir = Join-Path $RootDir "tools\PresentMon"
+    $sharedInstallDir = Get-TarkovDataDir -SubDir "tools\PresentMon"
     $presentMon = Invoke-BenchmarkScript -Name "check-presentmon.ps1" | ConvertFrom-Json
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = if ($presentMon.found) { "PresentMon ready" } else { "Install PresentMon" }
@@ -246,7 +247,7 @@ function Show-PresentMonSetup {
     $dialog.FormBorderStyle = "FixedDialog"
     $dialog.MaximizeBox = $false
     $dialog.MinimizeBox = $false
-    $dialog.ClientSize = New-Object System.Drawing.Size(520, 250)
+    $dialog.ClientSize = New-Object System.Drawing.Size(520, 310)
     $dialog.Font = New-Object System.Drawing.Font("Segoe UI", 9)
     Set-TarkovForm -Dialog $dialog
 
@@ -260,37 +261,52 @@ function Show-PresentMonSetup {
     $dialog.Controls.Add($linkDownload)
 
     $lblDestination = New-Object System.Windows.Forms.Label
-    $lblDestination.Text = if ($presentMon.found) { "PresentMon.exe was found in this folder:" } else { "2. Extract PresentMon.exe into this folder:" }
+    $lblDestination.Text = if ($presentMon.found) { "PresentMon is ready. You can also choose an install location:" } else { "2. Choose where to extract PresentMon.exe:" }
     $lblDestination.Location = New-Object System.Drawing.Point(18, 52)
     $lblDestination.Size = New-Object System.Drawing.Size(480, 22)
     Set-TarkovLabel -Control $lblDestination -Muted
     $dialog.Controls.Add($lblDestination)
 
+    $radioPortable = New-Object System.Windows.Forms.RadioButton
+    $radioPortable.Text = "This app (portable)"
+    $radioPortable.Checked = $true
+    $radioPortable.Location = New-Object System.Drawing.Point(18, 77)
+    $radioPortable.Size = New-Object System.Drawing.Size(160, 22)
+    Set-TarkovLabel -Control $radioPortable
+    $dialog.Controls.Add($radioPortable)
+
+    $radioShared = New-Object System.Windows.Forms.RadioButton
+    $radioShared.Text = "Shared with installed skills"
+    $radioShared.Location = New-Object System.Drawing.Point(190, 77)
+    $radioShared.Size = New-Object System.Drawing.Size(210, 22)
+    Set-TarkovLabel -Control $radioShared
+    $dialog.Controls.Add($radioShared)
+
     $txtInstallDir = New-Object System.Windows.Forms.TextBox
-    $txtInstallDir.Text = $installDir
+    $txtInstallDir.Text = $portableInstallDir
     $txtInstallDir.ReadOnly = $true
-    $txtInstallDir.Location = New-Object System.Drawing.Point(18, 78)
+    $txtInstallDir.Location = New-Object System.Drawing.Point(18, 106)
     $txtInstallDir.Size = New-Object System.Drawing.Size(480, 24)
     Set-TarkovTextInput -Control $txtInstallDir
     $dialog.Controls.Add($txtInstallDir)
 
     $lblPermission = New-Object System.Windows.Forms.Label
     $lblPermission.Text = "PresentMon starts without elevation. Windows asks for permission only if it is required."
-    $lblPermission.Location = New-Object System.Drawing.Point(18, 116)
+    $lblPermission.Location = New-Object System.Drawing.Point(18, 146)
     $lblPermission.Size = New-Object System.Drawing.Size(480, 38)
     Set-TarkovLabel -Control $lblPermission -Muted
     $dialog.Controls.Add($lblPermission)
 
     $btnOpenFolder = New-Object System.Windows.Forms.Button
     $btnOpenFolder.Text = "Open folder"
-    $btnOpenFolder.Location = New-Object System.Drawing.Point(18, 184)
+    $btnOpenFolder.Location = New-Object System.Drawing.Point(18, 244)
     $btnOpenFolder.Size = New-Object System.Drawing.Size(105, 32)
     Set-TarkovButton -Button $btnOpenFolder
     $dialog.Controls.Add($btnOpenFolder)
 
     $btnCopyPath = New-Object System.Windows.Forms.Button
     $btnCopyPath.Text = "Copy folder path"
-    $btnCopyPath.Location = New-Object System.Drawing.Point(135, 184)
+    $btnCopyPath.Location = New-Object System.Drawing.Point(135, 244)
     $btnCopyPath.Size = New-Object System.Drawing.Size(120, 32)
     Set-TarkovButton -Button $btnCopyPath
     $dialog.Controls.Add($btnCopyPath)
@@ -298,18 +314,28 @@ function Show-PresentMonSetup {
     $btnClose = New-Object System.Windows.Forms.Button
     $btnClose.Text = "Close"
     $btnClose.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-    $btnClose.Location = New-Object System.Drawing.Point(424, 184)
+    $btnClose.Location = New-Object System.Drawing.Point(424, 244)
     $btnClose.Size = New-Object System.Drawing.Size(74, 32)
     Set-TarkovButton -Button $btnClose
     $dialog.Controls.Add($btnClose)
 
     $linkDownload.Add_LinkClicked({ Start-Process "https://github.com/GameTechDev/PresentMon/releases" })
+    $radioPortable.Add_CheckedChanged({
+        if ($radioPortable.Checked) {
+            $txtInstallDir.Text = $portableInstallDir
+        }
+    })
+    $radioShared.Add_CheckedChanged({
+        if ($radioShared.Checked) {
+            $txtInstallDir.Text = $sharedInstallDir
+        }
+    })
     $btnOpenFolder.Add_Click({
-        New-Item -ItemType Directory -Force $installDir | Out-Null
-        Start-Process explorer.exe -ArgumentList $installDir
+        New-Item -ItemType Directory -Force $txtInstallDir.Text | Out-Null
+        Start-Process explorer.exe -ArgumentList $txtInstallDir.Text
     })
     $btnCopyPath.Add_Click({
-        [System.Windows.Forms.Clipboard]::SetText($installDir)
+        [System.Windows.Forms.Clipboard]::SetText($txtInstallDir.Text)
         $txtInstallDir.SelectAll()
         $txtInstallDir.Focus()
     })
