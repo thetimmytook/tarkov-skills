@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>TarkovPerformanceBenchmark</AssemblyName>
+    <RootNamespace>TarkovPerformanceBenchmark</RootNamespace>
+    <Version>0.1.0</Version>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="third_party\presentmon\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\PresentMon.exe" />
+    <Content Include="third_party\presentmon\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\LICENSE.txt" />
+    <Content Include="third_party\presentmon\dependency.json" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\dependency.json" />
+  </ItemGroup>
+
+</Project>

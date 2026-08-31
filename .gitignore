@@ -5,3 +5,7 @@ out/
 memory/
 tools/
 dist/
+bin/
+obj/
+.vs/
+TestResults/
