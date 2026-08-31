@@ -27,6 +27,12 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - Bundle the tested PresentMon binary in the MSIX. Do not search for or execute user-provided PresentMon copies from portable or shared tool directories.
 - Run the main application without elevation. First attempt capture with normal rights; on ETW access denial, offer a one-time elevated `--setup-permissions` flow that adds the current user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
 - Build and test MSIX packages in GitHub Actions, but keep Partner Center upload manual until the first Store certification succeeds. Test the first package as a closed Store release before public submission.
+- Build the Store artifact as an unsigned MSIX. Microsoft Store signs it after certification; do not create, trust, or install local self-signed certificates as part of the normal release check.
+- Validate the unsigned package locally through tests, PresentMon checksum verification, `MakeAppx` semantic validation, and package-content inspection. Validate Store installation, execution alias registration, PresentMon execution, and the `%LOCALAPPDATA%\TarkovSkills\benchmark.json` contract in a closed Store flight.
+- Use package versions with a nonzero first component and a zero fourth component, for example `1.0.0.0`; the fourth component is reserved for Microsoft Store.
+- For the first Store submission, use a private audience containing personal Microsoft accounts, not work or school accounts. Publish automatically after certification so the Microsoft-signed package becomes available to that private group; move to a public audience only after the signed package passes the release checks.
+- Keep the MVP Store listing in English (United States) only. Add another listing language only after the application UI supports that language.
+- Keep Partner Center field choices, privacy text, listing copy, and the `runFullTrust` justification aligned with `references/store-submission.md`. Update that file whenever an accepted submission changes the process or wording.
 - Keep Store artwork original and neutral: frametime/FPS imagery and a dark interface, without EFT logos, Battlestate Games artwork, or other official game assets. Include the unofficial/non-affiliation notice in the application and listing.
 - Keep `references/store-product-concept.md` aligned with this section before implementation begins; this section is authoritative when the two conflict.
 
@@ -89,6 +95,7 @@ Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA
 ## Git Hygiene
 
 - Do not commit unless the user asks.
+- Name new branches by the change type and purpose, for example `feat/store-msix`, `fix/raid-detection`, `docs/store-submission`, or `chore/dependency-update`. Do not prefix branches with an agent or tool name.
 - Use commit message format: `feat|fix # UI | BE # Description`.
 - Commit only as the repository author/user configured in Git. Do not add tool names, bot names, generated-by attribution text, or co-author trailers to commit messages, PR text, release notes, or other repository metadata unless the user explicitly asks.
 - Do not rewrite history or discard user changes.

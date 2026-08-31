@@ -36,6 +36,10 @@ For contributing FPS statistics without installing any skill: download `TarkovBe
 
 Persistent local state (goal memory and benchmark data) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data. PresentMon may live there as a shared tool or inside a standalone app's portable `tools\PresentMon\` folder.
 
+## Future Raid Planner
+
+Any future interactive map or raid-planning work follows the [raid planner data and asset policy](references/raid-planner-data-policy.md): use original or separately licensed schematic visuals and documented public data sources; do not redistribute EFT assets or publish hidden loot data.
+
 ## Requirements
 
 - Windows 10/11 with PowerShell 5.1+

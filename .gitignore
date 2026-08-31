@@ -2,6 +2,7 @@
 captures/
 runs/
 out/
+artifacts/
 memory/
 tools/
 dist/
