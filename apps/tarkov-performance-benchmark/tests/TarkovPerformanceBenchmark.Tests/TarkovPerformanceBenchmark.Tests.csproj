@@ -23,4 +23,8 @@
     <ProjectReference Include="..\..\src\TarkovPerformanceBenchmark\TarkovPerformanceBenchmark.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\packaging\AppxManifest.template.xml" Link="Fixtures\AppxManifest.template.xml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/tarkov-performance-benchmark/**"
       - "build/check-presentmon-dependency.ps1"
+      - "build/build-benchmark-msix.ps1"
       - ".github/workflows/benchmark-app.yml"
   push:
     branches:
@@ -12,6 +13,7 @@ on:
     paths:
       - "apps/tarkov-performance-benchmark/**"
       - "build/check-presentmon-dependency.ps1"
+      - "build/build-benchmark-msix.ps1"
       - ".github/workflows/benchmark-app.yml"
 
 permissions:
@@ -44,10 +46,22 @@ jobs:
       - name: Publish self-contained app
         run: dotnet publish apps/tarkov-performance-benchmark/src/TarkovPerformanceBenchmark/TarkovPerformanceBenchmark.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts/win-x64
 
+      - name: Build Store MSIX
+        shell: pwsh
+        run: ./build/build-benchmark-msix.ps1 -PackageVersion 1.0.0.0 -OutputDirectory artifacts/msix
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: tarkov-performance-benchmark-win-x64
           path: artifacts/win-x64
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Store MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarkov-performance-benchmark-msix
+          path: artifacts/msix/*.msix
           if-no-files-found: error
           retention-days: 7

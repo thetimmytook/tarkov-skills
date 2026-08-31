@@ -1,6 +1,6 @@
 # Microsoft Store Product Concept
 
-Status: accepted direction; benchmark prototype implemented, Store packaging pending
+Status: benchmark prototype and reproducible Store MSIX packaging implemented
 
 ## Product Boundary
 
@@ -48,4 +48,8 @@ Attempt ETW capture without elevation first. If Windows denies access, the futur
 
 The monorepo keeps the application under `apps/tarkov-performance-benchmark/` with a dedicated Windows pipeline. CI restores, tests, verifies PresentMon, and creates a temporary self-contained build artifact.
 
-MSIX packaging, the execution alias, Store artwork, privacy-policy hosting, and Partner Center submission remain separate release work. Upload to Partner Center manually until the first certification and closed Store test succeed.
+The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Validate visibility of the documented local skill contract during the closed Store flight.
+
+Privacy-policy hosting and Partner Center submission remain separate release work. Upload the package manually until the first certification and closed Store test succeed.
+
+Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then use the Microsoft-signed closed Store flight to test installation, alias registration, capture, and shared data visibility under the real distribution identity.
