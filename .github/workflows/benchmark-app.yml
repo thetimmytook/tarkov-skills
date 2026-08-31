@@ -1,0 +1,53 @@
+name: Benchmark app
+
+on:
+  pull_request:
+    paths:
+      - "apps/tarkov-performance-benchmark/**"
+      - "build/check-presentmon-dependency.ps1"
+      - ".github/workflows/benchmark-app.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/tarkov-performance-benchmark/**"
+      - "build/check-presentmon-dependency.ps1"
+      - ".github/workflows/benchmark-app.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Verify bundled PresentMon
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+
+      - name: Restore
+        run: dotnet restore apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln
+
+      - name: Test
+        run: dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release --no-restore
+
+      - name: Publish self-contained app
+        run: dotnet publish apps/tarkov-performance-benchmark/src/TarkovPerformanceBenchmark/TarkovPerformanceBenchmark.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts/win-x64
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarkov-performance-benchmark-win-x64
+          path: artifacts/win-x64
+          if-no-files-found: error
+          retention-days: 7

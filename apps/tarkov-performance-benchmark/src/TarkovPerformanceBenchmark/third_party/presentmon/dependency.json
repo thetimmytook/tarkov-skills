@@ -1,0 +1,8 @@
+{
+  "name": "PresentMon",
+  "version": "2.5.1",
+  "source": "https://github.com/GameTechDev/PresentMon/releases/tag/v2.5.1",
+  "asset": "PresentMon-2.5.1-x64.exe",
+  "sha256": "9BEC3083069F58F911E6A512F4806DB51A27BD096103087BC1D05EF54C80A191",
+  "license": "MIT"
+}

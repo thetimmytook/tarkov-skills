@@ -12,7 +12,34 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - `app/` - standalone WinForms benchmark wizard for non-agent users; packaged into a release zip by `build/build-release.ps1`.
 - `.claude-plugin/` - Claude Code plugin and marketplace manifests.
 
-Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository or plugin tree, so updates cannot destroy user data. PresentMon may live in the shared `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\` folder or in a standalone app's portable `tools\PresentMon\` folder.
+## Store Product Direction
+
+- Keep agent skills on GitHub and distribute the benchmark application through Microsoft Store. Do not install or manage Codex, Claude, or other client-specific skills from the Store package.
+- The Store product is `Tarkov Performance Benchmark`, package identity `TimmyTook.TarkovPerformanceBenchmark`, Store ID `9PJMPQ06JL21`.
+- Build the Store application as a Windows x64 packaged desktop application: C#, .NET 8, WPF, self-contained, full trust, minimum Windows build 19041.
+- Place the Store application in `apps/tarkov-performance-benchmark/`. Keep its build, MSIX packaging, resources, and tests isolated so monorepo pipelines can build skills and the application independently.
+- Ship no `.ps1` or `.cmd` runtime inside the Store application. Existing PowerShell is prototype/reference logic only; implement production log parsing, settings reads, system collection, PresentMon orchestration, and JSON generation in C#.
+- Keep the application single-instance. Expose the stable execution alias `tarkov-benchmark.exe` and support `tarkov-benchmark.exe collect --source skill` for agent-driven collection.
+- A skill-initiated collection opens the GUI, still requires an explicit Start action, saves a completed run, briefly shows the result, closes automatically, and returns a machine-readable summary to the caller. Normal Start-menu launches remain open.
+- Return the run ID, map, Average FPS, 1% Low, 0.1% Low, P95 frametime, local-save status, and upload status. State explicitly that data was saved locally and was not uploaded unless the user separately consented to upload.
+- Keep `%LOCALAPPDATA%\TarkovSkills\benchmark.json` as the shared local data contract. Do not include user-specific paths, user names, host names, IP addresses, serial numbers, or machine GUIDs in benchmark artifacts.
+- Never read Tarkov process memory, inject into the game, automate input, or provide an overlay. Limit interaction to process-presence checks, read-only logs/configuration files, Windows system information, and external ETW capture through PresentMon.
+- Bundle the tested PresentMon binary in the MSIX. Do not search for or execute user-provided PresentMon copies from portable or shared tool directories.
+- Run the main application without elevation. First attempt capture with normal rights; on ETW access denial, offer a one-time elevated `--setup-permissions` flow that adds the current user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
+- Build and test MSIX packages in GitHub Actions, but keep Partner Center upload manual until the first Store certification succeeds. Test the first package as a closed Store release before public submission.
+- Keep Store artwork original and neutral: frametime/FPS imagery and a dark interface, without EFT logos, Battlestate Games artwork, or other official game assets. Include the unofficial/non-affiliation notice in the application and listing.
+- Keep `references/store-product-concept.md` aligned with this section before implementation begins; this section is authoritative when the two conflict.
+
+Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository, plugin tree, or MSIX installation directory, so application and skill updates cannot destroy user data.
+
+## PresentMon Dependency Management
+
+- Treat PresentMon as an external bundled dependency. Pin an exact tested version; never resolve `latest` during a build or at application runtime.
+- Record the upstream release URL, version, SHA-256, license, and copyright notice in the dependency manifest and Store package.
+- Update PresentMon only through a deliberate manual change followed by dependency, capture, permissions, cancellation, raid-end, and metric-validation tests on supported Windows 10 and Windows 11 systems.
+- Verify the pinned binary's SHA-256 on every relevant local/build check. A mismatch is an error.
+- A local pre-commit check may query upstream for a newer PresentMon release no more than once per 24 hours. Cache the result under `.git/`, use a short network timeout, silently continue when offline, and emit only a non-blocking warning when a newer version exists.
+- Never replace the pinned binary, modify the manifest, or publish a release automatically in response to the version check.
 
 ## Core Rules
 

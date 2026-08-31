@@ -1,0 +1,53 @@
+<Window x:Class="TarkovPerformanceBenchmark.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About Tarkov Performance Benchmark"
+        Width="500"
+        Height="420"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        BorderBrush="#0C0C0C"
+        BorderThickness="1"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}"
+        Foreground="{StaticResource TextBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="38" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="TARKOV PERFORMANCE BENCHMARK" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" FontSize="15" />
+            <TextBlock x:Name="VersionText" Margin="0,7,0,0" Foreground="{StaticResource MutedBrush}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Created by TimmyTook" FontSize="14" />
+            <TextBlock Margin="0,7,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="A read-only community utility for repeatable Escape from Tarkov FPS and frametime measurements." />
+        </StackPanel>
+
+        <StackPanel Grid.Row="4">
+            <TextBlock Text="Privacy" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Margin="0,7,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Benchmark data stays on this PC unless you explicitly choose to upload it. The application does not read game memory or modify Tarkov files." />
+        </StackPanel>
+
+        <StackPanel Grid.Row="6">
+            <TextBlock Text="Third-party software" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Margin="0,7,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Includes PresentMon 2.5.1 under the MIT License." />
+            <TextBlock Margin="0,12,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Unofficial community tool. Not affiliated with or endorsed by Battlestate Games." />
+        </StackPanel>
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal">
+            <Button Content="GitHub" Width="96" Click="GitHub_Click" />
+            <Button Content="Close" Width="96" Margin="10,0,0,0" Click="Close_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
