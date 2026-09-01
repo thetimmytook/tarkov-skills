@@ -34,6 +34,7 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - Keep the MVP Store listing in English (United States) only. Add another listing language only after the application UI supports that language.
 - Keep Partner Center field choices, privacy text, listing copy, and the `runFullTrust` justification aligned with `references/store-submission.md`. Update that file whenever an accepted submission changes the process or wording.
 - Keep Store artwork original and neutral: frametime/FPS imagery and a dark interface, without EFT logos, Battlestate Games artwork, or other official game assets. Include the unofficial/non-affiliation notice in the application and listing.
+- Do not ship the default executable icon. Keep original application artwork wired to the WPF window, executable, taskbar, Start menu, installed-app entry, MSIX assets, and Store listing, and verify those surfaces using the Microsoft-signed package.
 - Keep `references/store-product-concept.md` aligned with this section before implementation begins; this section is authoritative when the two conflict.
 
 Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository, plugin tree, or MSIX installation directory, so application and skill updates cannot destroy user data.
