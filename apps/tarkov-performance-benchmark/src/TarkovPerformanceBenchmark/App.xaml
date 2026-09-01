@@ -52,7 +52,7 @@
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource SurfaceBrush}" />
                                 <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#383832" />
-                                <Setter Property="Foreground" Value="#6F6B5D" />
+                                <Setter Property="Foreground" Value="#8A846F" />
                                 <Setter Property="Cursor" Value="Arrow" />
                             </Trigger>
                         </ControlTemplate.Triggers>

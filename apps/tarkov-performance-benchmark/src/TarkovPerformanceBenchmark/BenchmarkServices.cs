@@ -118,9 +118,12 @@ internal sealed class RaidLogReader
 }
 
 internal sealed class PresentMonPermissionException(string message) : Exception(message);
+internal sealed class PresentMonSessionException(string message) : Exception(message);
 
 internal sealed class PresentMonRunner
 {
+    internal const string OwnedSessionName = "TimmyTook.TarkovPerformanceBenchmark";
+
     public bool IsDependencyReady(out string message)
     {
         try { VerifyDependency(); message = "Bundled PresentMon 2.5.1 ready"; return true; }
@@ -130,21 +133,110 @@ internal sealed class PresentMonRunner
     public async Task<PerformanceMetrics> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
     {
         VerifyDependency();
+        await CleanupLegacyOrphanedSessionAsync();
+        await StopSessionAsync(OwnedSessionName);
         var tempDirectory = Path.Combine(Path.GetTempPath(), "TarkovBenchmark-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tempDirectory); var csv = Path.Combine(tempDirectory, "capture.csv");
         try
         {
             var info = new ProcessStartInfo(AppPaths.PresentMonFile) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
-            foreach (var arg in new[] { "--process_name", "EscapeFromTarkov.exe", "--timed", durationSeconds.ToString(CultureInfo.InvariantCulture), "--terminate_after_timed", "--terminate_on_proc_exit", "--no_console_stats", "--output_file", csv }) info.ArgumentList.Add(arg);
+            foreach (var arg in BuildArguments(durationSeconds, csv)) info.ArgumentList.Add(arg);
             using var process = new Process { StartInfo = info }; if (!process.Start()) throw new InvalidOperationException("PresentMon could not start."); started();
             using var registration = cancellationToken.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
             var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken); var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
             await process.WaitForExitAsync(cancellationToken); var error = await stderr; _ = await stdout;
-            if (process.ExitCode != 0) { if (error.Contains("access denied", StringComparison.OrdinalIgnoreCase)) throw new PresentMonPermissionException("Windows denied access to the performance trace session."); throw new InvalidOperationException($"PresentMon exited with code {process.ExitCode}: {error.Trim()}"); }
+            if (process.ExitCode != 0) throw CreateExitException(process.ExitCode, error);
             if (!File.Exists(csv)) throw new InvalidOperationException("PresentMon did not create capture data.");
             return PresentMonCsvParser.Parse(csv);
         }
-        finally { try { Directory.Delete(tempDirectory, true); } catch { } }
+        finally
+        {
+            await StopSessionAsync(OwnedSessionName);
+            try { Directory.Delete(tempDirectory, true); } catch { }
+        }
     }
+
+    internal static IReadOnlyList<string> BuildArguments(int durationSeconds, string outputFile) =>
+    [
+        "--session_name", OwnedSessionName,
+        "--stop_existing_session",
+        "--process_name", "EscapeFromTarkov.exe",
+        "--timed", durationSeconds.ToString(CultureInfo.InvariantCulture),
+        "--terminate_after_timed",
+        "--terminate_on_proc_exit",
+        "--no_console_stats",
+        "--output_file", outputFile
+    ];
+
+    internal static Exception CreateExitException(int exitCode, string error)
+    {
+        if (error.Contains("already running", StringComparison.OrdinalIgnoreCase))
+            return new PresentMonSessionException("Close the other performance capture and try again. No benchmark data was saved.");
+        if (error.Contains("access denied", StringComparison.OrdinalIgnoreCase))
+            return new PresentMonPermissionException("Windows denied access to the performance trace session.");
+        return new InvalidOperationException($"PresentMon could not complete the measurement (exit code {exitCode}).");
+    }
+
+    internal static async Task CleanupLegacyOrphanedSessionAsync()
+    {
+        if (HasRunningPresentMonProcess())
+            throw new PresentMonSessionException("Another PresentMon capture is running. Stop it, then try again. The other process was not changed.");
+        if (!await SessionExistsAsync("PresentMon")) return;
+        if (HasRunningPresentMonProcess())
+            throw new PresentMonSessionException("Another PresentMon capture started during preparation. Stop it, then try again. The other process was not changed.");
+        await StopSessionAsync("PresentMon");
+    }
+
+    private static bool HasRunningPresentMonProcess()
+    {
+        var processes = Process.GetProcessesByName("PresentMon");
+        try { return processes.Any(process => !process.HasExited); }
+        finally { foreach (var process in processes) process.Dispose(); }
+    }
+
+    private static async Task<bool> SessionExistsAsync(string sessionName)
+    {
+        var info = new ProcessStartInfo("logman.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
+        foreach (var argument in new[] { "query", sessionName, "-ets" }) info.ArgumentList.Add(argument);
+        using var process = new Process { StartInfo = info };
+        if (!process.Start()) return false;
+        await process.WaitForExitAsync();
+        return process.ExitCode == 0;
+    }
+
+    private static async Task StopSessionAsync(string sessionName)
+    {
+        var info = new ProcessStartInfo(AppPaths.PresentMonFile) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
+        foreach (var argument in new[] { "--session_name", sessionName, "--stop_existing_session" }) info.ArgumentList.Add(argument);
+        using var process = new Process { StartInfo = info };
+        if (!process.Start()) return;
+        var output = process.StandardOutput.ReadToEndAsync();
+        var error = process.StandardError.ReadToEndAsync();
+        var wait = process.WaitForExitAsync();
+        if (await Task.WhenAny(wait, Task.Delay(TimeSpan.FromSeconds(5))) != wait)
+        {
+            try { process.Kill(true); } catch { }
+        }
+        await wait;
+        _ = await output;
+        _ = await error;
+
+        if (!await SessionExistsAsync(sessionName)) return;
+
+        var fallback = new ProcessStartInfo("logman.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
+        foreach (var argument in BuildLogmanStopArguments(sessionName)) fallback.ArgumentList.Add(argument);
+        using var fallbackProcess = new Process { StartInfo = fallback };
+        if (!fallbackProcess.Start()) return;
+        var fallbackOutput = fallbackProcess.StandardOutput.ReadToEndAsync();
+        var fallbackError = fallbackProcess.StandardError.ReadToEndAsync();
+        await fallbackProcess.WaitForExitAsync();
+        _ = await fallbackOutput;
+        _ = await fallbackError;
+
+        for (var attempt = 0; attempt < 10 && await SessionExistsAsync(sessionName); attempt++)
+            await Task.Delay(100);
+    }
+
+    internal static IReadOnlyList<string> BuildLogmanStopArguments(string sessionName) => ["stop", sessionName, "-ets"];
 
     private static void VerifyDependency()
     {
@@ -173,11 +265,37 @@ internal static class PresentMonCsvParser
 
 internal sealed class BenchmarkStore
 {
+    private readonly string _path;
+
+    public BenchmarkStore(string? path = null) => _path = path ?? AppPaths.BenchmarkFile;
+
     public BenchmarkDocument Load()
     {
-        if (!File.Exists(AppPaths.BenchmarkFile)) return new();
-        using var parsed = JsonDocument.Parse(File.ReadAllText(AppPaths.BenchmarkFile)); if (!parsed.RootElement.TryGetProperty("schema_version", out var schema) || schema.GetInt32() != 1) throw new InvalidDataException("The existing benchmark.json uses an unsupported prototype schema.");
+        if (!File.Exists(_path)) return new();
+        using var parsed = JsonDocument.Parse(File.ReadAllText(_path)); if (!parsed.RootElement.TryGetProperty("schema_version", out var schema) || schema.GetInt32() != 1) throw new InvalidDataException("The existing benchmark.json uses an unsupported prototype schema.");
         return JsonSerializer.Deserialize<BenchmarkDocument>(parsed.RootElement.GetRawText(), JsonDefaults.Options) ?? new();
     }
-    public void Append(BenchmarkRun run) { var document = Load(); document.Runs.Add(run); AppPaths.AtomicWrite(AppPaths.BenchmarkFile, JsonSerializer.Serialize(document, JsonDefaults.Options)); }
+    public void Append(BenchmarkRun run) { var document = Load(); document.Runs.Add(run); Save(document); }
+    public void MarkSubmitted(IEnumerable<string> runIds)
+    {
+        var ids = runIds.ToHashSet(StringComparer.Ordinal);
+        var document = Load();
+        for (var index = 0; index < document.Runs.Count; index++)
+        {
+            var run = document.Runs[index];
+            if (ids.Contains(run.RunId)) document.Runs[index] = run with { Submitted = true };
+        }
+        Save(document);
+    }
+    private void Save(BenchmarkDocument document) => AppPaths.AtomicWrite(_path, JsonSerializer.Serialize(document, JsonDefaults.Options));
+}
+
+internal static class BenchmarkSubmission
+{
+    internal const int MaxRuns = 20;
+    public static IReadOnlyList<BenchmarkRun> SelectUnsubmitted(IReadOnlyList<BenchmarkRun> runs) =>
+        runs.Where(run => !run.Submitted).TakeLast(MaxRuns).ToList();
+    public static IReadOnlyList<BenchmarkRun> SelectMostRecent(IReadOnlyList<BenchmarkRun> runs) =>
+        runs.TakeLast(MaxRuns).ToList();
+    public static string Serialize(IReadOnlyList<BenchmarkRun> runs) => JsonSerializer.Serialize(new BenchmarkDocument { Runs = runs.ToList() }, JsonDefaults.Options);
 }

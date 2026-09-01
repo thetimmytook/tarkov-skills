@@ -121,6 +121,8 @@ All capture activity is explicitly started by the user. The application does not
 
 ## Private Release Check
 
+Execute and record the manual cases in [`store-release-test-cases.md`](store-release-test-cases.md) before moving the product to a public audience.
+
 After certification and private publishing:
 
 1. Install from Microsoft Store using an account in the private audience.

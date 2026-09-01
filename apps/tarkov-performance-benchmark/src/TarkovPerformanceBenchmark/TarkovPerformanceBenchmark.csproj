@@ -15,6 +15,7 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>false</PublishSingleFile>
     <PublishTrimmed>false</PublishTrimmed>
+    <ApplicationIcon>..\..\packaging\Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="..\..\packaging\Assets\AppIcon.png" Link="Assets\AppIcon.png" />
     <Content Include="third_party\presentmon\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\PresentMon.exe" />
     <Content Include="third_party\presentmon\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\LICENSE.txt" />
     <Content Include="third_party\presentmon\dependency.json" CopyToOutputDirectory="PreserveNewest" TargetPath="tools\PresentMon\dependency.json" />
