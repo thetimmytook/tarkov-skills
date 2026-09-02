@@ -11,6 +11,7 @@ namespace TarkovPerformanceBenchmark;
 public partial class MainWindow : Window
 {
     private const int CaptureDurationSeconds = 120;
+    private static readonly TimeSpan RaidStatePollInterval = TimeSpan.FromSeconds(4);
     private const string PerformanceFormUrl = "https://forms.gle/D692T2Umd5ktD5wj8";
     private readonly AppInvocation _invocation;
     private readonly PresentMonRunner _presentMon = new();
@@ -81,7 +82,28 @@ public partial class MainWindow : Window
             var settingsTask = Task.Run(() => new SettingsReader().Read());
             var systemTask = Task.Run(() => new SystemInfoCollector().Collect());
             await Task.WhenAll(settingsTask, systemTask);
-            var metrics = await _presentMon.CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() => { _captureClock = Stopwatch.StartNew(); _timer.Start(); SetStatus("Collecting frametime data: 00:00 / 02:00", false); }), _captureCancellation.Token);
+            var raidEnded = 0;
+            using var raidMonitorCancellation = CancellationTokenSource.CreateLinkedTokenSource(_captureCancellation.Token);
+            var raidMonitor = MonitorRaidEndAsync(initialContext.StartedAt!.Value, () =>
+            {
+                Interlocked.Exchange(ref raidEnded, 1);
+                Dispatcher.Invoke(() => ShowStopping("Raid ended. Stopping collection and discarding partial data."));
+                _captureCancellation.Cancel();
+            }, raidMonitorCancellation.Token);
+            PerformanceMetrics metrics;
+            try
+            {
+                metrics = await _presentMon.CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() => { _captureClock = Stopwatch.StartNew(); _timer.Start(); SetStatus("Collecting frametime data: 00:00 / 02:00", false); }), _captureCancellation.Token);
+            }
+            catch (OperationCanceledException) when (Volatile.Read(ref raidEnded) == 1)
+            {
+                throw new IncompleteCaptureException("The raid ended before the measurement completed. The partial result was discarded.");
+            }
+            finally
+            {
+                raidMonitorCancellation.Cancel();
+                try { await raidMonitor; } catch (OperationCanceledException) { }
+            }
             _timer.Stop(); _captureClock?.Stop();
 
             var finalContext = _raidLogs.Read(tarkov.StartTime);
@@ -106,7 +128,23 @@ public partial class MainWindow : Window
         finally { _timer.Stop(); _captureClock = null; _captureCancellation?.Dispose(); _captureCancellation = null; SetCollecting(false); }
     }
 
-    private void Cancel_Click(object sender, RoutedEventArgs e) { CancelButton.IsEnabled = false; SetStatus("Stopping collection. This run will be discarded.", true); _captureCancellation?.Cancel(); }
+    private void Cancel_Click(object sender, RoutedEventArgs e) { ShowStopping("Stopping collection. This run will be discarded."); _captureCancellation?.Cancel(); }
+    private async Task MonitorRaidEndAsync(DateTime startedAt, Action raidEnded, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(RaidStatePollInterval, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                if (!_raidLogs.HasRaidEndedSince(startedAt)) continue;
+                raidEnded();
+                return;
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+    private void ShowStopping(string message) { _timer.Stop(); _captureClock?.Stop(); CancelButton.IsEnabled = false; SetStatus(message, true); }
     private void OpenFolder_Click(object sender, RoutedEventArgs e) { AppPaths.EnsureDataDirectory(); Process.Start(new ProcessStartInfo("explorer.exe", AppPaths.DataDirectory) { UseShellExecute = true }); }
     private void Submit_Click(object sender, RoutedEventArgs e)
     {

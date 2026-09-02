@@ -22,13 +22,13 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - Keep the application single-instance. Expose the stable execution alias `tarkov-benchmark.exe` and support `tarkov-benchmark.exe collect --source skill` for agent-driven collection.
 - A skill-initiated collection opens the GUI, still requires an explicit Start action, saves a completed run, briefly shows the result, closes automatically, and returns a machine-readable summary to the caller. Normal Start-menu launches remain open.
 - Return the run ID, map, Average FPS, 1% Low, 0.1% Low, P95 frametime, local-save status, and upload status. State explicitly that data was saved locally and was not uploaded unless the user separately consented to upload.
-- Keep `%LOCALAPPDATA%\TarkovSkills\benchmark.json` as the shared local data contract. Do not include user-specific paths, user names, host names, IP addresses, serial numbers, or machine GUIDs in benchmark artifacts.
+- The Store benchmark application owns its history under the package `LocalState\TarkovSkills\benchmark.json`. Agent skills interact with it through the stable `tarkov-benchmark.exe` alias and machine-readable command output, not by opening package files directly. Do not include user-specific paths, user names, host names, IP addresses, serial numbers, or machine GUIDs in benchmark artifacts.
 - Never read Tarkov process memory, inject into the game, automate input, or provide an overlay. Limit interaction to process-presence checks, read-only logs/configuration files, Windows system information, and external ETW capture through PresentMon.
 - Bundle the tested PresentMon binary in the MSIX. Do not search for or execute user-provided PresentMon copies from portable or shared tool directories.
 - Run the main application without elevation. First attempt capture with normal rights; on ETW access denial, offer a one-time elevated `--setup-permissions` flow that adds the current user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
 - Build and test MSIX packages in GitHub Actions, but keep Partner Center upload manual until the first Store certification succeeds. Test the first package as a closed Store release before public submission.
 - Build the Store artifact as an unsigned MSIX. Microsoft Store signs it after certification; do not create, trust, or install local self-signed certificates as part of the normal release check.
-- Validate the unsigned package locally through tests, PresentMon checksum verification, `MakeAppx` semantic validation, and package-content inspection. Validate Store installation, execution alias registration, PresentMon execution, and the `%LOCALAPPDATA%\TarkovSkills\benchmark.json` contract in a closed Store flight.
+- Validate the unsigned package locally through tests, PresentMon checksum verification, `MakeAppx` semantic validation, and package-content inspection. Validate Store installation, execution alias registration, PresentMon execution, package `LocalState` persistence across updates, and machine-readable alias output in a closed Store flight.
 - Use package versions with a nonzero first component and a zero fourth component, for example `1.0.0.0`; the fourth component is reserved for Microsoft Store.
 - For the first Store submission, use a private audience containing personal Microsoft accounts, not work or school accounts. Publish automatically after certification so the Microsoft-signed package becomes available to that private group; move to a public audience only after the signed package passes the release checks.
 - Keep the MVP Store listing in English (United States) only. Add another listing language only after the application UI supports that language.
@@ -37,7 +37,7 @@ This repository contains agent skills and scripts for Escape from Tarkov perform
 - Do not ship the default executable icon. Keep original application artwork wired to the WPF window, executable, taskbar, Start menu, installed-app entry, MSIX assets, and Store listing, and verify those surfaces using the Microsoft-signed package.
 - Keep `references/store-product-concept.md` aligned with this section before implementation begins; this section is authoritative when the two conflict.
 
-Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA%\TarkovSkills\`, never inside the repository, plugin tree, or MSIX installation directory, so application and skill updates cannot destroy user data.
+Skill-owned goal memory and captures live in `%LOCALAPPDATA%\TarkovSkills\`. Store benchmark runs live in the package `LocalState\TarkovSkills\` directory. Neither belongs inside the repository, plugin tree, or read-only MSIX installation directory. Updates preserve both locations; uninstalling the Store package removes its package-local benchmark history.
 
 ## PresentMon Dependency Management
 
@@ -58,7 +58,7 @@ Persistent local state (goal memory, captures, and runs) lives in `%LOCALAPPDATA
 - Do not automate gameplay, input, anti-cheat-adjacent behavior, or game process manipulation.
 - Treat FPS capture tools as external sources. Parse their exported CSV files instead of hooking the game.
 - Artifacts intended for sharing or upload (such as `benchmark.json`) must not contain user names, host names, or user-specific paths; each relevant skill keeps its own `TarkovCommon.ps1` with `Hide-TarkovUserPath`.
-- On app capture/save failures, create a short sanitized text report under `%LOCALAPPDATA%\TarkovSkills\reports\`, copy it to the clipboard, and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`. The form should have a required multiline `Crash report` field for the pasted text.
+- On app capture/save failures, create a short sanitized text report under the benchmark application's current data directory (`LocalState\TarkovSkills\reports\` when packaged), copy it to the clipboard, and offer the Crash form: `https://forms.gle/yvKPPWkzGVFrtGjG7`. The form should have a required multiline `Crash report` field for the pasted text.
 
 ## Skill Design
 

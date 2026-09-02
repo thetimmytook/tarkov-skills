@@ -95,7 +95,7 @@ Tarkov Performance Benchmark processes performance and diagnostic information lo
 
 The application does not collect names, email addresses, account identifiers, IP addresses, device serial numbers, machine identifiers, or precise location data. It does not read game process memory, automate input, or modify game files.
 
-Benchmark results are stored locally in the user's Local AppData folder. No benchmark or diagnostic data is uploaded automatically. Users can delete the stored data at any time by removing the TarkovSkills folder from Local AppData.
+Benchmark results are stored locally in the application's private Microsoft Store data folder. No benchmark or diagnostic data is uploaded automatically. Users can open the storage folder from the application and delete the benchmark JSON file, or remove all package-local data by uninstalling the application.
 
 The application uses the bundled open-source PresentMon utility to perform user-initiated FPS and frame-time capture. PresentMon runs locally on the device.
 
@@ -131,5 +131,5 @@ After certification and private publishing:
 4. Complete a real two-minute PresentMon capture.
 5. Verify cancellation discards the incomplete run.
 6. Verify metrics and context are saved without user-specific paths.
-7. Verify `%LOCALAPPDATA%\TarkovSkills\benchmark.json` is visible to an external skill process.
+7. Verify benchmark history is stored in package `LocalState`, survives a Store update, and is exposed to skills only through machine-readable execution-alias output.
 8. Verify no data is uploaded without explicit consent.

@@ -85,6 +85,35 @@ internal sealed class RaidLogReader
         return new(true, false, "unknown", "unknown", null, null, null);
     }
 
+    public bool HasRaidEndedSince(DateTime startedAt)
+    {
+        var logs = FindLogsDirectory();
+        if (logs is null) return false;
+
+        var folders = Directory.EnumerateDirectories(logs)
+            .Select(x => new DirectoryInfo(x))
+            .OrderByDescending(x => x.LastWriteTimeUtc)
+            .Take(2);
+        foreach (var folder in folders)
+        {
+            foreach (var file in folder.EnumerateFiles("*application*.log").OrderBy(x => x.LastWriteTimeUtc))
+            {
+                if (ContainsRaidEndMarkerAfter(ReadSharedLines(file.FullName), startedAt)) return true;
+            }
+        }
+        return false;
+    }
+
+    internal static bool ContainsRaidEndMarkerAfter(IEnumerable<string> lines, DateTime startedAt)
+    {
+        foreach (var line in lines)
+        {
+            var time = ParseTime(line);
+            if (time.HasValue && time.Value > startedAt && IsRaidEndMarker(line)) return true;
+        }
+        return false;
+    }
+
     private static RaidContext ParseFolder(DirectoryInfo folder, DateTime? processStartedAt)
     {
         string mapId = "unknown"; DateTime? started = null; DateTime? ended = null; string? version = Regex.Match(folder.Name, @"_(?<v>\d+(\.\d+){3,4})$").Groups["v"].Value; if (version == "") version = null;
@@ -96,7 +125,7 @@ internal sealed class RaidLogReader
                 var scene = Regex.Match(line, @"scene preset path:maps/(?<bundle>[a-zA-Z0-9_]+)\.bundle", RegexOptions.IgnoreCase); if (scene.Success) mapId = Bundles.GetValueOrDefault(scene.Groups["bundle"].Value, scene.Groups["bundle"].Value);
                 var location = Regex.Match(line, @"TRACE-NetworkGameCreate profileStatus.*Location: (?<map>[^,]+)"); if (location.Success) mapId = location.Groups["map"].Value.Trim();
                 if (line.Contains("application|GameStarted", StringComparison.OrdinalIgnoreCase)) { started = time; ended = null; }
-                if (line.Contains("Got notification | UserMatchOver", StringComparison.OrdinalIgnoreCase) || line.Contains("EFT.HideoutGameLoader:OnHideoutStart()", StringComparison.OrdinalIgnoreCase)) ended = time ?? started;
+                if (started.HasValue && IsRaidEndMarker(line) && (!time.HasValue || time.Value > started.Value)) ended = time ?? started;
             }
         }
         var validStart = started.HasValue && (!processStartedAt.HasValue || started.Value >= processStartedAt.Value.AddSeconds(-10));
@@ -105,6 +134,10 @@ internal sealed class RaidLogReader
     }
 
     private static IEnumerable<string> ReadSharedLines(string path) { try { using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); using var reader = new StreamReader(stream); while (reader.ReadLine() is { } line) yield return line; } finally { } }
+    private static bool IsRaidEndMarker(string line) =>
+        line.Contains("Got notification | UserMatchOver", StringComparison.OrdinalIgnoreCase)
+        || line.Contains("PrepareSelectedProfileLocally ProfileId:", StringComparison.OrdinalIgnoreCase)
+        || line.Contains("EFT.HideoutGameLoader:OnHideoutStart()", StringComparison.OrdinalIgnoreCase);
     private static DateTime? ParseTime(string line) { var match = Timestamp.Match(line); return match.Success && DateTime.TryParse(match.Groups["time"].Value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var value) ? value : null; }
     private static string? FindLogsDirectory()
     {
