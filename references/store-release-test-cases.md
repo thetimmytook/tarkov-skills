@@ -8,7 +8,7 @@ Use this checklist to validate the Microsoft-signed private Store release before
 - Microsoft Store is signed in with a personal Microsoft account from the private audience.
 - The Microsoft-signed Store package is installed.
 - Escape from Tarkov is available for the real-raid capture cases.
-- Record the initial number of entries in `%LOCALAPPDATA%\TarkovSkills\benchmark.json` when the file exists.
+- Record the initial run count shown by the application and, when available, the number of entries in the package-local `benchmark.json` opened through `Open folder`.
 - The PoC Google Form uses a required paragraph field with a maximum length of 200,000 characters.
 
 ## Store Installation And Launch
@@ -45,13 +45,14 @@ Use this checklist to validate the Microsoft-signed private Store release before
 | CAP-08 | Close the application during capture. | PresentMon is stopped and the incomplete run is not appended. |
 | CAP-09 | Restart the application after a successful capture. | The latest saved metrics are restored and `Open folder` remains enabled. |
 | CAP-10 | Start capture, then close Tarkov or reproduce a game crash before the two-minute capture completes. | The partial measurement is discarded, no success sound plays, no benchmark-details dialog opens, the JSON run count is unchanged, the main window reports that Tarkov closed, and the app-owned ETW session is removed. |
+| CAP-11 | Start capture in a raid, extract after 20-30 seconds, and remain on the first post-raid screen. | The app detects the post-raid profile marker within approximately four seconds, stops capture, discards partial data, plays no success sound, opens no details dialog, leaves the JSON run count unchanged, and removes the app-owned ETW session. |
 
 ## Benchmark Data Contract
 
 | ID | Test | Expected result |
 | --- | --- | --- |
-| DATA-00 | Rename or remove `%LOCALAPPDATA%\TarkovSkills`, then launch the app. | The app starts normally, latest-result metrics are empty, `Open folder` is disabled, and the missing data directory is not treated as an error. |
-| DATA-01 | Complete and save the first benchmark while `%LOCALAPPDATA%\TarkovSkills` does not exist. | The app creates the directory and a valid `benchmark.json` containing exactly one completed run. If the file already exists, the run is appended without overwriting earlier runs. |
+| DATA-00 | Remove the benchmark application's package-local `LocalState\TarkovSkills` directory, then launch the app. | The app starts normally, latest-result metrics are empty, `Open folder` is disabled, and the missing data directory is not treated as an error. |
+| DATA-01 | Complete and save the first benchmark while its package-local data directory does not exist. | The app creates `LocalState\TarkovSkills` and a valid `benchmark.json` containing exactly one completed run. If the file already exists, the run is appended without overwriting earlier runs. |
 | DATA-02 | Inspect the new run metrics. | Duration, Average FPS, 1% Low, 0.1% Low, P95 frametime, and sample data are present and plausible. |
 | DATA-03 | Inspect run context. | Map is inferred from logs when available; BSG server versus Local matches the user's selection; optional weather and time values are preserved when supplied. |
 | DATA-04 | Inspect system and settings data. | Relevant system information and current Graphics, PostFX, and Game settings are stored inside the run. Control and Sound settings are absent. |
@@ -73,7 +74,7 @@ Use this checklist to validate the Microsoft-signed private Store release before
 | --- | --- | --- |
 | ERR-01 | Cause or reproduce a normal precondition failure, such as starting outside a raid. | A concise actionable message is shown; no crash report is created for expected user-state failures. |
 | ERR-02 | Reproduce an ETW access-denied failure on a standard-user setup when possible. | The app explains the permissions problem and does not save a broken measurement. |
-| ERR-03 | Reproduce a genuine capture or save exception in a development build. | A sanitized report is written under `%LOCALAPPDATA%\TarkovSkills\reports\`, copied to the clipboard, and the Crash form is offered. The report contains useful error details but no user-specific paths. |
+| ERR-03 | Reproduce a genuine capture or save exception in a development build. | A sanitized report is written under the application's current `TarkovSkills\reports` data directory, copied to the clipboard, and the Crash form is offered. The report contains useful error details but no user-specific paths. |
 | ERR-04 | Start a capture while the app-owned `TimmyTook.TarkovPerformanceBenchmark` ETW session remains from any earlier app version. | The stale app-owned session is stopped automatically before capture. Capture succeeds and the session is removed after completion. |
 | ERR-05 | Cancel a capture, then query active ETW sessions and start another capture. | Cancellation removes the app-owned ETW session, no run is saved, and the next capture starts normally. |
 | ERR-06 | Leave an orphaned legacy `PresentMon` ETW session with no running `PresentMon.exe`, then start capture. | The orphaned legacy session is removed automatically and capture starts normally. |
@@ -83,9 +84,9 @@ Use this checklist to validate the Microsoft-signed private Store release before
 
 | ID | Test | Expected result |
 | --- | --- | --- |
-| LIFE-01 | Install a newer private Store package over the current version. | Microsoft Store updates the application and preserves benchmark history. |
+| LIFE-01 | Install a newer Store package over a version that already stores history in package `LocalState`. | Microsoft Store updates the application and preserves benchmark history. |
 | LIFE-02 | Launch the execution alias after an update. | The alias starts the updated Store application. |
-| LIFE-03 | Uninstall and reinstall the Store application. | Installation remains clean; shared benchmark data under `%LOCALAPPDATA%\TarkovSkills` is not silently destroyed. |
+| LIFE-03 | Uninstall and reinstall the Store application. | Installation remains clean and starts with no package-local benchmark history. The UI does not display stale runs from an unpackaged development build. |
 | LIFE-04 | Add another personal Microsoft account to the private-audience known user group. | The account gains access without a new app submission after group membership propagation. |
 
 ## Current Private-Flight Observations
@@ -97,6 +98,10 @@ Recorded on September 1, 2026:
 - No dedicated run counter was visible in Store version 1.0.0. The next build adds the count to the latest-result heading.
 - `Start collection` was available.
 - Cancellation worked, but the `Cancel and discard` label was not visible and must be checked against `UI-04`.
+
+Recorded on September 2, 2026:
+
+- Version 1.0.2 intentionally starts a new package `LocalState` history and does not migrate prototype runs redirected into `LocalCache`; no public users received those prototype versions. Persistence testing begins with data created by 1.0.2.
 - No `Submit` or upload button was present in Store version 1.0.0. The next build adds an explicit clipboard-and-form submission flow without automatic upload.
 - With the local data directory renamed, the app opened with empty metrics and `Open folder` disabled as expected.
 - The attempted first capture then failed because PresentMon reported that another PresentMon session was already running. This is separate from the missing-directory scenario and must be reproduced against `ERR-04`.

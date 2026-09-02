@@ -30,11 +30,11 @@ Download the repository archive from GitHub (Code -> Download ZIP, or a Release)
 
 ### Benchmark app (no agent needed)
 
-For contributing FPS statistics without installing any skill: download `TarkovBenchmarkApp.zip` from the GitHub Releases page, unpack, and run `Start-TarkovBenchmark.cmd`. With Tarkov already running in a raid, the app captures 2 or 4 minutes with PresentMon, reads map context from EFT logs, and appends an anonymized run to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`. On first run the app shows where to download PresentMon (a free Intel tool) and lets the player install it either under the portable app's `tools\PresentMon\` folder or the shared `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\` folder used by skills. The Upload button copies only runs that were not submitted before.
+Install **Tarkov Performance Benchmark** from Microsoft Store. With Tarkov running in a raid, the app performs a two-minute capture with its bundled PresentMon, reads map context from EFT logs, and stores benchmark history locally in its private Store data folder. Nothing is uploaded automatically; submission remains an explicit user action.
 
 ## Local Data
 
-Persistent local state (goal memory and benchmark data) lives in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch your data. PresentMon may live there as a shared tool or inside a standalone app's portable `tools\PresentMon\` folder.
+Skill goal memory and captures live in `%LOCALAPPDATA%\TarkovSkills\`, so plugin or repository updates never touch them. The Store benchmark application owns its benchmark history in package `LocalState`; Store updates preserve it, while uninstalling the application removes it.
 
 ## Future Raid Planner
 
@@ -49,7 +49,7 @@ Any future interactive map or raid-planning work follows the [raid planner data 
 ## Repository Layout
 
 - `skills/` — the four agent skills
-- `scripts/` — PowerShell runtime for the standalone app
-- `app/` — standalone WinForms benchmark wizard
+- `scripts/` — shared PowerShell logic vendored into agent skills
+- `apps/tarkov-performance-benchmark/` — C# WPF Microsoft Store application
 - `references/` — app-level benchmark rules
 - `build/` — release packaging script

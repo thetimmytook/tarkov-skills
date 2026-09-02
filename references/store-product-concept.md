@@ -23,7 +23,7 @@ The first Store release provides the standalone two-minute benchmark UI. It:
 - records non-identifying Windows hardware and driver information;
 - captures FPS and frametime data through the bundled PresentMon binary;
 - asks for BSG server versus Local and optional weather/time context after capture;
-- writes completed runs to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`;
+- writes completed runs to the Store package's private `LocalState\TarkovSkills\benchmark.json` history;
 - uploads nothing without explicit consent.
 
 Do not read Tarkov process memory, inject code, provide an overlay, automate input, or interact with anti-cheat systems.
@@ -44,11 +44,31 @@ PresentMon is an external MIT-licensed dependency bundled inside the MSIX. Pin i
 
 Attempt ETW capture without elevation first. If Windows denies access, the future Store package may offer a one-time elevated setup that adds the user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
 
+## Future Result Comparison
+
+A completed benchmark must eventually explain what the run means, not only display isolated FPS numbers. After a run, show the user's position within a comparable submitted cohort using a clear percentile/distribution chart for Average FPS, 1% Low, 0.1% Low, and P95 frametime.
+
+- Compare like-for-like results by map, resolution, execution type, and broadly comparable hardware/settings where sample size permits.
+- Show the cohort definition and sample count next to the chart. Do not present a precise rank when the cohort is too small or poorly matched.
+- Keep the local result useful before upload. Fetch or display community comparison data only after the user explicitly consents to the relevant network action.
+- Use a backend API or periodically published aggregate dataset for comparisons. The temporary Google Form is collection-only and is not a runtime data source for the application.
+- Prefer a distribution/percentile view over a competitive leaderboard. The purpose is diagnosis and expectation-setting, not encouraging unsafe tuning.
+
+### Tuned Hardware
+
+Do not infer overclocking from observed clocks or automatically exclude unusually fast results. Detection is unreliable because boost behavior, power limits, undervolting, memory profiles, cooling, and vendor defaults overlap.
+
+- Add an optional self-reported tuning classification when community comparison is implemented: `stock`, `overclocked`, `undervolted`, `mixed`, or `unknown`.
+- Preserve tuned runs and label them; they are useful evidence rather than invalid data.
+- Use stock results as the default baseline. Compare tuned systems within the same tuning class when enough data exists, or show them as a separately marked cohort.
+- Keep `unknown` results in broad aggregate analysis, but do not use them for a strict stock-versus-tuned claim.
+- Do not add temperature, voltage, clock, or other hardware-sensor collection solely to classify overclocking. Such diagnostics belong to a separate hardware-debugging feature with its own consent and validation.
+
 ## Distribution
 
 The monorepo keeps the application under `apps/tarkov-performance-benchmark/` with a dedicated Windows pipeline. CI restores, tests, verifies PresentMon, and creates a temporary self-contained build artifact.
 
-The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Validate visibility of the documented local skill contract during the closed Store flight.
+The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Benchmark history belongs to package `LocalState`; skills use the execution alias and machine-readable output rather than direct file access.
 
 Privacy-policy hosting and Partner Center submission remain separate release work. Upload the package manually until the first certification and closed Store test succeed.
 
