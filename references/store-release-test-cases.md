@@ -30,6 +30,7 @@ Use this checklist to validate the Microsoft-signed private Store release before
 | UI-03 | Inspect the window, taskbar, Start menu, installed-app entry, and Store listing icons. | Original product artwork is shown consistently; the default executable icon is not used. This is required before public release. |
 | UI-04 | Inspect collection controls before and during a capture. | `Start collection` is readable and enabled when PresentMon is available. `Cancel and discard` is readable but disabled before capture, then enabled during capture. |
 | UI-05 | Inspect the latest-result panel with existing data. | The heading shows `LATEST RESULT · N RUNS` with correct singular/plural text. Average FPS, 1% Low, 0.1% Low, and P95 frametime are visible. `Open folder` and `Submit` are enabled when runs exist. |
+| UI-06 | Compare the standalone latest-result actions with Toolkit. | The standalone Benchmark does not show the Toolkit-only `Copy results` action; Open folder and Submit continue to work. |
 
 ## Raid Detection And Capture
 
@@ -107,3 +108,10 @@ Recorded on September 2, 2026:
 - The attempted first capture then failed because PresentMon reported that another PresentMon session was already running. This is separate from the missing-directory scenario and must be reproduced against `ERR-04`.
 - Stopping the orphaned legacy `PresentMon` ETW session restored successful capture without elevation. Future builds use a version-independent app-owned session name and clean it before and after every capture.
 - In the local post-1.0 development build, closing Tarkov during capture produced a `discarded` result, left the JSON run count unchanged, saved and uploaded nothing, and removed the app-owned ETW session.
+
+Recorded on September 3, 2026:
+
+- The standalone Benchmark regression checklist passed against the shared `TarkovBenchmark.Feature` implementation.
+- A complete two-minute capture, completion notification, context dialog, save, metrics, run-count increment, Open folder, and Submit flow all passed.
+- Cancellation discarded the partial capture without incrementing the run count.
+- The standalone product kept the Toolkit-only Copy results action hidden.

@@ -31,7 +31,7 @@ Priorities by goal:
 
 ## Run Confidence
 
-Canonical tiers, computed by `add-benchmark-run.ps1` (benchmark skill and standalone app):
+Canonical tiers, computed by the Store applications and interpreted by the skills:
 
 - `high`: duration is at least 120 seconds and map, weather, and time of day are known.
 - `medium`: duration is at least 60 seconds.

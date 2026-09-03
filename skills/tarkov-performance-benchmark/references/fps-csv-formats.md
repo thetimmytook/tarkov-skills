@@ -1,46 +1,9 @@
-# FPS CSV Formats
+# Existing CSV Input
 
-Use this if `parse-fps-csv.ps1` cannot detect the capture format.
+Automated capture uses Tarkov Performance Toolkit. This reference applies only when the user already has an export from PresentMon, CapFrameX, or FrameView.
 
-## Preferred Data
+Look for a frame-duration column such as `MsBetweenPresents`, `FrameTime`, or `Frametime`. FPS columns may be used when no duration column exists. Exclude invalid, nonpositive, and non-game rows where the export identifies a process.
 
-Prefer per-frame frametime in milliseconds. If available, compute:
+Return sample count, duration, average FPS, 1% low, 0.1% low, average frametime, p95, and p99. State the detected source and lower confidence when column semantics are ambiguous.
 
-- average FPS as `frame_count / total_seconds`
-- 1% low FPS from the slowest 1% frametimes
-- 0.1% low FPS from the slowest 0.1% frametimes
-- average, p95, and p99 frametime
-
-## Header Hints
-
-PresentMon often includes fields such as:
-
-- `MsBetweenPresents`
-- `msBetweenPresents`
-- `Application`
-- `ProcessName`
-
-CapFrameX exports may include:
-
-- `Frametime`
-- `Frame Time`
-- `FPS`
-
-FrameView exports may include:
-
-- `FPS`
-- `FrameTime`
-- `Frame Time`
-
-If only FPS samples are available, compute average and lows from FPS samples but mark `method` as `fps_samples`, because this is less reliable than frametime.
-
-## Parser Behavior
-
-`parse-fps-csv.ps1` handles these cases automatically:
-
-- comment/metadata lines before the header (starting with `#` or `//`) are skipped;
-- the delimiter is auto-detected between comma, semicolon, and tab (European locale exports often use `;`);
-- decimal commas are converted to dots before parsing;
-- non-numeric and non-positive values are dropped from the sample set.
-
-If detection still fails, inspect the raw headers and either rename the column to a recognized name or extend the header patterns in this skill's `scripts/parse-fps-csv.ps1`.
+Do not ask the user to install an unsigned parser or rename their original file. Analyze a supplied copy or ask for a Toolkit capture.

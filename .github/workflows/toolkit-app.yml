@@ -1,0 +1,47 @@
+name: Performance toolkit
+
+on:
+  pull_request:
+    paths:
+      - "apps/tarkov-performance-toolkit/**"
+      - "src/TarkovSkills.Core/**"
+      - "src/TarkovBenchmark.Feature/**"
+      - "build/build-toolkit-msix.ps1"
+      - "build/check-presentmon-dependency.ps1"
+      - ".github/workflows/toolkit-app.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/tarkov-performance-toolkit/**"
+      - "src/TarkovSkills.Core/**"
+      - "src/TarkovBenchmark.Feature/**"
+      - "build/build-toolkit-msix.ps1"
+      - "build/check-presentmon-dependency.ps1"
+      - ".github/workflows/toolkit-app.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Verify bundled PresentMon
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+      - name: Test
+        run: dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
+      - name: Build Store MSIX
+        shell: pwsh
+        run: ./build/build-toolkit-msix.ps1 -PackageVersion 1.0.0.0 -OutputDirectory artifacts/toolkit-msix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarkov-performance-toolkit-msix
+          path: artifacts/toolkit-msix/*.msix
+          if-no-files-found: error
+          retention-days: 7

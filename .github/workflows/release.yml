@@ -44,19 +44,6 @@ jobs:
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Build benchmark app archive
-        shell: pwsh
-        run: ./build/build-release.ps1
-
-      - name: Build codex skills archive
-        shell: pwsh
-        run: |
-          $staging = Join-Path $env:RUNNER_TEMP "tarkov-skills"
-          New-Item -ItemType Directory -Force $staging | Out-Null
-          Copy-Item -Recurse -Path skills -Destination $staging
-          Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
-          Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-codex.zip"
-
       - name: Open and merge version bump PR
         id: merge
         shell: pwsh
@@ -92,7 +79,7 @@ jobs:
 
           gh pr create --base main --head $branch --title "fix # BE # bump version to $version" --body ""
           Invoke-Checked "gh pr create"
-          gh pr merge $branch --squash --delete-branch
+          gh pr merge $branch --merge --delete-branch
           Invoke-Checked "gh pr merge"
 
           git checkout main
@@ -108,18 +95,63 @@ jobs:
               throw "main is at version '$mergedVersion' after the merge, expected '$version'. The bump PR was not merged into main; refusing to tag."
           }
 
+      - name: Verify bundled PresentMon
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+
+      - name: Test applications
+        shell: pwsh
+        run: |
+          dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release
+          if ($LASTEXITCODE -ne 0) { throw "Benchmark tests failed." }
+          dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
+          if ($LASTEXITCODE -ne 0) { throw "Toolkit tests failed." }
+
+      - name: Build release archives
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ steps.bump.outputs.version }}"
+          New-Item -ItemType Directory -Force dist | Out-Null
+
+          ./build/build-portable.ps1 -Version $version -OutputDirectory dist
+
+          $skillsStaging = Join-Path $env:RUNNER_TEMP "tarkov-skills"
+          New-Item -ItemType Directory -Force $skillsStaging | Out-Null
+          Copy-Item -Recurse -Path skills -Destination $skillsStaging
+          Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $skillsStaging
+          Compress-Archive -Path $skillsStaging -DestinationPath "dist/tarkov-skills-codex-$version.zip"
+
+          git archive --format=zip --output "dist/tarkov-skills-source-$version.zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw "Source archive creation failed." }
+
+      - name: Tag release
+        shell: pwsh
+        run: |
+          $version = "${{ steps.bump.outputs.version }}"
           git tag "v$version"
-          Invoke-Checked "git tag"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to create release tag." }
           git push origin "v$version"
-          Invoke-Checked "git push tag"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to push release tag." }
 
       - name: Create GitHub release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $notes = @'
+          ## Install
+
+          - [Tarkov Performance Toolkit on Microsoft Store](https://apps.microsoft.com/detail/9N3L7DZH0K64)
+          - [Tarkov Performance Benchmark on Microsoft Store](https://apps.microsoft.com/detail/9PJMPQ06JL21)
+
+          Microsoft Store is the recommended installation source. Self-contained portable Windows builds and the complete source archive are attached below for users who do not use the Store.
+          '@
           gh release create "v${{ steps.bump.outputs.version }}" `
-            "dist/TarkovBenchmarkApp.zip" `
-            "dist/tarkov-skills-codex.zip" `
+            "dist/TarkovPerformanceBenchmark-${{ steps.bump.outputs.version }}-win-x64.zip" `
+            "dist/TarkovPerformanceToolkit-${{ steps.bump.outputs.version }}-win-x64.zip" `
+            "dist/tarkov-skills-codex-${{ steps.bump.outputs.version }}.zip" `
+            "dist/tarkov-skills-source-${{ steps.bump.outputs.version }}.zip" `
             --title "v${{ steps.bump.outputs.version }}" `
+            --notes $notes `
             --generate-notes

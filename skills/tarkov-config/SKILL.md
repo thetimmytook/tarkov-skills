@@ -1,123 +1,36 @@
 ---
 name: tarkov-config
-description: Read-only Escape from Tarkov FPS configuration analysis. Use when an agent needs to read EFT settings from %APPDATA%\Battlestate Games\Escape from Tarkov\Settings, inspect graphics/PostFX/game configuration, collect basic Windows hardware and pagefile context, and produce practical conclusions for stability, 50-60 FPS expectations, stutters, visibility, and support reporting without modifying game files.
+description: Analyze Escape from Tarkov graphics configuration and Windows performance context without changing game files. Use for FPS expectations, stutter risks, visibility tradeoffs, or a saved performance goal; prefer the signed Tarkov Performance Toolkit and support transparent manual review when it is unavailable.
 ---
 
 # Tarkov Config
 
-Analyze current Escape from Tarkov configuration in read-only mode and explain likely performance/stability risks.
+Analyze settings and system readiness in read-only mode. Never edit EFT files or promise a specific FPS.
 
-This skill is separate from `tarkov-performance-benchmark` and `tarkov-frametime`. Use `tarkov-tuning` to orchestrate iterative tuning decisions across config analysis and measured FPS/frametime results.
+## Choose The Input Path
 
-Core rules:
+1. For a local agent, run `tarkov-skills.exe status`. If available, run `tarkov-skills.exe inspect` and consume its JSON.
+2. In a web client, ask the user to open **Tarkov Performance Toolkit**, press **Collect report**, then **Copy JSON** and paste or attach the result.
+3. Without Toolkit, explain each source before reading it. A local agent may directly read `Graphics.ini`, `PostFx.ini`, and `Game.ini` and use standard read-only Windows system queries. A web user may attach those files and a Windows System Information report. Do not download, generate, or execute script files.
 
-- Read from `%APPDATA%\Battlestate Games\Escape from Tarkov\Settings` by default.
-- Do not edit EFT files or apply settings automatically.
-- Do not promise perfect FPS or stutter-free gameplay.
-- Prefer the user's active goal. Default to stable minimum FPS, reduced stutters, and practical visibility over pretty graphics only when no custom goal is saved.
-- If the user changes the target FPS or asks for a different tradeoff such as lower FPS for better quality, save the new goal in local memory and follow it in later analysis.
-- If settings are missing or key names differ by Tarkov version, report `unknown`, lower confidence, continue; on script failure offer the Crash form from `references/configuration-rules.md`.
-- Manual mode must work: if files are unavailable, ask for screenshots/settings text.
+The Toolkit is the only automated dependency. If it is missing, direct the user to `https://apps.microsoft.com/detail/9N3L7DZH0K64`; do not offer unsigned PowerShell as a fallback.
 
-## Primary Script
+## Goal
 
-Run:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\analyze-tarkov-fps-config.ps1
-```
-
-The script reads EFT settings, collects basic system/pagefile context, and writes a Markdown report. Use `-JsonOutputPath` to also save structured data.
-
-To update the local goal memory:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\analyze-tarkov-fps-config.ps1 -Goal better-graphics -TargetFpsMin 45 -QualityPreference "higher quality, acceptable lower FPS" -SaveGoal
-```
-
-The active goal is stored in `%LOCALAPPDATA%\TarkovSkills\memory\current-goal.json` — outside the plugin/repository tree, so it survives updates.
-
-## Workflow
-
-1. Read current config:
-   - `Graphics.ini`
-   - `PostFx.ini`
-   - `Game.ini`
-
-2. Collect system context:
-   - CPU
-   - GPU
-   - RAM amount and speed where available
-   - OS
-   - pagefile size and location
-
-3. Produce conclusions:
-   - expectation for the active saved goal
-   - risky settings
-   - stutter/pagefile/RAM warnings
-   - visibility/PostFX notes
-   - suggested next manual checks
-
-4. If the system appears near a known-good baseline but performance misses the diagnostics threshold from `references/measurement-rules.md` (15% worse than expected), switch from graphics tuning to diagnostics:
-   - manual/external thermal throttling check with tools such as HWiNFO or MSI Afterburner; this skill does not collect temperatures automatically
-   - power plan
-   - installed GPU driver version and whether it is current for AMD/NVIDIA
-   - storage/pagefile
-   - RAM XMP/EXPO
-   - overlays/recording/background apps
-   - PvE/local server load
-
-## Commands To Support In Conversation
-
-- `/baseline`: summarize system readiness and current settings.
-- `/tune-more-fps`: recommend manual changes in priority order.
-- `/troubleshoot-stutter`: focus on RAM/pagefile/storage/background/system risks.
-- `/tune-better-graphics`: only after stable target FPS is reached.
-- `/report-bsg`: prepare a concise support report.
-
-## Response Style
-
-For tuning:
+Read the active goal from `inspect` or `tarkov-skills.exe goal get`. When the user changes the target or quality tradeoff, confirm the values and save them with:
 
 ```text
-Diagnosis:
-<short diagnosis>
-
-Tarkov Readiness:
-Overall expectation:
-<one sentence about whether the active target is realistic and what blocks it>
-
-Component check:
-CPU:      ████████░░  Good
-GPU:      ███████░░░  Target-range
-RAM:      █████░░░░░  Borderline
-Storage:  ████████░░  Good
-Pagefile: ███░░░░░░░  Risky
-
-System position:
-Minimum ───── Entry ───── Target 60 FPS ───── High-end
-                         ▲
-                      Your PC
-
-Note: this is an expectation estimate, not a benchmark score.
-
-Recommended next changes:
-1. <change>
-2. <change>
-3. <change>
-
-Why:
-<short explanation>
-
-After testing:
-Report FPS/stutters on <map> for <time or raid length>.
+tarkov-skills.exe goal set --goal <name> --target-fps <20-360> --quality <text> [--notes <text>]
 ```
 
-For idea validation:
+In web/manual mode, keep the goal in the conversation when the local command cannot be run.
 
-```text
-Verdict: accepted / risky / needs testing / rejected
-Why: <1-2 short reasons>
-Fix: <how to adjust it>
-Skill note: <exact rule to save>
-```
+## Analysis
+
+- Use only `Graphics.ini`, `PostFx.ini`, and graphically relevant `Game.ini` data. Ignore controls and sound.
+- Consider CPU, GPU/VRAM, RAM, game-drive media, pagefile size/media, resolution, and driver version.
+- Suggest only changes that are not already applied.
+- If measured performance is at least 15% below a relevant expectation, switch from ordinary graphics tuning to diagnostics such as throttling, power, RAM configuration, storage, drivers, overlays, and local PvE load.
+- Treat driver currency as a manual check against the GPU vendor's official page.
+
+Use the readiness display and response conventions in `references/configuration-rules.md`. Apply thresholds from `references/measurement-rules.md`.

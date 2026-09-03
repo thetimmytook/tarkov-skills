@@ -1,11 +1,14 @@
 [CmdletBinding()]
-param()
+param(
+    [string] $SourcePath = (Join-Path $PSScriptRoot 'Source\AppIconSource.png'),
+    [string] $AssetsDirectory = (Join-Path $PSScriptRoot 'Assets')
+)
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
-$assetsDirectory = Join-Path $PSScriptRoot 'Assets'
-$sourcePath = Join-Path $PSScriptRoot 'Source\AppIconSource.png'
+$assetsDirectory = [System.IO.Path]::GetFullPath($AssetsDirectory)
+$sourcePath = [System.IO.Path]::GetFullPath($SourcePath)
 New-Item -ItemType Directory -Path $assetsDirectory -Force | Out-Null
 
 if (-not (Test-Path -LiteralPath $sourcePath)) {
@@ -84,8 +87,24 @@ try {
     New-BenchmarkAsset -Path (Join-Path $assetsDirectory 'Wide310x150Logo.png') -Width 310 -Height 150
     New-BenchmarkAsset -Path (Join-Path $assetsDirectory 'AppIcon.png') -Width 256 -Height 256
 
-    $iconSizes = @(16, 24, 32, 48, 64, 128, 256)
-    $iconImages = @($iconSizes | ForEach-Object { Get-IconPngBytes -Size $_ })
+    $iconSizes = @(16, 20, 24, 32, 40, 48, 64, 128, 256)
+    $iconFrames = foreach ($size in $iconSizes) {
+        [pscustomobject]@{
+            Size = $size
+            Bytes = [byte[]](Get-IconPngBytes -Size $size)
+        }
+    }
+    $pngSignature = [byte[]](137, 80, 78, 71, 13, 10, 26, 10)
+    foreach ($frame in $iconFrames) {
+        $bytes = [byte[]]$frame.Bytes
+        $validSignature = $bytes.Length -ge $pngSignature.Length
+        for ($index = 0; $validSignature -and $index -lt $pngSignature.Length; $index++) {
+            $validSignature = $bytes[$index] -eq $pngSignature[$index]
+        }
+        if (-not $validSignature) {
+            throw "ICO frame generation failed for $($frame.Size)x$($frame.Size): expected PNG data, got $($bytes.Length) bytes."
+        }
+    }
     $iconPath = Join-Path $assetsDirectory 'AppIcon.ico'
     $stream = [System.IO.File]::Open($iconPath, [System.IO.FileMode]::Create)
     $writer = [System.IO.BinaryWriter]::new($stream)
@@ -96,8 +115,9 @@ try {
 
         $offset = 6 + (16 * $iconSizes.Count)
         for ($index = 0; $index -lt $iconSizes.Count; $index++) {
-            $size = $iconSizes[$index]
-            $bytes = $iconImages[$index]
+            $frame = $iconFrames[$index]
+            $size = $frame.Size
+            $bytes = [byte[]]$frame.Bytes
             $writer.Write([byte]$(if ($size -eq 256) { 0 } else { $size }))
             $writer.Write([byte]$(if ($size -eq 256) { 0 } else { $size }))
             $writer.Write([byte]0)
@@ -109,8 +129,8 @@ try {
             $offset += $bytes.Length
         }
 
-        foreach ($bytes in $iconImages) {
-            $writer.Write($bytes)
+        foreach ($frame in $iconFrames) {
+            $writer.Write([byte[]]$frame.Bytes)
         }
     }
     finally {

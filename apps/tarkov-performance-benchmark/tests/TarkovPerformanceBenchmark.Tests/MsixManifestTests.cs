@@ -27,5 +27,6 @@ public sealed class MsixManifestTests
         Assert.Equal("tarkov-benchmark.exe", (string?)alias.Attribute("Alias"));
         Assert.Contains("runFullTrust", capabilities);
         Assert.DoesNotContain("unvirtualizedResources", capabilities);
+        Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "PublisherCacheFolders");
     }
 }

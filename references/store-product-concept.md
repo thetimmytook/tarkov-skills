@@ -1,10 +1,10 @@
 # Microsoft Store Product Concept
 
-Status: benchmark prototype and reproducible Store MSIX packaging implemented
+Status: benchmark published; shared Core, shared Benchmark feature, and Toolkit MSIX prototype implemented
 
 ## Product Boundary
 
-Keep agent skills in GitHub and publish one Microsoft Store application: **Tarkov Performance Benchmark**.
+Keep agent skills in GitHub and distribute local executable functionality through two Microsoft Store products:
 
 - Package identity: `TimmyTook.TarkovPerformanceBenchmark`
 - Store ID: `9PJMPQ06JL21`
@@ -12,7 +12,20 @@ Keep agent skills in GitHub and publish one Microsoft Store application: **Tarko
 - Minimum Windows build: 19041
 - Technology: C#, .NET 8, WPF, self-contained packaged desktop application with full trust
 
-The Store application must not install Codex, Claude, or other client-specific skills. Skills call the trusted installed application and contain no executable PowerShell, CMD, EXE, or PresentMon copies.
+The standalone **Tarkov Performance Benchmark** remains the focused manual benchmark/submission product. The separate **Tarkov Performance Toolkit** supplies headless settings/system inspection, capture, and goal memory to local agents, serves web users through its GUI, and hosts the same shared benchmark feature in its Benchmark section.
+
+- Toolkit identity: `TimmyTook.TarkovPerformanceToolkit`
+- Store ID: `9N3L7DZH0K64`
+- Publisher: `CN=55890398-71D9-4366-AF45-568B3BC3A786`
+- Package family name: `TimmyTook.TarkovPerformanceToolkit_kzkg4vyj42m5j`
+- Package SID: `S-1-15-2-599854310-2684056050-4152303614-2218492696-4213724081-2583029688-1534160776`
+- GUI executable: `TarkovPerformanceToolkit.exe`
+- Console alias: `tarkov-skills.exe`
+- Shared collectors and contracts: `src/TarkovSkills.Core/TarkovSkills.Core.csproj`
+- Shared benchmark workflow and UI: `src/TarkovBenchmark.Feature/TarkovBenchmark.Feature.csproj`
+- Each Store package includes private copies of both required DLLs and registers no global library
+
+Neither Store application installs Codex, Claude, or client-specific skills. Skills call trusted installed aliases and contain no PowerShell, CMD, EXE, DLL, or PresentMon copies.
 
 ## Benchmark MVP
 
@@ -28,7 +41,7 @@ The first Store release provides the standalone two-minute benchmark UI. It:
 
 Do not read Tarkov process memory, inject code, provide an overlay, automate input, or interact with anti-cheat systems.
 
-## Skill Contract
+## Standalone Benchmark Contract
 
 Expose a stable application execution alias and command:
 
@@ -36,7 +49,7 @@ Expose a stable application execution alias and command:
 tarkov-benchmark.exe collect --source skill
 ```
 
-The command opens the normal GUI and still requires the user to press Start. After a successful save, it returns a machine-readable summary with the run ID, map, Average FPS, 1% Low, 0.1% Low, P95 frametime, local-save status, and upload status. Skill-initiated sessions close after briefly showing the result; normal Start-menu sessions remain open.
+The command opens the normal GUI and still requires the user to press Start. After a successful save, it returns a machine-readable summary with the run ID, map, Average FPS, 1% Low, 0.1% Low, P95 frametime, local-save status, and upload status. Command-initiated sessions close after briefly showing the result; normal Start-menu sessions remain open. Agent skills use Toolkit's headless `tarkov-skills.exe` commands as their primary local contract instead of opening this UI.
 
 ## PresentMon
 
@@ -72,4 +85,4 @@ The repository builds an unsigned x64 MSIX with the reserved Store identity, bun
 
 Privacy-policy hosting and Partner Center submission remain separate release work. Upload the package manually until the first certification and closed Store test succeed.
 
-Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then use the Microsoft-signed closed Store flight to test installation, alias registration, capture, and shared data visibility under the real distribution identity.
+Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then use the Microsoft-signed closed Store flight to test installation, alias registration, capture, and package-local persistence under the real distribution identity.
