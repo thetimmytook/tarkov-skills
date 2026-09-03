@@ -7,7 +7,7 @@ public sealed class CaptureValidationTests
     [Fact]
     public void RejectsCaptureWhenTarkovExited()
     {
-        var exception = Assert.Throws<IncompleteCaptureException>(() => CaptureValidation.EnsureComplete(Metrics(120), ActiveContext(), true));
+        var exception = Assert.Throws<CaptureDiscardedException>(() => CaptureValidation.EnsureComplete(Metrics(120), ActiveContext(), true));
         Assert.Contains("Tarkov closed", exception.Message);
     }
 
@@ -15,14 +15,14 @@ public sealed class CaptureValidationTests
     public void RejectsCaptureWhenRaidEnded()
     {
         var context = ActiveContext() with { Active = false, EndedAt = DateTime.Now };
-        var exception = Assert.Throws<IncompleteCaptureException>(() => CaptureValidation.EnsureComplete(Metrics(120), context, false));
+        var exception = Assert.Throws<CaptureDiscardedException>(() => CaptureValidation.EnsureComplete(Metrics(120), context, false));
         Assert.Contains("raid ended", exception.Message);
     }
 
     [Fact]
     public void RejectsCaptureThatIsTooShort()
     {
-        var exception = Assert.Throws<IncompleteCaptureException>(() => CaptureValidation.EnsureComplete(Metrics(60), ActiveContext(), false));
+        var exception = Assert.Throws<CaptureDiscardedException>(() => CaptureValidation.EnsureComplete(Metrics(60), ActiveContext(), false));
         Assert.Contains("partial result was discarded", exception.Message);
     }
 

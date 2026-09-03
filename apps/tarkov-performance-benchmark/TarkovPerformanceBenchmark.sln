@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A65C2A64
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TarkovPerformanceBenchmark.Tests", "tests\TarkovPerformanceBenchmark.Tests\TarkovPerformanceBenchmark.Tests.csproj", "{50FC65B6-5666-478F-9272-8A044ECECC26}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TarkovSkills.Core", "..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj", "{214E48F2-E94E-49AB-B1C9-AC8928D9FC49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TarkovBenchmark.Feature", "..\..\src\TarkovBenchmark.Feature\TarkovBenchmark.Feature.csproj", "{5D3D2D27-4632-4138-85F8-BFE5A0DA7E33}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +32,14 @@ Global
 		{50FC65B6-5666-478F-9272-8A044ECECC26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50FC65B6-5666-478F-9272-8A044ECECC26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50FC65B6-5666-478F-9272-8A044ECECC26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{214E48F2-E94E-49AB-B1C9-AC8928D9FC49}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{214E48F2-E94E-49AB-B1C9-AC8928D9FC49}.Debug|Any CPU.Build.0 = Debug|x64
+		{214E48F2-E94E-49AB-B1C9-AC8928D9FC49}.Release|Any CPU.ActiveCfg = Release|x64
+		{214E48F2-E94E-49AB-B1C9-AC8928D9FC49}.Release|Any CPU.Build.0 = Release|x64
+		{5D3D2D27-4632-4138-85F8-BFE5A0DA7E33}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{5D3D2D27-4632-4138-85F8-BFE5A0DA7E33}.Debug|Any CPU.Build.0 = Debug|x64
+		{5D3D2D27-4632-4138-85F8-BFE5A0DA7E33}.Release|Any CPU.ActiveCfg = Release|x64
+		{5D3D2D27-4632-4138-85F8-BFE5A0DA7E33}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5EA05002-87AC-437D-B536-31A6CDA044C6} = {A04158DA-4A1B-4BD0-B872-3F47237ED189}

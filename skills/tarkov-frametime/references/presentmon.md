@@ -1,33 +1,9 @@
-# PresentMon Notes
+# PresentMon Collection
 
-PresentMon is the preferred FPS/frametime capture utility for this skill.
+Tarkov Performance Toolkit bundles the exact PresentMon version tested by this repository. Skills must not search PATH, execute user-provided copies, or instruct the player to download PresentMon separately.
 
-Official download page:
+The Toolkit starts an external ETW trace for the selected duration and targets `EscapeFromTarkov.exe`. It does not read process memory, inject code, automate input, or provide an overlay.
 
-```text
-https://github.com/GameTechDev/PresentMon/releases
-```
+A capture is valid only when Tarkov is running, logs indicate an active raid, the requested duration completes, and enough frame samples are present. Cancellation, raid exit, game exit, capture conflict, or permission failure discards partial data.
 
-Expected local locations, in check order:
-
-- a user-provided path (`-PresentMonPath`)
-- `PresentMon.exe` available on PATH
-- skill/app-local `tools/PresentMon/PresentMon.exe` (portable installation)
-- `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe` (shared skill installation; survives plugin/repo updates)
-
-If PresentMon is missing, give the user these choices:
-
-1. Download from the official GitHub releases page.
-2. Extract/copy `PresentMon.exe` to `%LOCALAPPDATA%\TarkovSkills\tools\PresentMon\PresentMon.exe`.
-3. Provide a custom `PresentMon.exe` path.
-4. Use manual CSV mode only if they already have a CSV export from PresentMon, CapFrameX, or FrameView.
-
-Keep download/install automation explicit. Do not silently download binaries.
-
-## Elevation
-
-PresentMon starts an ETW trace session, which normally requires elevation (or membership in the Performance Log Users group). `capture-presentmon.ps1` first tries without elevation; with `-RequestElevation` it retries once through a Windows UAC prompt after a failed non-elevated attempt. This is the one documented admin exception in this repository (see `AGENTS.md`). Explain the possible permission prompt to the user before capture. CSV parsing never needs elevation.
-
-## CLI Flags
-
-The exact command-line flags may differ between PresentMon releases. `capture-presentmon.ps1` uses a conservative invocation: `-process_name`, `-timed`, `-terminate_after_timed`, `-output_file`. `-terminate_after_timed` matters: without it PresentMon keeps running after the timed capture and the wrapper would wait forever. If the invocation fails on a given release, report the error and ask for manual CSV export.
+Without Toolkit, this skill may interpret an existing CSV export supplied by the user, but it cannot perform automated capture.

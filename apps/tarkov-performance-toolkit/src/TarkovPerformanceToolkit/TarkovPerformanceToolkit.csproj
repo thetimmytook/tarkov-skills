@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>TarkovPerformanceToolkit</AssemblyName>
+    <RootNamespace>TarkovPerformanceToolkit</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <ApplicationIcon>..\..\packaging\Assets\AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\src\TarkovBenchmark.Feature\TarkovBenchmark.Feature.csproj" />
+    <Resource Include="..\..\packaging\Assets\AppIcon.png" Link="Assets\AppIcon.png" />
+    <Content Include="..\..\..\tarkov-performance-benchmark\src\TarkovPerformanceBenchmark\third_party\presentmon\PresentMon.exe" Link="tools\PresentMon\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\tarkov-performance-benchmark\src\TarkovPerformanceBenchmark\third_party\presentmon\LICENSE.txt" Link="tools\PresentMon\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\tarkov-performance-benchmark\src\TarkovPerformanceBenchmark\third_party\presentmon\dependency.json" Link="tools\PresentMon\dependency.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

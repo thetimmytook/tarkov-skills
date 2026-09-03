@@ -1,11 +1,8 @@
 # Codex Agent Notes
 
-Use these notes together with `../SKILL.md`.
+Use these notes together with `../SKILL.md` and the repository `AGENTS.md`.
 
-- Treat this as the orchestrator.
-- Use `tarkov-config` for settings and goal state.
-- Use `tarkov-frametime` for FPS/frametime stats.
-- Use `tarkov-performance-benchmark` only when map/log context and full run JSON are needed.
-- If PresentMon capture is needed and subagents are available, delegate capture immediately.
-- Do not edit EFT config files.
-- Track the last recommended manual change so you can decide keep/revert after the next measurement.
+- Prefer the signed Store application's machine-readable command when local execution is available.
+- In web mode, guide the user through the Toolkit GUI and consume pasted or attached JSON.
+- Do not create, download, or execute unsigned script fallbacks.
+- Keep all EFT interaction read-only and use the language of the conversation.

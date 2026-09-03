@@ -1,10 +1,8 @@
 # Claude Agent Notes
 
-Use these notes together with `../SKILL.md`.
+Inherit the repository `AGENTS.md`, then follow `../SKILL.md`.
 
-- Keep instructions short and sequential.
-- Use the user's language / the language of the conversation.
-- Ask the user to start the scenario before capture, but do not ask what map or mode it is.
-- Treat PresentMon capture as blocking; if the environment supports delegated workers, use one for capture and keep the main conversation free.
-- If capture is blocked, switch calmly to manual CSV export mode.
-- Return the FPS summary plainly and avoid interpreting settings/context.
+- Prefer the signed Store application's machine-readable command when local execution is available.
+- In web mode, guide the user through the Toolkit GUI and consume pasted or attached JSON.
+- Do not create, download, or execute unsigned script fallbacks.
+- Keep all EFT interaction read-only and use the language of the conversation.

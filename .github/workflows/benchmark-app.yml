@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "apps/tarkov-performance-benchmark/**"
+      - "src/TarkovSkills.Core/**"
+      - "src/TarkovBenchmark.Feature/**"
       - "build/check-presentmon-dependency.ps1"
       - "build/build-benchmark-msix.ps1"
       - ".github/workflows/benchmark-app.yml"
@@ -12,6 +14,8 @@ on:
       - main
     paths:
       - "apps/tarkov-performance-benchmark/**"
+      - "src/TarkovSkills.Core/**"
+      - "src/TarkovBenchmark.Feature/**"
       - "build/check-presentmon-dependency.ps1"
       - "build/build-benchmark-msix.ps1"
       - ".github/workflows/benchmark-app.yml"
