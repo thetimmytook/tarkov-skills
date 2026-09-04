@@ -1,157 +1,164 @@
-name: Release
+name: Product release
 
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: "Version bump type"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
+  push:
+    tags:
+      - "benchmark-v*.*.*"
+      - "toolkit-v*.*.*"
+      - "skills-v*.*.*"
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   release:
     runs-on: windows-latest
+    timeout-minutes: 30
+    outputs:
+      product: ${{ steps.release.outputs.product }}
+      store_product_id: ${{ steps.release.outputs.store_product_id }}
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 0
 
-      - name: Bump version in plugin manifest
-        id: bump
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Require a tag on the current main commit
         shell: pwsh
         run: |
-          $manifestPath = ".claude-plugin/plugin.json"
-          $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-          $parts = @($manifest.version -split '\.' | ForEach-Object { [int]$_ })
-          switch ('${{ inputs.bump }}') {
-            'major' { $parts[0]++; $parts[1] = 0; $parts[2] = 0 }
-            'minor' { $parts[1]++; $parts[2] = 0 }
-            default { $parts[2]++ }
-          }
-          $version = $parts -join '.'
-          $manifest.version = $version
-          $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          git fetch origin main --depth=1
+          $main = git rev-parse origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Could not resolve origin/main." }
+          if ($env:GITHUB_SHA -ne $main) { throw "Release tag must point at current main ($main), not $env:GITHUB_SHA." }
 
-      - name: Open and merge version bump PR
-        id: merge
+      - name: Resolve and validate release target
+        id: release
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          $ErrorActionPreference = "Stop"
-
-          # $ErrorActionPreference does not catch failures from native commands
-          # (git, gh): a non-zero exit code alone does not stop the script, so
-          # every step that must succeed is checked explicitly.
-          function Invoke-Checked {
-              param([string]$Description)
-              if ($LASTEXITCODE -ne 0) {
-                  throw "$Description failed with exit code $LASTEXITCODE"
-              }
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -match '^skills-v([0-9]+\.[0-9]+\.[0-9]+)$') {
+            $plugin = Get-Content -Raw .claude-plugin/plugin.json | ConvertFrom-Json
+            if ($plugin.version -ne $Matches[1]) { throw "Tag '$tag' does not match skills version '$($plugin.version)'." }
+            "product=skills" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
           }
-
-          $version = "${{ steps.bump.outputs.version }}"
-          $branch = "chore/release-v$version"
-
-          # main is protected (PR required, no direct push, even for admins), so the
-          # bump lands through a normal PR merge instead of a direct push.
-          git config user.name "thetimmytook"
-          git config user.email "timmytook.channel@gmail.com"
-          git checkout -b $branch
-          Invoke-Checked "git checkout -b $branch"
-          git add .claude-plugin/plugin.json
-          git commit -m "fix # BE # bump version to $version"
-          Invoke-Checked "git commit"
-          git push origin $branch
-          Invoke-Checked "git push $branch"
-
-          gh pr create --base main --head $branch --title "fix # BE # bump version to $version" --body ""
-          Invoke-Checked "gh pr create"
-          gh pr merge $branch --merge --delete-branch
-          Invoke-Checked "gh pr merge"
-
-          git checkout main
-          Invoke-Checked "git checkout main"
-          git pull --ff-only origin main
-          Invoke-Checked "git pull main"
-
-          # Belt-and-braces: refuse to tag/release a commit that does not
-          # actually carry the version bump, even if every command above
-          # reported success.
-          $mergedVersion = (Get-Content -Raw ".claude-plugin/plugin.json" | ConvertFrom-Json).version
-          if ($mergedVersion -ne $version) {
-              throw "main is at version '$mergedVersion' after the merge, expected '$version'. The bump PR was not merged into main; refusing to tag."
-          }
+          $product = if ($tag -like 'benchmark-v*') { 'benchmark' } elseif ($tag -like 'toolkit-v*') { 'toolkit' } else { throw "Unsupported release tag '$tag'." }
+          Import-Module ./build/StoreRelease.psm1 -Force
+          $storeRelease = Assert-StoreRelease -Product $product -RepositoryRoot $env:GITHUB_WORKSPACE -ExpectedTag $tag
+          "product=$product" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "store_product_id=$($storeRelease.StoreProductId)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Verify bundled PresentMon
+        if: steps.release.outputs.product != 'skills'
         shell: pwsh
         run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
 
-      - name: Test applications
-        shell: pwsh
-        run: |
-          dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release
-          if ($LASTEXITCODE -ne 0) { throw "Benchmark tests failed." }
-          dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
-          if ($LASTEXITCODE -ne 0) { throw "Toolkit tests failed." }
+      - name: Test Benchmark
+        if: steps.release.outputs.product == 'benchmark'
+        run: dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release
 
-      - name: Build release archives
+      - name: Test Toolkit
+        if: steps.release.outputs.product == 'toolkit'
+        run: dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
+
+      - name: Build unsigned Benchmark MSIX and portable ZIP
+        if: steps.release.outputs.product == 'benchmark'
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $version = "${{ steps.bump.outputs.version }}"
+          New-Item -ItemType Directory -Force dist, artifacts/msix | Out-Null
+          ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
+          ./build/build-portable.ps1 -Product benchmark -OutputDirectory dist
+
+      - name: Build unsigned Toolkit MSIX and portable ZIP
+        if: steps.release.outputs.product == 'toolkit'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist, artifacts/msix | Out-Null
+          ./build/build-toolkit-msix.ps1 -OutputDirectory artifacts/msix
+          ./build/build-portable.ps1 -Product toolkit -OutputDirectory dist
+
+      - name: Build skills archive
+        if: steps.release.outputs.product == 'skills'
+        shell: pwsh
+        run: |
           New-Item -ItemType Directory -Force dist | Out-Null
+          $tag = $env:GITHUB_REF_NAME
+          $staging = Join-Path $env:RUNNER_TEMP 'tarkov-skills'
+          New-Item -ItemType Directory -Force $staging | Out-Null
+          Copy-Item -Recurse -Path skills -Destination $staging
+          Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
+          Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-$tag.zip"
 
-          ./build/build-portable.ps1 -Version $version -OutputDirectory dist
-
-          $skillsStaging = Join-Path $env:RUNNER_TEMP "tarkov-skills"
-          New-Item -ItemType Directory -Force $skillsStaging | Out-Null
-          Copy-Item -Recurse -Path skills -Destination $skillsStaging
-          Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $skillsStaging
-          Compress-Archive -Path $skillsStaging -DestinationPath "dist/tarkov-skills-codex-$version.zip"
-
-          git archive --format=zip --output "dist/tarkov-skills-source-$version.zip" HEAD
-          if ($LASTEXITCODE -ne 0) { throw "Source archive creation failed." }
-
-      - name: Tag release
+      - name: Build source archive
         shell: pwsh
         run: |
-          $version = "${{ steps.bump.outputs.version }}"
-          git tag "v$version"
-          if ($LASTEXITCODE -ne 0) { throw "Failed to create release tag." }
-          git push origin "v$version"
-          if ($LASTEXITCODE -ne 0) { throw "Failed to push release tag." }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $tag = $env:GITHUB_REF_NAME
+          git archive --format=zip --output "dist/tarkov-skills-source-$tag.zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Source archive creation failed.' }
+
+      - name: Write SHA-256 checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem -LiteralPath dist -File | Sort-Object Name | ForEach-Object {
+            "{0} *{1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          } | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding ascii
+
+      - name: Upload Store submission package
+        if: steps.release.outputs.product != 'skills'
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-submission-${{ steps.release.outputs.product }}
+          path: artifacts/msix/*.msix
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Create GitHub release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $notes = @'
-          ## Install
+          $tag = $env:GITHUB_REF_NAME
+          $product = '${{ steps.release.outputs.product }}'
+          $notes = if ($product -eq 'benchmark') {
+            "[Microsoft Store: Tarkov Performance Benchmark](https://apps.microsoft.com/detail/9PJMPQ06JL21)`n`nPortable builds are self-contained, not Microsoft Store-signed, do not auto-update, and do not register Store execution aliases."
+          } elseif ($product -eq 'toolkit') {
+            "[Microsoft Store: Tarkov Performance Toolkit](https://apps.microsoft.com/detail/9N3L7DZH0K64)`n`nPortable builds are self-contained, not Microsoft Store-signed, do not auto-update, and do not register Store execution aliases."
+          } else { 'Skills-only release.' }
+          $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object { $_.FullName })
+          gh release create $tag @assets --title $tag --notes $notes
 
-          - [Tarkov Performance Toolkit on Microsoft Store](https://apps.microsoft.com/detail/9N3L7DZH0K64)
-          - [Tarkov Performance Benchmark on Microsoft Store](https://apps.microsoft.com/detail/9PJMPQ06JL21)
+  submit-to-store:
+    needs: release
+    if: needs.release.outputs.product != 'skills'
+    runs-on: windows-latest
+    environment: microsoft-store
+    timeout-minutes: 20
+    steps:
+      - name: Download approved unsigned MSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: store-submission-${{ needs.release.outputs.product }}
+          path: store-package
 
-          Microsoft Store is the recommended installation source. Self-contained portable Windows builds and the complete source archive are attached below for users who do not use the Store.
-          '@
-          gh release create "v${{ steps.bump.outputs.version }}" `
-            "dist/TarkovPerformanceBenchmark-${{ steps.bump.outputs.version }}-win-x64.zip" `
-            "dist/TarkovPerformanceToolkit-${{ steps.bump.outputs.version }}-win-x64.zip" `
-            "dist/tarkov-skills-codex-${{ steps.bump.outputs.version }}.zip" `
-            "dist/tarkov-skills-source-${{ steps.bump.outputs.version }}.zip" `
-            --title "v${{ steps.bump.outputs.version }}" `
-            --notes $notes `
-            --generate-notes
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      - name: Submit package to Partner Center
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          STORE_PRODUCT_ID: ${{ needs.release.outputs.store_product_id }}
+        run: |
+          $package = Get-ChildItem -LiteralPath store-package -Filter *.msix -File | Select-Object -First 1
+          if (-not $package) { throw 'The Store submission artifact does not contain an MSIX.' }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore publish store-package --inputFile $package.FullName --appId $env:STORE_PRODUCT_ID
+          if ($LASTEXITCODE -ne 0) { throw 'Partner Center submission failed.' }

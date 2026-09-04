@@ -1,6 +1,6 @@
 # Microsoft Store Product Concept
 
-Status: benchmark published; shared Core, shared Benchmark feature, and Toolkit MSIX prototype implemented
+Status: Benchmark `1.0.3.0` and Toolkit `1.0.0.0` publicly published; shared Core and shared Benchmark feature implemented
 
 ## Product Boundary
 
@@ -83,6 +83,6 @@ The monorepo keeps the application under `apps/tarkov-performance-benchmark/` wi
 
 The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Benchmark history belongs to package `LocalState`; skills use the execution alias and machine-readable output rather than direct file access.
 
-Privacy-policy hosting and Partner Center submission remain separate release work. Upload the package manually until the first certification and closed Store test succeed.
+Privacy-policy hosting and Partner Center submission remain separate release concerns. Both products have passed initial certification and are public. Upload packages manually until an authenticated Store deployment pipeline is deliberately introduced.
 
-Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then use the Microsoft-signed closed Store flight to test installation, alias registration, capture, and package-local persistence under the real distribution identity.
+Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then validate installation, alias registration, capture, and package-local persistence with the Microsoft-signed Store update. Use a closed Store flight when an update needs limited distribution before production.

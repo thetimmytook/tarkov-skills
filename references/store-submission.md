@@ -1,6 +1,13 @@
 # Microsoft Store Submission
 
-Status: first private submission in certification
+Status: both products publicly published
+
+## Published Products
+
+| Product | Store ID | Current public version |
+| --- | --- | --- |
+| Tarkov Performance Benchmark | `9PJMPQ06JL21` | `1.0.3.0` |
+| Tarkov Performance Toolkit | `9N3L7DZH0K64` | `1.0.0.0` |
 
 ## Package
 
@@ -9,6 +16,7 @@ Status: first private submission in certification
 - Identity: `TimmyTook.TarkovPerformanceBenchmark`
 - Package: unsigned x64 MSIX
 - First package version: `1.0.0.0`
+- Current public version: `1.0.3.0`
 - Device family: Windows 10/11 Desktop only
 - Minimum version: Windows build `19041`
 - Do not let Microsoft add future device families automatically.
@@ -19,12 +27,11 @@ Microsoft Store signs the package after certification. Do not use local self-sig
 
 - Markets: all available markets
 - Base price: free (`0`)
-- First submission audience: Private audience
-- Testers: known user group containing personal Microsoft accounts
-- Discoverability: restricted to the private audience
+- Current production audience: Public
+- Discoverability: available in Microsoft Store
 - Publishing hold: publish as soon as certification passes
 
-After the private release passes testing, create a new submission and change the audience to Public. A product submitted to a public audience cannot later be changed back to private.
+Use a package flight with a known-user group when an update needs closed Store validation before broad release. Production submissions remain public.
 
 ## Properties
 
@@ -119,13 +126,13 @@ The capability is used to read Escape from Tarkov graphics settings and log file
 All capture activity is explicitly started by the user. The application does not inject code, read game process memory, automate input, modify game files, install a service, or interact with anti-cheat components. It runs without elevation by default and does not upload data automatically.
 ```
 
-## Private Release Check
+## Store Release Check
 
-Execute and record the manual cases in [`store-release-test-cases.md`](store-release-test-cases.md) before moving the product to a public audience.
+Execute and record the applicable manual cases in [`store-release-test-cases.md`](store-release-test-cases.md) before each production update. Use the full checklist for changes to capture, storage, packaging, permissions, or execution aliases.
 
-After certification and private publishing:
+After certification and publishing:
 
-1. Install from Microsoft Store using an account in the private audience.
+1. Install or update from Microsoft Store.
 2. Verify Start menu launch and single-instance behavior.
 3. Verify the `tarkov-benchmark.exe` execution alias.
 4. Complete a real two-minute PresentMon capture.
@@ -133,3 +140,16 @@ After certification and private publishing:
 6. Verify metrics and context are saved without user-specific paths.
 7. Verify benchmark history is stored in package `LocalState`, survives a Store update, and is exposed to skills only through machine-readable execution-alias output.
 8. Verify no data is uploaded without explicit consent.
+
+## GitHub Deployment Pipeline
+
+Store package versions and release tags are independent per product. The version files under each product's `packaging\store-release.json` are the source of truth and must be updated in the release PR before tagging `main`:
+
+| Product | Tag form | Next approved tag | Next package version |
+| --- | --- | --- | --- |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.4` | `1.0.4.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.1` | `1.0.1.0` |
+
+The tag workflow refuses a tag that does not match its version file or does not point to the current `main` commit. It tests only the tagged product, verifies PresentMon, builds and inspects an unsigned MSIX, creates the matching portable ZIP and GitHub Release, and publishes SHA-256 checksums.
+
+Store submission is a separate `submit-to-store` job protected by the `microsoft-store` GitHub Environment. Configure required reviewers on that Environment and store these Environment secrets there: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. The associated Microsoft Entra application must have the Partner Center Manager role. Approval releases the already-validated MSIX to `msstore publish`; Partner Center then performs Microsoft certification and publishes according to the configured production publishing setting.

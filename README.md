@@ -14,6 +14,11 @@ Install [Tarkov Performance Benchmark](https://apps.microsoft.com/detail/9PJMPQ0
 
 Microsoft Store provides signed packages and automatic updates. Both applications keep results locally and upload nothing without an explicit user action.
 
+Current public Store versions:
+
+- Tarkov Performance Toolkit: `1.0.0.0`
+- Tarkov Performance Benchmark: `1.0.3.0`
+
 ### GitHub Release
 
 Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes self-contained Windows x64 archives for the Toolkit and standalone Benchmark, an agent-skills archive, and a complete source archive. Extract the selected portable application and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.

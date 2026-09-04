@@ -1,12 +1,15 @@
 [CmdletBinding()]
 param(
-    [ValidatePattern('^[1-9][0-9]{0,4}\.[0-9]{1,5}\.[0-9]{1,5}\.0$')] [string] $PackageVersion = '1.0.0.0',
+    [ValidatePattern('^[1-9][0-9]{0,4}\.[0-9]{1,5}\.[0-9]{1,5}\.0$')] [string] $PackageVersion,
     [ValidateSet('Debug', 'Release')] [string] $Configuration = 'Release',
     [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\toolkit-msix')
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+Import-Module (Join-Path $PSScriptRoot 'StoreRelease.psm1') -Force
+$storeRelease = Assert-StoreRelease -Product toolkit -RepositoryRoot $repoRoot -PackageVersion $PackageVersion
+$PackageVersion = $storeRelease.PackageVersion
 $appRoot = Join-Path $repoRoot 'apps\tarkov-performance-toolkit'
 $guiProject = Join-Path $appRoot 'src\TarkovPerformanceToolkit\TarkovPerformanceToolkit.csproj'
 $cliProject = Join-Path $appRoot 'src\TarkovSkills.Cli\TarkovSkills.Cli.csproj'
@@ -35,6 +38,7 @@ function Find-MakeAppx {
 
 New-Item -ItemType Directory -Path $resolvedOutput,$layout -Force | Out-Null
 try {
+    & (Join-Path $PSScriptRoot 'check-presentmon-dependency.ps1') -SkipUpstreamCheck
     $makeAppx = Find-MakeAppx
     foreach ($project in @($guiProject, $cliProject)) {
         Invoke-Checked 'dotnet' @('publish', $project, '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', ('-p:Version=' + ($PackageVersion -replace '\.0$', '')), '-o', $layout)
@@ -44,6 +48,7 @@ try {
     (Get-Content $manifestTemplate -Raw).Replace('__PACKAGE_VERSION__', $PackageVersion) | Set-Content (Join-Path $layout 'AppxManifest.xml') -Encoding utf8
     if (Test-Path $packagePath) { Remove-Item $packagePath -Force }
     Invoke-Checked $makeAppx @('pack', '/d', $layout, '/p', $packagePath, '/o')
+    & (Join-Path $PSScriptRoot 'test-msix-package.ps1') -Product toolkit -PackagePath $packagePath
     Write-Output $packagePath
 }
 finally {
