@@ -8,6 +8,10 @@ on:
       - "src/TarkovBenchmark.Feature/**"
       - "build/check-presentmon-dependency.ps1"
       - "build/build-benchmark-msix.ps1"
+      - "build/StoreRelease.psm1"
+      - "build/test-msix-package.ps1"
+      - "build/test-store-release.ps1"
+      - "apps/tarkov-performance-benchmark/packaging/store-release.json"
       - ".github/workflows/benchmark-app.yml"
   push:
     branches:
@@ -18,7 +22,12 @@ on:
       - "src/TarkovBenchmark.Feature/**"
       - "build/check-presentmon-dependency.ps1"
       - "build/build-benchmark-msix.ps1"
+      - "build/StoreRelease.psm1"
+      - "build/test-msix-package.ps1"
+      - "build/test-store-release.ps1"
+      - "apps/tarkov-performance-benchmark/packaging/store-release.json"
       - ".github/workflows/benchmark-app.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -52,7 +61,7 @@ jobs:
 
       - name: Build Store MSIX
         shell: pwsh
-        run: ./build/build-benchmark-msix.ps1 -PackageVersion 1.0.0.0 -OutputDirectory artifacts/msix
+        run: ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

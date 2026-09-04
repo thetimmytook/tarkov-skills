@@ -1,11 +1,11 @@
 # Microsoft Store Release Test Cases
 
-Use this checklist to validate the Microsoft-signed private Store release before making the product public. Record `Pass`, `Fail`, or `Blocked` for every case and attach a short note for failures.
+Use this checklist to validate Microsoft-signed Store releases and updates. Record `Pass`, `Fail`, or `Blocked` for every applicable case and attach a short note for failures.
 
 ## Preconditions
 
 - Windows 10 build 19041 or later, or Windows 11.
-- Microsoft Store is signed in with a personal Microsoft account from the private audience.
+- Microsoft Store is signed in with a personal Microsoft account. For a closed package flight, the account belongs to its known-user group.
 - The Microsoft-signed Store package is installed.
 - Escape from Tarkov is available for the real-raid capture cases.
 - Record the initial run count shown by the application and, when available, the number of entries in the package-local `benchmark.json` opened through `Open folder`.
@@ -15,7 +15,7 @@ Use this checklist to validate the Microsoft-signed private Store release before
 
 | ID | Test | Expected result |
 | --- | --- | --- |
-| STORE-01 | Acquire the app from its private Store listing. | The authorized account can see and install the app without trusting a local certificate. |
+| STORE-01 | Acquire the app from its public Store listing or assigned closed package flight. | The authorized account can see and install the app without trusting a local certificate. |
 | STORE-02 | Launch the app from the Start menu. | The app opens without UAC, certificate, PowerShell, or console prompts. |
 | STORE-03 | Verify the installed package identity, publisher signature, version, and architecture. | Identity is `TimmyTook.TarkovPerformanceBenchmark`, the package is Microsoft-signed, architecture is x64, and the version matches the submission. |
 | STORE-04 | Launch the app a second time while it is already open. | No second application window is created. |
@@ -88,9 +88,9 @@ Use this checklist to validate the Microsoft-signed private Store release before
 | LIFE-01 | Install a newer Store package over a version that already stores history in package `LocalState`. | Microsoft Store updates the application and preserves benchmark history. |
 | LIFE-02 | Launch the execution alias after an update. | The alias starts the updated Store application. |
 | LIFE-03 | Uninstall and reinstall the Store application. | Installation remains clean and starts with no package-local benchmark history. The UI does not display stale runs from an unpackaged development build. |
-| LIFE-04 | Add another personal Microsoft account to the private-audience known user group. | The account gains access without a new app submission after group membership propagation. |
+| LIFE-04 | For a closed package flight, add another personal Microsoft account to its known-user group. | The account gains access without a new app submission after group membership propagation. |
 
-## Current Private-Flight Observations
+## Recorded Release Observations
 
 Recorded on September 1, 2026:
 

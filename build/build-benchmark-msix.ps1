@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[1-9][0-9]{0,4}\.[0-9]{1,5}\.[0-9]{1,5}\.0$')]
-    [string] $PackageVersion = '1.0.0.0',
+    [string] $PackageVersion,
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
     [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\msix')
@@ -9,6 +9,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+Import-Module (Join-Path $PSScriptRoot 'StoreRelease.psm1') -Force
+$storeRelease = Assert-StoreRelease -Product benchmark -RepositoryRoot $repoRoot -PackageVersion $PackageVersion
+$PackageVersion = $storeRelease.PackageVersion
 $appRoot = Join-Path $repoRoot 'apps\tarkov-performance-benchmark'
 $project = Join-Path $appRoot 'src\TarkovPerformanceBenchmark\TarkovPerformanceBenchmark.csproj'
 $packagingRoot = Join-Path $appRoot 'packaging'
@@ -51,6 +54,7 @@ New-Item -ItemType Directory -Path $resolvedOutput -Force | Out-Null
 New-Item -ItemType Directory -Path $publish -Force | Out-Null
 
 try {
+    & (Join-Path $PSScriptRoot 'check-presentmon-dependency.ps1') -SkipUpstreamCheck
     $makeAppx = Find-MakeAppx
     Invoke-Checked -FilePath 'dotnet' -ArgumentList @(
         'publish', $project,
@@ -69,6 +73,7 @@ try {
 
     if (Test-Path -LiteralPath $packagePath) { Remove-Item -LiteralPath $packagePath -Force }
     Invoke-Checked -FilePath $makeAppx -ArgumentList @('pack', '/d', $publish, '/p', $packagePath, '/o')
+    & (Join-Path $PSScriptRoot 'test-msix-package.ps1') -Product benchmark -PackagePath $packagePath
     Write-Output $packagePath
 }
 finally {
