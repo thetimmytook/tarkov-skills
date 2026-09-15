@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -64,7 +64,7 @@ jobs:
         run: ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tarkov-performance-benchmark-win-x64
           path: artifacts/win-x64
@@ -72,7 +72,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Store MSIX
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tarkov-performance-benchmark-msix
           path: artifacts/msix/*.msix
