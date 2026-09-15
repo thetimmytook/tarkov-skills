@@ -65,7 +65,7 @@ ChatGPT web cannot run the local Toolkit command directly. Open Tarkov Performan
 
 Attaching a `SKILL.md` file to one chat can provide temporary instructions, but ChatGPT treats it as ordinary chat context rather than an installed skill. Use this only for development while the plugin is not yet listed.
 
-The publication checklist is maintained in [references/chatgpt-plugin-publication.md](references/chatgpt-plugin-publication.md).
+The ChatGPT and Claude publication checklists are maintained in [references/chatgpt-plugin-publication.md](references/chatgpt-plugin-publication.md) and [references/claude-plugin-publication.md](references/claude-plugin-publication.md).
 
 ### Manual and other agents
 

@@ -17,6 +17,10 @@ jobs:
         shell: pwsh
         run: ./build/sync-skills.ps1 -Check
 
+      - name: Validate clean skills-only plugin archive
+        shell: pwsh
+        run: ./build/build-skills-plugin.ps1 -OutputDirectory artifacts/skills-plugin
+
       - name: Validate independent Store release versions
         shell: pwsh
         run: ./build/test-store-release.ps1

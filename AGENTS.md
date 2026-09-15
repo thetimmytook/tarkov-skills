@@ -8,6 +8,7 @@ This repository contains Escape from Tarkov performance skills and signed Micros
 - `src/TarkovSkills.Core/` - shared read-only C# collectors and JSON contracts used by both Store products.
 - `src/TarkovBenchmark.Feature/` - the single shared WPF benchmark workflow and UI hosted by both Store products.
 - Skills contain instructions and references only. They do not ship scripts, executables, DLLs, or PresentMon.
+- Keep every skill and Skills-only directory package clean: include only instructions, references, assets, and declarative metadata. Distribute all binaries, application packages, archives, and executable scripts as separate application artifacts; never embed them in a skill bundle.
 - `references/measurement-rules.md` - master copy of the benchmark rules; skill copies are vendored from it.
 - `build/sync-map.json` and `build/sync-skills.ps1` - reference vendoring manifest and sync script; CI fails when copies drift from their masters.
 - `apps/tarkov-performance-benchmark/` - standalone benchmark/submission Store product.
@@ -96,6 +97,7 @@ Store-owned goal memory, reports, captures, and benchmark runs live under each p
 - Keep `SKILL.md` focused on the agent workflow.
 - Avoid extra docs beyond `README.md` unless they are directly useful to agents.
 - Publish the existing Claude-compatible bundle to ChatGPT as a **Skills only** plugin; do not add an MCP server merely to distribute these skills. Keep the reproducible preparation, review, and post-publication process in `references/chatgpt-plugin-publication.md`.
+- Keep the Claude directory preparation and review process in `references/claude-plugin-publication.md`. Do not describe GitHub marketplace installation or private organization sharing as publication in Anthropic's public directory.
 - The ChatGPT web workflow must work from user-pasted or attached Toolkit output and must never claim local computer access. GitHub marketplace installation is for Codex or Claude; public ChatGPT users install the reviewed plugin from OpenAI's universal Plugins Directory.
 
 ## Benchmarking Principles

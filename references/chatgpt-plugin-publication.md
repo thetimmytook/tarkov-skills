@@ -27,6 +27,14 @@ Official references:
 - [ ] Exclude repository-only build files, app binaries, Store packages, capture data, and agent-specific notes that are not required by the skills.
 - [ ] Validate the final ZIP by extracting it into a clean directory and checking every referenced file.
 
+Build the dedicated archive with:
+
+```powershell
+.\build\build-skills-plugin.ps1
+```
+
+The script reads the version from `.claude-plugin/plugin.json` and writes a clean, provider-neutral upload artifact under `artifacts/skills-plugin/`. The same archive can be uploaded to Claude or imported by the ChatGPT submission portal.
+
 ## OpenAI Account Setup
 
 - [ ] Choose the OpenAI Platform organization that will own the plugin.

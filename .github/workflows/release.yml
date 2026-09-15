@@ -92,6 +92,7 @@ jobs:
           Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
           $version = $tag -replace '^skills-v', ''
           Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-$version.zip"
+          ./build/build-skills-plugin.ps1 -OutputDirectory dist
 
       - name: Build source archive
         shell: pwsh
