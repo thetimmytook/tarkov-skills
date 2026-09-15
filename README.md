@@ -69,7 +69,7 @@ The publication checklist is maintained in [references/chatgpt-plugin-publicatio
 
 ### Manual and other agents
 
-Download the `tarkov-skills-codex-<version>.zip` archive from a GitHub Release and unpack it, or use a repository clone. This is a fallback for clients without marketplace support and for development. `AGENTS.md` and the per-skill `agents/` notes drive agent behavior. Skills contain instructions only and can be installed independently.
+Download the `tarkov-skills-<version>.zip` archive from a GitHub Release and unpack it, or use a repository clone. This is a fallback for clients without marketplace support and for development. `AGENTS.md` and the per-skill `agents/` notes drive agent behavior. Skills contain instructions only and can be installed independently.
 
 ## Build From Source
 

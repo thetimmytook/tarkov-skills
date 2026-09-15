@@ -115,6 +115,7 @@ Store-owned goal memory, reports, captures, and benchmark runs live under each p
 - Use commit message format: `feat|fix # UI | BE # Description`.
 - Commit only as the repository author/user configured in Git. Do not add tool names, bot names, generated-by attribution text, or co-author trailers to commit messages, PR text, release notes, or other repository metadata unless the user explicitly asks.
 - Do not rewrite history or discard user changes.
+- Do not wait for or poll GitHub Actions, pull-request checks, Store certification, publication, or other remote jobs unless the user explicitly asks. After starting a remote job, return its link and current status immediately.
 - Keep generated capture data, temporary outputs, and run results out of Git unless the user asks to version examples.
 - When creating or editing a PR body from PowerShell, pass multiline Markdown through a here-string variable (`@' ... '@`), not literal `\n` escapes. Verify the rendered body afterward with `gh pr view <number> --json body --jq .body`.
 - Keep commit messages and PR descriptions focused on the change summary. Do not add generic `Verification`/`Testing` sections or command lists unless the user asks for them or a meaningful test limitation needs disclosure.

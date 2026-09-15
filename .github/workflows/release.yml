@@ -18,11 +18,11 @@ jobs:
       product: ${{ steps.release.outputs.product }}
       store_product_id: ${{ steps.release.outputs.store_product_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -90,14 +90,16 @@ jobs:
           New-Item -ItemType Directory -Force $staging | Out-Null
           Copy-Item -Recurse -Path skills -Destination $staging
           Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
-          Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-$tag.zip"
+          $version = $tag -replace '^skills-v', ''
+          Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-$version.zip"
 
       - name: Build source archive
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           $tag = $env:GITHUB_REF_NAME
-          git archive --format=zip --output "dist/tarkov-skills-source-$tag.zip" HEAD
+          $archiveTag = if ($tag -like 'skills-v*') { $tag -replace '^skills-v', '' } else { $tag }
+          git archive --format=zip --output "dist/tarkov-skills-source-$archiveTag.zip" HEAD
           if ($LASTEXITCODE -ne 0) { throw 'Source archive creation failed.' }
 
       - name: Write SHA-256 checksums
@@ -109,7 +111,7 @@ jobs:
 
       - name: Upload Store submission package
         if: steps.release.outputs.product != 'skills'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: store-submission-${{ steps.release.outputs.product }}
           path: artifacts/msix/*.msix
@@ -139,13 +141,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Download approved unsigned MSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: store-submission-${{ needs.release.outputs.product }}
           path: store-package
 
       - name: Install Microsoft Store publisher
-        uses: microsoft/microsoft-store-apppublisher@v1.1
+        uses: microsoft/microsoft-store-apppublisher@v1.4
 
       - name: Submit package to Partner Center
         shell: pwsh
