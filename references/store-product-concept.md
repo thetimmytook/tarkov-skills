@@ -41,6 +41,18 @@ The first Store release provides the standalone two-minute benchmark UI. It:
 
 Do not read Tarkov process memory, inject code, provide an overlay, automate input, or interact with anti-cheat systems.
 
+### Expanded Local Hardware Details (Future Benchmark Work)
+
+Extend the shared Benchmark system collector to retain useful hardware context with each completed local run. Collect what Windows reports reliably; unavailable or ambiguous values remain `unknown`. This is a separate implementation task. Public submission fields, detail-page presentation, and privacy review will be decided before any of these additional fields are uploaded.
+
+- **CPU:** retain the detected model, core/thread counts, and reported maximum clock. A current clock reading is only a snapshot; never label it as the frequency sustained during the FPS capture. Do not add continuous hardware sensor sampling solely for this feature.
+- **RAM:** retain total capacity and, per module, capacity, manufacturer, sanitized part/model number, memory type, and configured speed. Preserve module configuration rather than presenting total capacity as the whole story. Do not claim to know memory timings or the active channel mode from fields that do not report them.
+- **GPU:** retain the detected GPU name/model, chip vendor, VRAM, and driver version. Investigate Windows PCI device/subsystem IDs to identify the board vendor and, where an offline lookup has an unambiguous match, the board model. A subsystem ID or lookup result must not be treated as proof of a precise retail SKU when multiple variants share it. Keep raw hardware/device/instance IDs out of saved and shareable run records; store only a sanitized resolved label and its confidence, or `unknown`.
+- **Game storage:** identify the volume holding Tarkov and retain its storage media type, reported physical-disk model and bus type where mapping is reliable, plus total/free space at capture time. Do not label interface specifications or a disk model's advertised speed as measured read/write throughput. A real storage-speed benchmark would require separate design and consent.
+- **Pagefile:** retain its allocated size and whether its backing storage is SSD, HDD, or unknown; current/peak usage and backing-disk details may be retained locally if reliable and useful for later analysis. Support multiple pagefiles. Never save or publish their local paths or drive letters.
+
+Apply explicit field selection and sanitization before persistence or sharing. Never include serial numbers, raw PCI/PnP identifiers, machine IDs, host/user names, or local paths in benchmark artifacts. Check Windows-reported values on varied systems, including laptops, multiple GPUs/disks, and missing WMI/Storage data. These details are context for individual runs, not additional mandatory keys for the initial CPU/GPU/RAM-capacity search grouping. Do not upload them automatically; publication still requires the user's explicit review and consent.
+
 ## Standalone Benchmark Contract
 
 Expose a stable application execution alias and command:
@@ -59,13 +71,7 @@ Attempt ETW capture without elevation first. If Windows denies access, the futur
 
 ## Future Result Comparison
 
-A completed benchmark must eventually explain what the run means, not only display isolated FPS numbers. After a run, show the user's position within a comparable submitted cohort using a clear percentile/distribution chart for Average FPS, 1% Low, 0.1% Low, and P95 frametime.
-
-- Compare like-for-like results by map, resolution, execution type, and broadly comparable hardware/settings where sample size permits.
-- Show the cohort definition and sample count next to the chart. Do not present a precise rank when the cohort is too small or poorly matched.
-- Keep the local result useful before upload. Fetch or display community comparison data only after the user explicitly consents to the relevant network action.
-- Use a backend API or periodically published aggregate dataset for comparisons. The temporary Google Form is collection-only and is not a runtime data source for the application.
-- Prefer a distribution/percentile view over a competitive leaderboard. The purpose is diagnosis and expectation-setting, not encouraging unsafe tuning.
+A completed benchmark must eventually explain what the run means, not only display isolated FPS numbers. The agreed design for the Benchmark screen, public search, submission, and backend contract is in [community-benchmark-design.md](community-benchmark-design.md). Its two lower tabs are **Diff** (local comparison with previous runs) and **Position** (consented comparison with community runs). The temporary Google Form is collection-only and is not a runtime data source for the application.
 
 ### Tuned Hardware
 
