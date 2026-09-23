@@ -27,6 +27,19 @@ The standalone **Tarkov Performance Benchmark** remains the focused manual bench
 
 Neither Store application installs Codex, Claude, or client-specific skills. Skills call trusted installed aliases and contain no PowerShell, CMD, EXE, DLL, or PresentMon copies.
 
+### Desktop authentication
+
+Both products share a Clerk public-client OAuth implementation in Core and a shared
+account UI in `TarkovBenchmark.Feature`. Each product supplies its own issuer/client
+configuration. System-browser authorization uses S256 PKCE, state validation and a
+one-time IPv4 loopback callback. Credentials use Windows CurrentUser DPAPI in each
+package's local state, additionally bound to product, issuer and client. Desktop
+logout revokes the desktop grant without logging out the browser session.
+
+Authentication is independent of collection, aliases, history and the existing Google
+Form flow. Neither authentication nor the local `submitted` flag establishes publication
+in a future backend. This phase adds no publication or owner API calls.
+
 ## Benchmark MVP
 
 The first Store release provides the standalone two-minute benchmark UI. It:
