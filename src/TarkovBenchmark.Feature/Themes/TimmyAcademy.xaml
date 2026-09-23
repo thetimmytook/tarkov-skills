@@ -413,5 +413,3 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style></ResourceDictionary>
-
-
