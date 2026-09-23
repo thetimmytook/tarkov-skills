@@ -14,6 +14,7 @@
     <PublishTrimmed>false</PublishTrimmed>
     <ApplicationIcon>..\..\packaging\Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+  <Import Project="..\..\..\..\build\StoreProductVersion.props" />
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj" />
     <Content Include="..\..\..\tarkov-performance-benchmark\src\TarkovPerformanceBenchmark\third_party\presentmon\PresentMon.exe" Link="tools\PresentMon\PresentMon.exe" CopyToOutputDirectory="PreserveNewest" />

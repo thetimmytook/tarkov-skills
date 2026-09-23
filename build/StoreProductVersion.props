@@ -1,0 +1,13 @@
+<Project>
+  <!-- Imported only by product executables. Shared libraries have no product version. -->
+  <PropertyGroup>
+    <_StoreReleaseFile>$(MSBuildProjectDirectory)/../../packaging/store-release.json</_StoreReleaseFile>
+    <_StoreReleaseJson>$([System.IO.File]::ReadAllText('$(_StoreReleaseFile)'))</_StoreReleaseJson>
+    <_StoreProductVersion>$([System.Text.RegularExpressions.Regex]::Match('$(_StoreReleaseJson)', '&quot;packageVersion&quot;\s*:\s*&quot;([1-9][0-9]*\.[0-9]+\.[0-9]+)\.0&quot;').Groups[1].Value)</_StoreProductVersion>
+    <Version>$(_StoreProductVersion)</Version>
+  </PropertyGroup>
+  <Target Name="ValidateStoreProductVersion" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(_StoreProductVersion)' == ''" Text="Invalid packageVersion in $(_StoreReleaseFile). Expected major.minor.patch.0 with a nonzero major version." />
+    <Error Condition="'$(Version)' != '$(_StoreProductVersion)'" Text="Version $(Version) differs from store-release.json ($(_StoreProductVersion)). Update the release manifest instead of overriding the product version." />
+  </Target>
+</Project>

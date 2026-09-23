@@ -18,7 +18,7 @@
       <TextBlock x:Name="StatusDetailText" Text="No performance data is sent automatically." Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" TextWrapping="Wrap"/>
     </StackPanel>
 
-    <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="18">
+    <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
       <Grid>
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
         <StackPanel>
@@ -37,7 +37,7 @@
       </Grid>
     </Border>
 
-    <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="18">
+    <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
       <Grid>
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -48,10 +48,10 @@
           <Button x:Name="SubmitButton" Content="Submit" Padding="12,5" Margin="8,0,0,0" Style="{StaticResource PrimaryButton}" IsEnabled="False" Click="Submit_Click"/>
         </StackPanel>
         <UniformGrid Grid.Row="1" Grid.ColumnSpan="2" Columns="4" Margin="0,16,0,0">
-          <StackPanel><TextBlock Text="Average FPS" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="AverageFpsText" Text="—" FontSize="22" Margin="0,5,0,0"/></StackPanel>
-          <StackPanel><TextBlock Text="1% Low" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="OneLowText" Text="—" FontSize="22" Margin="0,5,0,0"/></StackPanel>
-          <StackPanel><TextBlock Text="0.1% Low" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="PointOneLowText" Text="—" FontSize="22" Margin="0,5,0,0"/></StackPanel>
-          <StackPanel><TextBlock Text="P95 frametime" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="P95Text" Text="—" FontSize="22" Margin="0,5,0,0"/></StackPanel>
+          <StackPanel><TextBlock Text="Average FPS" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="AverageFpsText" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
+          <StackPanel><TextBlock Text="1% Low" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="OneLowText" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
+          <StackPanel><TextBlock Text="0.1% Low" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="PointOneLowText" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
+          <StackPanel><TextBlock Text="P95 frametime" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="P95Text" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
         </UniformGrid>
       </Grid>
     </Border>

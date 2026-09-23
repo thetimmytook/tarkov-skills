@@ -1,4 +1,4 @@
-<Window x:Class="TarkovPerformanceBenchmark.MainWindow"
+<Window Style="{StaticResource AcademyWindow}" x:Class="TarkovPerformanceBenchmark.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Tarkov Performance Benchmark" Icon="Assets/AppIcon.png"
