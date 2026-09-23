@@ -15,6 +15,7 @@
     <PublishTrimmed>false</PublishTrimmed>
     <ApplicationIcon>..\..\packaging\Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+  <Import Project="..\..\..\..\build\StoreProductVersion.props" />
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj" />
     <ProjectReference Include="..\..\..\..\src\TarkovBenchmark.Feature\TarkovBenchmark.Feature.csproj" />

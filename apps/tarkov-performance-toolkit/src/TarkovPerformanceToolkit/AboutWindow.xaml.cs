@@ -5,7 +5,11 @@ namespace TarkovPerformanceToolkit;
 
 public partial class AboutWindow : Window
 {
-    public AboutWindow() => InitializeComponent();
+    public AboutWindow()
+    {
+        InitializeComponent();
+        VersionText.Text = $"Version {typeof(AboutWindow).Assembly.GetName().Version?.ToString(3) ?? "unknown"}";
+    }
     private void GitHub_Click(object sender, RoutedEventArgs e) => Open("https://github.com/thetimmytook/tarkov-skills");
     private void Privacy_Click(object sender, RoutedEventArgs e) => Open("https://github.com/thetimmytook/tarkov-skills/blob/main/PRIVACY.md");
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

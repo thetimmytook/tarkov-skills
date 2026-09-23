@@ -8,7 +8,6 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>TarkovPerformanceBenchmark</AssemblyName>
     <RootNamespace>TarkovPerformanceBenchmark</RootNamespace>
-    <Version>0.1.0</Version>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -17,6 +16,8 @@
     <PublishTrimmed>false</PublishTrimmed>
     <ApplicationIcon>..\..\packaging\Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <Import Project="..\..\..\..\build\StoreProductVersion.props" />
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj" />
