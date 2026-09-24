@@ -1,0 +1,26 @@
+<UserControl x:Class="TarkovBenchmark.Feature.Authentication.AccountView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{StaticResource TextBrush}">
+  <UserControl.Resources>
+    <BooleanToVisibilityConverter x:Key="BooleanVisibility"/>
+  </UserControl.Resources>
+  <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+          BorderThickness="1" CornerRadius="8" Padding="14,10">
+    <Grid>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding Detail}" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+      </StackPanel>
+      <WrapPanel Grid.Column="1" MaxWidth="190" VerticalAlignment="Center" HorizontalAlignment="Right">
+        <Button Content="Sign in" IsEnabled="{Binding CanSignIn}" Click="SignIn_Click" Padding="12,5" Margin="0,2,6,2"/>
+        <Button Content="Sign out" IsEnabled="{Binding CanSignOut}" Click="SignOut_Click" Padding="12,5" Margin="0,2,0,2"/>
+        <Button Content="Retry" Visibility="{Binding CanRetry, Converter={StaticResource BooleanVisibility}}"
+                Click="Retry_Click" Padding="12,5" Margin="0,2,6,2"/>
+        <Button Content="Cancel sign-in" Visibility="{Binding CanCancel, Converter={StaticResource BooleanVisibility}}"
+                Click="Cancel_Click" Padding="12,5" Margin="0,2,0,2"/>
+      </WrapPanel>
+    </Grid>
+  </Border>
+</UserControl>

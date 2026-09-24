@@ -30,14 +30,25 @@ Neither Store application installs Codex, Claude, or client-specific skills. Ski
 ### Desktop authentication
 
 Both products share a Clerk public-client OAuth implementation in Core and a shared
-account UI in `TarkovBenchmark.Feature`. Each product supplies its own issuer/client
-configuration. System-browser authorization uses S256 PKCE, state validation and a
-one-time IPv4 loopback callback. Credentials use Windows CurrentUser DPAPI in each
-package's local state, additionally bound to product, issuer and client. Desktop
-logout revokes the desktop grant without logging out the browser session.
+account UI in `TarkovBenchmark.Feature`. Both products share one issuer/client ID per
+environment. Development configuration is local and ignored; production configuration
+is versioned and required for Release builds and both MSIX packages. System-browser
+authorization uses S256 PKCE, state validation and a
+one-time IPv4 loopback callback. Consent remains enabled. Both products share one
+credential encrypted with Windows CurrentUser DPAPI and bound to issuer and client.
+MSIX packages use the declared `TarkovDesktopAuth` publisher cache folder; portable
+builds share a separate user-local auth directory. Desktop logout in either product
+revokes the shared grant for both, without logging out the browser session.
 
-Authentication is independent of collection, aliases, history and the existing Google
-Form flow. Neither authentication nor the local `submitted` flag establishes publication
+Authentication starts only when Submit is chosen. The shared Submit dialog restores
+the credential before opening a browser, provides Sign in / Sign out / Retry, and
+requires an explicit Open form action after sign-in. No permanent login banner is
+shown on the ordinary collection or inspection screens.
+See `references/desktop-auth.md` for migration and the manual test checkpoint.
+
+Authentication does not affect collection, aliases or history. The existing Google
+Form opens after the new sign-in gate; submission remains manual. Neither
+authentication nor the local `submitted` flag establishes publication
 in a future backend. This phase adds no publication or owner API calls.
 
 ## Benchmark MVP

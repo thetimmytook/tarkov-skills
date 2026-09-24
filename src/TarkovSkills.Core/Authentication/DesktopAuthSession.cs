@@ -5,10 +5,17 @@ namespace TarkovSkills.Core.Authentication;
 // Public results contain no tokens, provider error bodies or identity claims.
 public enum DesktopAuthStatus
 {
-    SignedOut, SignedIn, SignInRequired, Unavailable, Canceled, RevocationPending, StorageUnavailable
+    SignedOut, SignedIn, SignInRequired, Unavailable, Canceled, RevocationPending, StorageUnavailable, Busy
 }
 
-public sealed class DesktopAuthSession : IDisposable
+public interface IDesktopAuthSession : IDisposable
+{
+    Task<DesktopAuthStatus> RestoreAsync(CancellationToken cancellation = default);
+    Task<DesktopAuthStatus> SignInAsync(CancellationToken cancellation = default);
+    Task<DesktopAuthStatus> SignOutAsync(CancellationToken cancellation = default);
+}
+
+public sealed class DesktopAuthSession : IDesktopAuthSession
 {
     private readonly AuthConfiguration config;
     private readonly IDesktopAuthAdapter adapter;
@@ -28,7 +35,7 @@ public sealed class DesktopAuthSession : IDisposable
         try
         {
             return new(configuration, new ClerkDesktopAdapter(configuration, http, TimeProvider.System),
-                new CredentialStore(configuration, Path.Combine(AppPaths.DataDirectory, "auth", configuration.Product.ToString())),
+                new CredentialStore(configuration, CredentialStore.SharedDirectory),
                 TimeProvider.System, uri =>
                 {
                     using var process = Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
@@ -54,7 +61,10 @@ public sealed class DesktopAuthSession : IDisposable
 
     // Used on startup and periodically by the shared UI. It never opens the browser.
     // A restored local grant is not a verified backend account or publication permission.
-    public Task<DesktopAuthStatus> RestoreAsync(CancellationToken cancellation = default) => RunAsync(async () =>
+    public Task<DesktopAuthStatus> RestoreAsync(CancellationToken cancellation = default) =>
+        RunAsync(() => RestoreCoreAsync(cancellation), cancellation);
+
+    private async Task<DesktopAuthStatus> RestoreCoreAsync(CancellationToken cancellation)
     {
         var credential = store.Load();
         if (credential is null) return DesktopAuthStatus.SignedOut;
@@ -70,13 +80,13 @@ public sealed class DesktopAuthSession : IDisposable
             store.Clear();
             return DesktopAuthStatus.SignInRequired;
         }
-    }, cancellation);
+    }
 
     public Task<DesktopAuthStatus> SignInAsync(CancellationToken cancellation = default) => RunAsync(async () =>
     {
         var previous = store.Load();
         if (previous is not null)
-            return previous.RevocationPending ? DesktopAuthStatus.RevocationPending : DesktopAuthStatus.Unavailable;
+            return await RestoreCoreAsync(cancellation);
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         timeout.CancelAfter(TimeSpan.FromMinutes(3));
@@ -132,16 +142,31 @@ public sealed class DesktopAuthSession : IDisposable
             await gate.WaitAsync(cancellation);
             try
             {
-                using var lease = store.AcquireLease();
+                using var lease = await AcquireLeaseAsync(cancellation);
                 return await operation();
             }
             finally { gate.Release(); }
         }
         catch (OperationCanceledException) { return DesktopAuthStatus.Canceled; }
+        catch (CredentialStoreBusy) { return DesktopAuthStatus.Busy; }
         catch (IOException) { return DesktopAuthStatus.StorageUnavailable; }
         catch (UnauthorizedAccessException) { return DesktopAuthStatus.StorageUnavailable; }
         catch (System.Security.Cryptography.CryptographicException) { return DesktopAuthStatus.StorageUnavailable; }
         catch { return DesktopAuthStatus.Unavailable; }
+    }
+
+    private async Task<IDisposable> AcquireLeaseAsync(CancellationToken cancellation)
+    {
+        var wait = Stopwatch.StartNew();
+        while (true)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            try { return store.AcquireLease(); }
+            catch (CredentialStoreBusy) when (wait.Elapsed < TimeSpan.FromSeconds(5))
+            {
+                await Task.Delay(100, cancellation);
+            }
+        }
     }
 
     // The host cancels and awaits pending operations before disposal.

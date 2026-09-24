@@ -23,17 +23,29 @@ internal interface ICredentialStore
 
 internal sealed class CredentialStore : ICredentialStore
 {
+    internal const string SharedFolderName = "TarkovDesktopAuth";
     private readonly string file;
     private readonly byte[] entropy;
 
     public CredentialStore(AuthConfiguration config, string directory)
     {
         Directory.CreateDirectory(directory);
-        entropy = SHA256.HashData(Encoding.UTF8.GetBytes(config.Product + "\n" + config.Issuer + "\n" + config.ClientId));
+        entropy = SHA256.HashData(Encoding.UTF8.GetBytes("TarkovDesktopAuth.v1\n" + config.Issuer + "\n" + config.ClientId));
         file = Path.Combine(directory, Convert.ToHexString(entropy) + ".credential");
     }
 
-    public IDisposable AcquireLease() => new FileStream(file + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+    internal static string SharedDirectory => AppPaths.GetPackageFamilyName() is null
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TarkovSkills", "shared-auth-v1")
+        : Windows.Storage.ApplicationData.Current.GetPublisherCacheFolder(SharedFolderName).Path;
+
+    public IDisposable AcquireLease()
+    {
+        try { return new FileStream(file + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+        catch (IOException error) when ((error.HResult & 0xffff) is 32 or 33)
+        {
+            throw new CredentialStoreBusy();
+        }
+    }
 
     public DesktopCredential? Load()
     {
@@ -79,3 +91,5 @@ internal sealed class CredentialStore : ICredentialStore
 
     public void Clear() => File.Delete(file);
 }
+
+internal sealed class CredentialStoreBusy : IOException { }

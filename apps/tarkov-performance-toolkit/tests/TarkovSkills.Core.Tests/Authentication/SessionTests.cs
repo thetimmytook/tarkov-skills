@@ -126,6 +126,96 @@ public sealed class SessionTests
     private static DesktopAuthSession Session(MemoryStore store, Adapter adapter) =>
         new(Config, adapter, store, new Clock(), _ => throw new Xunit.Sdk.XunitException("Unexpected browser launch"));
 
+    [Fact]
+    public async Task TwoProductsShareRestoreConcurrentRefreshPendingRevocationAndLogout()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "tarkov-shared-auth-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var toolkitConfig = new AuthConfiguration(Config.Issuer, Config.ClientId, DesktopAuthProduct.Toolkit);
+            var benchmarkStore = new CredentialStore(Config, directory);
+            var toolkitStore = new CredentialStore(toolkitConfig, directory);
+            var adapter = new Adapter();
+            Action<Uri> noBrowser = _ => throw new Xunit.Sdk.XunitException("Unexpected browser launch");
+            using var benchmark = new DesktopAuthSession(Config, adapter, benchmarkStore, new Clock(), noBrowser);
+            using var toolkit = new DesktopAuthSession(toolkitConfig, adapter, toolkitStore, new Clock(), noBrowser);
+            benchmarkStore.Save(Credential(expired: true));
+            var states = await Task.WhenAll(benchmark.RestoreAsync(), toolkit.RestoreAsync());
+            Assert.All(states, state => Assert.Equal(DesktopAuthStatus.SignedIn, state));
+            Assert.Equal(1, adapter.Refreshes);
+            // A stale Sign in button in the other app must reuse the saved grant.
+            Assert.Equal(DesktopAuthStatus.SignedIn, await toolkit.SignInAsync());
+            adapter.RevokeError = new HttpRequestException("fixture-outage");
+            Assert.Equal(DesktopAuthStatus.RevocationPending, await toolkit.SignOutAsync());
+            Assert.Equal(DesktopAuthStatus.RevocationPending, await benchmark.RestoreAsync());
+            Assert.Equal(DesktopAuthStatus.RevocationPending, await benchmark.SignInAsync());
+            adapter.RevokeError = null;
+            Assert.Equal(DesktopAuthStatus.SignedOut, await benchmark.SignOutAsync());
+            Assert.Equal(DesktopAuthStatus.SignedOut, await toolkit.RestoreAsync());
+            // No fallback to old per-product files can resurrect the signed-out session.
+            Assert.Null(benchmarkStore.Load());
+            Assert.Null(toolkitStore.Load());
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
+    public async Task WaitingForOtherAppLeaseCanBeCanceledAndDoesNotOpenBrowser()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "tarkov-shared-auth-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new CredentialStore(Config, directory);
+            using var lease = store.AcquireLease();
+            using var session = new DesktopAuthSession(Config, new Adapter(), store, new Clock(),
+                _ => throw new Xunit.Sdk.XunitException("Unexpected browser launch"));
+            using var cancellation = new CancellationTokenSource();
+            var waiting = session.SignInAsync(cancellation.Token);
+            Assert.False(waiting.IsCompleted);
+            cancellation.Cancel();
+            Assert.Equal(DesktopAuthStatus.Canceled, await waiting);
+            Assert.Null(store.Load());
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
+    public async Task ConcurrentProductLoginsOpenOnlyOneBrowserAndBothRestoreAfterRestart()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "tarkov-shared-auth-test-" + Guid.NewGuid().ToString("N"));
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        try
+        {
+            var toolkitConfig = new AuthConfiguration(Config.Issuer, Config.ClientId, DesktopAuthProduct.Toolkit);
+            var adapter = new Adapter();
+            var browserOpened = new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var browserCount = 0;
+            void OpenBrowser(Uri uri) { Interlocked.Increment(ref browserCount); browserOpened.TrySetResult(uri); }
+            using (var benchmark = new DesktopAuthSession(Config, adapter, new CredentialStore(Config, directory), new Clock(), OpenBrowser))
+            using (var toolkit = new DesktopAuthSession(toolkitConfig, adapter, new CredentialStore(toolkitConfig, directory), new Clock(), OpenBrowser))
+            {
+                var first = benchmark.SignInAsync(cancellation.Token);
+                var uri = await browserOpened.Task.WaitAsync(cancellation.Token);
+                var second = toolkit.SignInAsync(cancellation.Token);
+                Assert.False(second.IsCompleted);
+                var query = QueryHelpers.ParseQuery(uri.Query);
+                using var http = new HttpClient();
+                await http.GetStringAsync(query["redirect_uri"] + "?code=fixture-code&state=" + query["state"], cancellation.Token);
+                var statuses = await Task.WhenAll(first, second);
+                Assert.All(statuses, status => Assert.Equal(DesktopAuthStatus.SignedIn, status));
+                Assert.Equal(1, browserCount);
+            }
+            foreach (var configuration in new[] { Config, toolkitConfig })
+            {
+                using var restarted = new DesktopAuthSession(configuration, adapter, new CredentialStore(configuration, directory), new Clock(), OpenBrowser);
+                Assert.Equal(DesktopAuthStatus.SignedIn, await restarted.RestoreAsync(cancellation.Token));
+            }
+            Assert.Equal(1, browserCount);
+            Assert.Single(Directory.GetFiles(directory, "*.credential"));
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
+
     private static DesktopCredential Credential(bool expired = false) => new()
     {
         AccessToken = "fixture-access", RefreshToken = "fixture-refresh",

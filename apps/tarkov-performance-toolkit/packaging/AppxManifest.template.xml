@@ -14,5 +14,10 @@
       </Extensions>
     </Application>
   </Applications>
+  <Extensions>
+    <Extension Category="windows.publisherCacheFolders">
+      <PublisherCacheFolders><Folder Name="TarkovDesktopAuth" /></PublisherCacheFolders>
+    </Extension>
+  </Extensions>
   <Capabilities><rescap:Capability Name="runFullTrust" /></Capabilities>
 </Package>

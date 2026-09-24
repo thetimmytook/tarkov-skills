@@ -96,7 +96,7 @@ public sealed class WindowsBoundaryTests
             var store = new CredentialStore(new AuthConfiguration(Issuer, "client_fixture", DesktopAuthProduct.Benchmark), directory);
             using (store.AcquireLease())
             {
-                Assert.Throws<IOException>(() => store.AcquireLease());
+                Assert.Throws<CredentialStoreBusy>(() => store.AcquireLease());
                 Assert.Null(store.Load());
                 store.Save(Credential("fixture-private-access"));
                 Assert.Equal("fixture-private-access", store.Load()!.AccessToken);
@@ -123,18 +123,18 @@ public sealed class WindowsBoundaryTests
     }
 
     [Theory]
-    [InlineData("other_client", DesktopAuthProduct.Benchmark)]
-    [InlineData("client_fixture", DesktopAuthProduct.Toolkit)]
-    public void CredentialCannotBeLoadedUnderAnotherClientOrProductBinding(string client, DesktopAuthProduct product)
+    [InlineData("https://fixture.clerk.accounts.dev", "other_client")]
+    [InlineData("https://other.clerk.accounts.dev", "client_fixture")]
+    public void CredentialCannotBeLoadedUnderAnotherClientOrIssuerBinding(string issuer, string client)
     {
         var directory = Path.Combine(Path.GetTempPath(), "tarkov-auth-test-" + Guid.NewGuid().ToString("N"));
         try
         {
             var original = new CredentialStore(new AuthConfiguration(Issuer, "client_fixture", DesktopAuthProduct.Benchmark), directory);
-            var other = new CredentialStore(new AuthConfiguration(Issuer, client, product), directory);
+            var other = new CredentialStore(new AuthConfiguration(issuer, client, DesktopAuthProduct.Toolkit), directory);
             original.Save(Credential("private-fixture"));
             Assert.Null(other.Load());
-            // Even copying the encrypted file to the other client's path must fail its DPAPI entropy binding.
+            // A copied credential cannot cross environment/client boundaries.
             var originalFile = Directory.GetFiles(directory, "*.credential").Single();
             other.Save(Credential("other-fixture"));
             var otherFile = Directory.GetFiles(directory, "*.credential").Single(path => path != originalFile);
@@ -145,6 +145,28 @@ public sealed class WindowsBoundaryTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Fact]
+    public void SharedOAuthClientSharesEncryptedCredentialLeaseRotationAndLogout()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "tarkov-auth-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var benchmark = new CredentialStore(new AuthConfiguration(Issuer, "shared_client", DesktopAuthProduct.Benchmark), directory);
+            var toolkit = new CredentialStore(new AuthConfiguration(Issuer, "shared_client", DesktopAuthProduct.Toolkit), directory);
+            using var benchmarkLease = benchmark.AcquireLease();
+            Assert.Throws<CredentialStoreBusy>(() => toolkit.AcquireLease());
+            benchmark.Save(Credential("fixture-benchmark-access"));
+            Assert.Equal("fixture-benchmark-access", toolkit.Load()!.AccessToken);
+            toolkit.Save(Credential("fixture-toolkit-access"));
+            Assert.Equal("fixture-toolkit-access", benchmark.Load()!.AccessToken);
+            Assert.Equal("fixture-toolkit-access", toolkit.Load()!.AccessToken);
+            benchmark.Clear();
+            Assert.Null(benchmark.Load());
+            Assert.Null(toolkit.Load());
+        }
+        finally { Directory.Delete(directory, recursive: true); }
     }
 
     private static DesktopCredential Credential(string access) => new()

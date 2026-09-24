@@ -208,9 +208,9 @@ public partial class BenchmarkView : UserControl
                 runs = BenchmarkSubmission.SelectMostRecent(document.Runs).ToList();
             }
 
-            Clipboard.SetText(BenchmarkSubmission.Serialize(runs));
-            var submissionWindow = new SubmissionWindow(runs.Count) { Owner = _owner };
+            var submissionWindow = new SubmissionWindow(runs.Count, _options.AuthProduct) { Owner = _owner };
             if (submissionWindow.ShowDialog() != true) return;
+            Clipboard.SetText(BenchmarkSubmission.Serialize(runs));
             _pendingSubmissionRunIds = markSubmitted ? runs.Select(run => run.RunId).ToList() : [];
             _waitingForSubmissionReturn = markSubmitted;
             _submissionWindowLostFocus = false;

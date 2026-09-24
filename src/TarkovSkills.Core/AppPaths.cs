@@ -27,7 +27,7 @@ public static class AppPaths
             ? Path.Combine(localAppData, "TarkovSkills")
             : Path.Combine(localAppData, "Packages", packageFamilyName, "LocalState", "TarkovSkills");
 
-    private static string? GetPackageFamilyName()
+    internal static string? GetPackageFamilyName()
     {
         uint length = 0;
         var result = GetCurrentPackageFamilyName(ref length, null);
