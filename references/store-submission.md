@@ -93,20 +93,25 @@ At least one desktop PNG screenshot is required at `1366 x 768` or larger. Keep 
 
 ## Privacy Policy Text
 
+For the next auth-enabled submission, use the wording below and the shared
+`PRIVACY.md`. Optional Clerk authentication changes the previous local-only privacy
+description; it does not add benchmark publication. This copy has not yet been
+submitted or certified for an auth-enabled release.
+
 ```text
 Privacy Policy for Tarkov Performance Benchmark
 
-Effective date: August 31, 2026
+Effective date: set when the auth-enabled release is published
 
 Tarkov Performance Benchmark processes performance and diagnostic information locally on the user's device. This may include FPS and frame-time metrics, Windows hardware and driver information, Escape from Tarkov graphics settings, game version, map, raid environment, weather, and time-of-day context.
 
-The application does not collect names, email addresses, account identifiers, IP addresses, device serial numbers, machine identifiers, or precise location data. It does not read game process memory, automate input, or modify game files.
+Generated benchmark and diagnostic reports do not contain names, email addresses, account identifiers, IP addresses, device serial numbers, machine identifiers, or precise location data. The application does not read game process memory, automate input, or modify game files.
 
 Benchmark results are stored locally in the application's private Microsoft Store data folder. No benchmark or diagnostic data is uploaded automatically. Users can open the storage folder from the application and delete the benchmark JSON file, or remove all package-local data by uninstalling the application.
 
 The application uses the bundled open-source PresentMon utility to perform user-initiated FPS and frame-time capture. PresentMon runs locally on the device.
 
-The application does not sell, share, or transmit personal information to the developer or third parties.
+Optional account sign-in opens Clerk authentication in the system browser. Clerk handles email verification and consent and receives information entered there and normal connection information. Benchmark and Toolkit share access and refresh credentials encrypted for the current Windows user and Clerk environment, separately from benchmark reports. Store builds use shared publisher storage, which Windows retains until the last app from that publisher is uninstalled; portable builds use a separate shared user-local folder retained until sign-out or removal. It contacts Clerk to refresh expiring credentials while signed in. Sign out in either app requests revocation for both; if that cannot be confirmed, both apps disable access, retain the encrypted credential for retry, and report incomplete sign-out. Browser and desktop sign-out are independent. The application does not store the user's email or profile, include credentials in reports or logs, or publish results merely because the user signs in. Clerk's privacy terms apply to authentication.
 
 Tarkov Performance Benchmark is an unofficial community tool and is not affiliated with or endorsed by Battlestate Games.
 

@@ -1,0 +1,35 @@
+<Project>
+  <!-- One public OAuth client per environment, shared by both GUI hosts. -->
+  <PropertyGroup>
+    <DesktopAuthEnvironment Condition="'$(DesktopAuthEnvironment)' == '' and '$(Configuration)' == 'Debug'">Development</DesktopAuthEnvironment>
+    <DesktopAuthEnvironment Condition="'$(DesktopAuthEnvironment)' == ''">Production</DesktopAuthEnvironment>
+    <_DesktopAuthSource Condition="'$(DesktopAuthEnvironment)' == 'Development'">$(MSBuildThisFileDirectory)..\config\desktop-auth.development.local.json</_DesktopAuthSource>
+    <_DesktopAuthSource Condition="'$(DesktopAuthEnvironment)' == 'Production'">$(MSBuildThisFileDirectory)..\config\desktop-auth.production.json</_DesktopAuthSource>
+    <_DesktopAuthValidator>$(MSBuildThisFileDirectory)test-desktop-auth-config.ps1</_DesktopAuthValidator>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(_DesktopAuthSource)')">
+    <Content Include="$(_DesktopAuthSource)" Link="desktop-auth.json" TargetPath="desktop-auth.json"
+             CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+  </ItemGroup>
+  <Target Name="ValidateDesktopAuthSource" BeforeTargets="PrepareForBuild;ComputeFilesToPublish">
+    <Error Condition="'$(DesktopAuthEnvironment)' != 'Development' and '$(DesktopAuthEnvironment)' != 'Production'"
+           Text="DesktopAuthEnvironment must be Development or Production." />
+    <Error Condition="'$(Configuration)' != 'Debug' and '$(DesktopAuthEnvironment)' != 'Production'"
+           Text="Release builds require the versioned production desktop auth configuration." />
+    <Error Condition="'$(DesktopAuthEnvironment)' == 'Production' and !Exists('$(_DesktopAuthSource)')"
+           Text="Required config/desktop-auth.production.json is missing. Development fallback is forbidden." />
+    <Exec Condition="Exists('$(_DesktopAuthSource)')"
+          Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(_DesktopAuthValidator)&quot; -ConfigurationPath &quot;$(_DesktopAuthSource)&quot;"
+          IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" StandardErrorImportance="Low" StandardOutputImportance="Low">
+      <Output TaskParameter="ExitCode" PropertyName="_DesktopAuthValidationExitCode" />
+    </Exec>
+    <Error Condition="Exists('$(_DesktopAuthSource)') and '$(_DesktopAuthValidationExitCode)' != '0'"
+           Text="Desktop auth configuration must contain only a valid HTTPS issuer origin and a nonempty public clientId. Complete config/desktop-auth.production.json for Production; no development fallback or secrets are allowed." />
+  </Target>
+  <Target Name="RemoveUnconfiguredDesktopAuthOutput" AfterTargets="Build" Condition="'$(DesktopAuthEnvironment)' == 'Development' and !Exists('$(_DesktopAuthSource)')">
+    <Delete Files="$(TargetDir)desktop-auth.json" />
+  </Target>
+  <Target Name="RemoveUnconfiguredDesktopAuthPublishOutput" AfterTargets="Publish" Condition="'$(DesktopAuthEnvironment)' == 'Development' and !Exists('$(_DesktopAuthSource)') and '$(PublishDir)' != ''">
+    <Delete Files="$(PublishDir)desktop-auth.json" />
+  </Target>
+</Project>

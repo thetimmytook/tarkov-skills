@@ -41,7 +41,7 @@ try {
     & (Join-Path $PSScriptRoot 'check-presentmon-dependency.ps1') -SkipUpstreamCheck
     $makeAppx = Find-MakeAppx
     foreach ($project in @($guiProject, $cliProject)) {
-        Invoke-Checked 'dotnet' @('publish', $project, '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', ('-p:Version=' + ($PackageVersion -replace '\.0$', '')), '-o', $layout)
+        Invoke-Checked 'dotnet' @('publish', $project, '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:DesktopAuthEnvironment=Production', ('-p:Version=' + ($PackageVersion -replace '\.0$', '')), '-o', $layout)
     }
     Get-ChildItem $layout -Filter '*.pdb' -File | Remove-Item -Force
     Copy-Item $assets (Join-Path $layout 'Assets') -Recurse

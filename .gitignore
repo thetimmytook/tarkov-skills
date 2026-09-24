@@ -11,3 +11,7 @@ obj/
 .vs/
 TestResults/
 PresentMon-*.csv
+/config/desktop-auth.development.local.json
+desktop-auth.json
+*.credential
+*.credential.lock

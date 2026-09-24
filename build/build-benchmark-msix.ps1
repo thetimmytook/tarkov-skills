@@ -61,6 +61,7 @@ try {
         '-c', $Configuration,
         '-r', 'win-x64',
         '--self-contained', 'true',
+        '-p:DesktopAuthEnvironment=Production',
         ('-p:Version=' + ($PackageVersion -replace '\.0$', '')),
         '-o', $publish
     )

@@ -30,6 +30,8 @@ public sealed class MsixManifestTests
         var manifest = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "AppxManifest.template.xml"));
         var capabilities = manifest.Descendants().Where(element => element.Name.LocalName == "Capability").Select(element => element.Attribute("Name")?.Value).ToList();
         Assert.Equal(["runFullTrust"], capabilities);
-        Assert.DoesNotContain(manifest.Descendants(), element => element.Name.LocalName == "PublisherCacheFolders");
+        var sharedAuth = Assert.Single(manifest.Descendants(), element => element.Name.LocalName == "PublisherCacheFolders");
+        Assert.Equal("TarkovDesktopAuth", Assert.Single(sharedAuth.Elements()).Attribute("Name")?.Value);
+        Assert.Equal("windows.publisherCacheFolders", sharedAuth.Parent?.Attribute("Category")?.Value);
     }
 }

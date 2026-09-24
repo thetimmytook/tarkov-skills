@@ -27,6 +27,8 @@ public sealed class MsixManifestTests
         Assert.Equal("tarkov-benchmark.exe", (string?)alias.Attribute("Alias"));
         Assert.Contains("runFullTrust", capabilities);
         Assert.DoesNotContain("unvirtualizedResources", capabilities);
-        Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "PublisherCacheFolders");
+        var sharedAuth = Assert.Single(document.Descendants(), element => element.Name.LocalName == "PublisherCacheFolders");
+        Assert.Equal("TarkovDesktopAuth", Assert.Single(sharedAuth.Elements()).Attribute("Name")?.Value);
+        Assert.Equal("windows.publisherCacheFolders", sharedAuth.Parent?.Attribute("Category")?.Value);
     }
 }
