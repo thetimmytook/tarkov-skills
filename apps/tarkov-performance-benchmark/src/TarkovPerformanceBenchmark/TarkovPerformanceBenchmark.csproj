@@ -19,6 +19,7 @@
 
   <Import Project="..\..\..\..\build\StoreProductVersion.props" />
   <Import Project="..\..\..\..\build\DesktopAuth.props" />
+  <Import Project="..\..\..\..\build\AcademyApi.props" />
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\TarkovSkills.Core\TarkovSkills.Core.csproj" />

@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <_AcademyApiSource Condition="'$(Configuration)' == 'Debug'">$(MSBuildThisFileDirectory)..\config\academy-api.development.local.json</_AcademyApiSource>
+    <_AcademyApiSource Condition="'$(Configuration)' != 'Debug'">$(MSBuildThisFileDirectory)..\config\academy-api.production.json</_AcademyApiSource>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(_AcademyApiSource)')">
+    <Content Include="$(_AcademyApiSource)" Link="academy-api.json" TargetPath="academy-api.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+  </ItemGroup>
+  <Target Name="ValidateAcademyApiSource" BeforeTargets="PrepareForBuild;ComputeFilesToPublish">
+    <Error Condition="'$(Configuration)' != 'Debug' and !Exists('$(_AcademyApiSource)')" Text="Production Academy API configuration is required; development fallback is forbidden." />
+  </Target>
+  <Target Name="RemoveUnconfiguredAcademyApi" AfterTargets="Build" Condition="!Exists('$(_AcademyApiSource)')">
+    <Delete Files="$(TargetDir)academy-api.json" />
+  </Target>
+  <Target Name="RemoveUnconfiguredAcademyApiPublish" AfterTargets="Publish" Condition="!Exists('$(_AcademyApiSource)') and '$(PublishDir)' != ''">
+    <Delete Files="$(PublishDir)academy-api.json" />
+  </Target>
+</Project>

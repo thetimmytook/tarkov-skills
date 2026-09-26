@@ -12,6 +12,8 @@ obj/
 TestResults/
 PresentMon-*.csv
 /config/desktop-auth.development.local.json
+/config/academy-api.development.local.json
+academy-api.json
 desktop-auth.json
 *.credential
 *.credential.lock

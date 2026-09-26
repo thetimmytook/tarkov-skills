@@ -1,6 +1,120 @@
 # Desktop OAuth
 
-## Open P1 review finding: submission authorization
+## Live verification: Development Clerk and local API (2026-09-26)
+
+User-guided checks with the real Debug applications and local Academy API confirmed:
+
+- Benchmark completed browser consent and returned to a signed-in desktop state.
+- Explicit submission of a selected local run returned `pending_review`.
+- After a Debug rebuild/restart, Check status displayed the green Confirmed banner.
+- After the user approved the run in Admin, Benchmark displayed `published`.
+- Toolkit reused the shared Windows credential without opening the browser.
+- Toolkit's selected-run workflow displayed `published` for the tested run.
+
+These observations do not prove a new Toolkit-only upload, network-level absence
+of duplicate POSTs, production/MSIX behavior, or a fresh signed-out browser flow
+after the web fix. Rejection, deletion, token expiry and interrupted-request
+recovery still need live checks; relevant automated workflow tests cover them.
+No commit, push or deployment was performed.
+
+## Resolved local sign-in blocker
+
+The main Academy sign-in page initially stopped at "You are signed in" while the
+Benchmark callback listener was active. The old Development consent configuration
+also pointed at local `/oauth/consent`, a route belonging to the obsolete auth
+harness rather than the main application.
+
+Development now uses Clerk Account Portal consent. The web fix preserves OAuth
+continuation through both sign-in and sign-up and resumes an existing browser
+session with full-page navigation. It accepts only the exact HTTPS authorization
+continuation on the current frontend API origin or `/oauth-consent` on the Account
+Portal origin returned by Clerk SDK `buildUserProfileUrl()`. Other origins, paths,
+credentials, fragments and duplicate redirect parameters are rejected. Production
+uses its configured Account Portal origin, not a hardcoded Development domain.
+No live OAuth URL parameters were copied into fixtures or logs. The 46 targeted
+web tests, typecheck, lint and web build passed.
+
+## Shared submission status UI
+
+The user requested a prominent result after the original plain-text status was
+hard to notice. The shared dialog now shows green Confirmed for a current
+pending/published response, red Error for failures, amber Rejected, and neutral
+Deleted or dated historical status. Pending explicitly says not public yet.
+The action row wraps long labels. Both Release hosts and both Debug hosts build;
+all 183 Windows tests pass. The user confirmed the rebuilt green banner in
+Benchmark. Layout at other display scales and live error banners remain to check.
+
+## Academy API transport checkpoint (2026-09-26)
+
+`AcademyApiClient` in shared Core uses the existing `DesktopAuthSession` and
+protected shared credential. It supports lookup of a single run and explicit POST
+submission. There is no My runs list. The shared Submit dialog now selects one local
+run and GPU, reviews the frozen public-safe request, then sends only after a separate
+**Send for review** action. The old Google Form handoff and local `submitted` update
+are no longer part of Submit; collection, Copy results and local history stay unchanged.
+
+The DTO projects only the reviewed settings and hardware fields. It uses the saved
+run UUID as `client_run_id` and measured capture duration, not the requested duration.
+All eleven desktop maps use the IDs agreed with the API owner, including `the-lab`
+and `ground-zero`; the API owner is updating its map catalog separately.
+Unknown/malformed required values fail preparation instead of being invented.
+With multiple GPUs the user must choose; monitor resolution is never substituted
+for saved in-game resolution.
+
+Before any POST, `SubmissionOutbox` saves the exact DTO under the application's data
+directory, in `academy-submissions/<environment hash>/<run UUID>.json`. The binding
+includes API endpoint, issuer and OAuth client. Restart and manual retry reuse the
+same bytes, including the original app version, even if the local run later changes.
+Saved requests are reprojected through the allowlist before reuse. No raw captures,
+credential or account identity is stored there. Preparing alone does not send.
+
+The dialog validates the matching server receipt and distinguishes pending review,
+published, rejected and deleted. Pending is explicitly not public. **Check status**
+reads only the selected run's owner lookup, including before preparing a submission.
+The last confirmed status and check time are saved in a separate `.status.json`
+sidecar; no owner identity, credential, public URL or hardware is cached there.
+The UI labels cached observations **Last confirmed**, never as current-account
+authorization. Network failures retain the dated observation and do not report success.
+
+Before an explicit Send/retry, the workflow checks owner lookup. A known submission
+returns its status without another POST. Only 404 with no previously confirmed
+status permits POST of the same frozen payload. A 404 after earlier confirmation
+is ambiguous (including an account change) and cannot recreate the run. The transport
+also checks that the shared credential did not change between lookup and POST; an
+account switch or intervening refresh requires another explicit attempt.
+
+Deletion is terminal locally: lookup `deleted` or POST `publication_deleted` saves
+a tombstone, disables sending, and survives restart. A late older response cannot
+overwrite it. `idempotency_conflict` is shown separately. These are the only server
+error codes exposed by the transport; raw error bodies remain private. An uncertain
+response never sets the old `submitted` Boolean and never triggers an automatic POST.
+The next explicit attempt first looks up the same ID to resolve a lost response.
+
+The client restores/refreshes without opening a browser, sends the access token
+only in the Authorization header, and refreshes/retries once after an explicit 401.
+Other HTTP errors and network failures do not trigger retries. An `invalid_grant`
+clears the shared credential. A repeated API 401 is returned to the caller, retaining
+the credential because the API can also report provider outages as 401.
+`AuthStatus.SignedIn` describes local credential readiness, not server acceptance;
+the caller must inspect `StatusCode`. Failure bodies and credential headers are not
+returned to UI or reports. Success bytes still require endpoint contract validation.
+
+API configuration is independent of the OAuth issuer. Debug uses ignored
+`config/academy-api.development.local.json` (copy the example); Release requires
+versioned `config/academy-api.production.json`. Both hosts copy the selected file as
+`academy-api.json`. Production points to `https://timmy.academy/api/bench/v1`;
+deployment readiness is a separate API-owner check. The local integration endpoint
+is `http://127.0.0.1:8787/api/bench/v1`; HTTP loopback is enabled by the configuration
+reader only in Debug. Release never falls back to the local file. Cookies and
+redirects are disabled. Tests use synthetic credentials and real local redirect
+sockets, and the generated C# DTO was checked with Academy's actual TypeScript schema.
+Live authenticated submission, WPF visual review and MSIX validation remain separate.
+
+## Original P1 review finding: submission authorization
+
+Historical finding below describes the preceding Google Form implementation. The
+new uncommitted API integration replaces this flow; live end-to-end authorization
+and owner-status checks are still required before closing the finding.
 
 User decision: create the desktop-auth PR now, retaining the current UX. Address this
 finding with the real submission API integration in a follow-up. Explicitly disclose

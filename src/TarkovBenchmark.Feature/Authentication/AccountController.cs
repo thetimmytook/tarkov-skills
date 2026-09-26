@@ -29,6 +29,7 @@ internal sealed class AccountController : INotifyPropertyChanged
     public bool CanCancel { get; private set; }
 
     internal AccountController(IDesktopAuthSession? session) => this.session = session;
+    internal DesktopAuthSession? DesktopSession => session as DesktopAuthSession;
 
     public static AccountController Create(DesktopAuthProduct product, string configurationPath)
     {

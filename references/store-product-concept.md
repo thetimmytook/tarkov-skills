@@ -42,14 +42,41 @@ revokes the shared grant for both, without logging out the browser session.
 
 Authentication starts only when Submit is chosen. The shared Submit dialog restores
 the credential before opening a browser, provides Sign in / Sign out / Retry, and
-requires an explicit Open form action after sign-in. No permanent login banner is
+requires an explicit review and Send for review action after sign-in. No permanent login banner is
 shown on the ordinary collection or inspection screens.
 See `references/desktop-auth.md` for migration and the manual test checkpoint.
 
-Authentication does not affect collection, aliases or history. The existing Google
-Form opens after the new sign-in gate; submission remains manual. Neither
-authentication nor the local `submitted` flag establishes publication
-in a future backend. This phase adds no publication or owner API calls.
+Authentication does not affect collection, aliases or history. Submit now sends
+one selected run to Academy using an explicit allowlist DTO and the run's permanent
+UUID. The exact request is saved separately for retries. Pending review is not
+publication; only the validated server receipt establishes publication state.
+Neither local sign-in nor the legacy `submitted` flag proves server acceptance.
+The shared dialog persists the last confirmed server status and offers Check status
+for the selected run after moderation. Deleted runs are not sent again; uncertain
+outcomes are resolved through owner lookup before any explicit retry. Live end-to-end
+validation and Store-package checks remain required before release.
+
+## Planned comparison charts (2026-09-26)
+
+Recorded user direction; not implemented in this step. Continue the current Academy
+desktop-auth and explicit submission integration first, then implement this UI in
+`src/TarkovBenchmark.Feature` for both Benchmark and Toolkit.
+
+- Show a chart comparing the user's selected local benchmark run with other public
+  runs, using the existing Academy public search/Position contracts.
+- Before the first completed local run, show **Run benchmark to see your position**
+  in place of the personal-position chart. Still show public-run charts for a map,
+  with the selected map clearly visible and changeable.
+- Once a local run exists, show its position among comparable public runs. Reading
+  public results and calculating Position must not require publication or sign-in;
+  neither operation uploads or publishes the local run.
+- Keep publication separate and explicit. Pending, rejected or deleted submissions
+  must not be presented as public comparison records.
+
+Suggested UX details to agree before implementation: use the local run's map for
+the comparison, label the comparison filters and sample size, and show an honest
+empty state when there are too few comparable public runs. The initial map, chart
+type and metric selection remain open; do not invent benchmark data to fill charts.
 
 ## Benchmark MVP
 
