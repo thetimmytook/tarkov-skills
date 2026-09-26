@@ -1,0 +1,213 @@
+name: Microsoft Store production promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Flight-tested product to publish publicly
+        required: true
+        type: choice
+        options:
+          - benchmark
+          - toolkit
+          - both
+      flight_run_id:
+        description: Successful Microsoft Store flight workflow run ID containing the tested MSIX
+        required: true
+        type: string
+      confirm_public_release:
+        description: I confirm this creates a public Store submission after Environment approval
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  validate-source:
+    runs-on: ubuntu-latest
+    outputs:
+      head_sha: ${{ steps.source.outputs.head_sha }}
+    steps:
+      - name: Require explicit public-release confirmation
+        if: inputs.confirm_public_release != true
+        run: |
+          echo "Public release confirmation was not provided."
+          exit 1
+      - name: Validate source flight workflow run
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FLIGHT_RUN_ID: ${{ inputs.flight_run_id }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FLIGHT_RUN_ID")"
+          name="$(jq -r '.name' <<< "$run_json")"
+          event="$(jq -r '.event' <<< "$run_json")"
+          conclusion="$(jq -r '.conclusion' <<< "$run_json")"
+          head_sha="$(jq -r '.head_sha' <<< "$run_json")"
+          head_branch="$(jq -r '.head_branch' <<< "$run_json")"
+          if [[ "$name" != "Microsoft Store flight" || "$event" != "workflow_dispatch" || "$conclusion" != "success" ]]; then
+            echo "Run $FLIGHT_RUN_ID is not a successful manual Microsoft Store flight run."
+            exit 1
+          fi
+          if [[ "$head_branch" != "main" || "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Public promotion and its source flight run must both use main."
+            exit 1
+          fi
+          if [[ "$head_sha" != "$CURRENT_SHA" ]]; then
+            echo "Flight run commit $head_sha does not match promotion commit $CURRENT_SHA."
+            exit 1
+          fi
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
+  validate-benchmark:
+    needs: validate-source
+    if: inputs.product == 'benchmark' || inputs.product == 'both'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.validate-source.outputs.head_sha }}
+      - name: Download flight-tested Benchmark MSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: store-flight-benchmark-${{ inputs.flight_run_id }}
+          path: store-package
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.flight_run_id }}
+      - name: Revalidate Benchmark package
+        shell: pwsh
+        run: |
+          ./build/test-store-release.ps1 -Product benchmark
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Benchmark MSIX, found $($packages.Count)." }
+          ./build/test-msix-package.ps1 -Product benchmark -PackagePath $packages[0].FullName
+          (Get-FileHash -LiteralPath $packages[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content -LiteralPath store-package/SHA256.txt -Encoding ascii
+      - name: Stage immutable Benchmark production artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-production-benchmark-${{ github.run_id }}
+          path: store-package
+          if-no-files-found: error
+          retention-days: 90
+
+  validate-toolkit:
+    needs: validate-source
+    if: inputs.product == 'toolkit' || inputs.product == 'both'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.validate-source.outputs.head_sha }}
+      - name: Download flight-tested Toolkit MSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: store-flight-toolkit-${{ inputs.flight_run_id }}
+          path: store-package
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.flight_run_id }}
+      - name: Revalidate Toolkit package
+        shell: pwsh
+        run: |
+          ./build/test-store-release.ps1 -Product toolkit
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Toolkit MSIX, found $($packages.Count)." }
+          ./build/test-msix-package.ps1 -Product toolkit -PackagePath $packages[0].FullName
+          (Get-FileHash -LiteralPath $packages[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content -LiteralPath store-package/SHA256.txt -Encoding ascii
+      - name: Stage immutable Toolkit production artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-production-toolkit-${{ github.run_id }}
+          path: store-package
+          if-no-files-found: error
+          retention-days: 90
+
+  publish-benchmark:
+    needs: validate-benchmark
+    runs-on: windows-latest
+    timeout-minutes: 20
+    environment: microsoft-store-production
+    concurrency:
+      group: microsoft-store-benchmark
+      cancel-in-progress: false
+    steps:
+      - name: Download approved Benchmark production artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: store-production-benchmark-${{ github.run_id }}
+          path: store-package
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Submit Benchmark publicly
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+        run: |
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Benchmark MSIX, found $($packages.Count)." }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+          msstore publish store-package --inputFile $packages[0].FullName --appId 9PJMPQ06JL21
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark production submission failed.' }
+      - name: Read current Benchmark production status once
+        continue-on-error: true
+        run: msstore submission status 9PJMPQ06JL21
+      - name: Write Benchmark production summary
+        shell: pwsh
+        run: |
+          "## Benchmark public Store submission" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Submitted the validated artifact from flight run ${{ inputs.flight_run_id }}. Certification is not polled by this workflow." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Partner Center: https://partner.microsoft.com/dashboard" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+
+  publish-toolkit:
+    needs: validate-toolkit
+    runs-on: windows-latest
+    timeout-minutes: 20
+    environment: microsoft-store-production
+    concurrency:
+      group: microsoft-store-toolkit
+      cancel-in-progress: false
+    steps:
+      - name: Download approved Toolkit production artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: store-production-toolkit-${{ github.run_id }}
+          path: store-package
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Submit Toolkit publicly
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+        run: |
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Toolkit MSIX, found $($packages.Count)." }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+          msstore publish store-package --inputFile $packages[0].FullName --appId 9N3L7DZH0K64
+          if ($LASTEXITCODE -ne 0) { throw 'Toolkit production submission failed.' }
+      - name: Read current Toolkit production status once
+        continue-on-error: true
+        run: msstore submission status 9N3L7DZH0K64
+      - name: Write Toolkit production summary
+        shell: pwsh
+        run: |
+          "## Toolkit public Store submission" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Submitted the validated artifact from flight run ${{ inputs.flight_run_id }}. Certification is not polled by this workflow." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Partner Center: https://partner.microsoft.com/dashboard" | Out-File $env:GITHUB_STEP_SUMMARY -Append

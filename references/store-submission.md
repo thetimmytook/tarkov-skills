@@ -94,9 +94,9 @@ At least one desktop PNG screenshot is required at `1366 x 768` or larger. Keep 
 ## Privacy Policy Text
 
 For the next auth-enabled submission, use the wording below and the shared
-`PRIVACY.md`. Optional Clerk authentication changes the previous local-only privacy
-description; it does not add benchmark publication. This copy has not yet been
-submitted or certified for an auth-enabled release.
+`PRIVACY.md`. Optional Clerk authentication and explicit Academy publication change
+the previous local-only privacy description. This copy has not yet been submitted or
+certified for an auth-enabled release.
 
 ```text
 Privacy Policy for Tarkov Performance Benchmark
@@ -148,13 +148,23 @@ After certification and publishing:
 
 ## GitHub Deployment Pipeline
 
-Store package versions and release tags are independent per product. The version files under each product's `packaging\store-release.json` are the source of truth and must be updated in the release PR before tagging `main`:
+Store package versions and release tags are independent per product. The version files under each product's `packaging\store-release.json` are the source of truth and must be updated in the release PR before tagging `main`. `publishedPackageVersion` records the current public baseline; `packageVersion` must be higher, every component must be at most 65535, the first component must be nonzero, and the fourth component must remain zero:
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
 | Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.4` | `1.0.4.0` |
 | Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.1` | `1.0.1.0` |
 
-The tag workflow refuses a tag that does not match its version file or does not point to the current `main` commit. It tests only the tagged product, verifies PresentMon, builds and inspects an unsigned MSIX, creates the matching portable ZIP and GitHub Release, and publishes SHA-256 checksums.
+Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 
-Store submission is a separate `submit-to-store` job protected by the `microsoft-store` GitHub Environment. Configure required reviewers on that Environment and store these Environment secrets there: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. The associated Microsoft Entra application must have the Partner Center Manager role. Approval releases the already-validated MSIX to `msstore publish`; Partner Center then performs Microsoft certification and publishes according to the configured production publishing setting.
+The tag workflow refuses a tag that does not match its version file or does not point to the current `main` commit. It tests only the tagged product, verifies PresentMon, builds and inspects an unsigned MSIX, creates the matching portable ZIP and GitHub Release, and publishes SHA-256 checksums. A tag never submits a package to Microsoft Store.
+
+`Microsoft Store flight` is a manual workflow with a `benchmark`, `toolkit`, or `both` choice. It requires an explicit production-API readiness confirmation, runs the applicable Release tests, verifies PresentMon, builds with the versioned Production `desktop-auth.json` and `academy-api.json`, creates the unsigned MSIX with MakeAppx, and inspects the package before any Store credential is available. Its submission jobs use the protected `microsoft-store-flight` Environment and send each validated package only to its configured private package flight. Store mutations are serialized per product. The workflow reads status once after submission and does not poll certification.
+
+`Microsoft Store production promotion` is a separate manual workflow. It requires the successful flight workflow run ID and an explicit public-release confirmation. Both runs must be dispatched from `main`; the workflow refuses a source run from another workflow, a failed run, or a different commit. It downloads the immutable flight artifact, repeats package inspection, and stages the same bytes for an approval-protected `microsoft-store-production` job. Production promotion does not rebuild the MSIX and does not use a flight ID.
+
+Creating a Microsoft Entra tenant does not associate it with the Windows developer account. After creation, return to Partner Center **Account settings > Tenants > Developer**, select **Associate Microsoft Entra ID**, sign in with that tenant's Global Administrator, and confirm that the tenant appears under **Current tenant associations**. Only then does **User management > Microsoft Entra applications** become available. Add the CI app registration there and grant only the `Manager (Windows)` role required by Microsoft Store Developer CLI. Record the tenant ID, application client ID, one-time client-secret value, and the Seller ID from **Legal info > Developer > Publisher IDs**; do not confuse Seller ID with Windows publisher ID.
+
+Create both GitHub Environments with required reviewers. Store these secrets separately in each Environment: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. Store `BENCHMARK_STORE_FLIGHT_ID` and `TOOLKIT_STORE_FLIGHT_ID` as variables on `microsoft-store-flight`. The personal Store test account is unrelated to these CI credentials: add its Microsoft-account email to a known-user group and attach that group to one package flight per product.
+
+Before approving a flight submission, the Academy owner must confirm that `https://timmy.academy/api/bench/v1` implements the deployed desktop contracts: Clerk authorization/token/revocation, authenticated `GET /me/runs/by-client-id/{clientRunId}`, authenticated `POST /me/runs`, anonymous grouped run browsing, and cohort comparison. Local API evidence does not satisfy this gate. Never put Clerk tokens, Partner Center secrets, the personal test email, or API response bodies in workflow configuration or logs.

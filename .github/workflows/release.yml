@@ -16,7 +16,6 @@ jobs:
     timeout-minutes: 30
     outputs:
       product: ${{ steps.release.outputs.product }}
-      store_product_id: ${{ steps.release.outputs.store_product_id }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,7 +48,6 @@ jobs:
           Import-Module ./build/StoreRelease.psm1 -Force
           $storeRelease = Assert-StoreRelease -Product $product -RepositoryRoot $env:GITHUB_WORKSPACE -ExpectedTag $tag
           "product=$product" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "store_product_id=$($storeRelease.StoreProductId)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Verify bundled PresentMon
         if: steps.release.outputs.product != 'skills'
@@ -133,35 +131,3 @@ jobs:
           } else { 'Skills-only release.' }
           $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object { $_.FullName })
           gh release create $tag @assets --title $tag --notes $notes
-
-  submit-to-store:
-    needs: release
-    if: needs.release.outputs.product != 'skills'
-    runs-on: windows-latest
-    environment: microsoft-store
-    timeout-minutes: 20
-    steps:
-      - name: Download approved unsigned MSIX
-        uses: actions/download-artifact@v8
-        with:
-          name: store-submission-${{ needs.release.outputs.product }}
-          path: store-package
-
-      - name: Install Microsoft Store publisher
-        uses: microsoft/microsoft-store-apppublisher@v1.4
-
-      - name: Submit package to Partner Center
-        shell: pwsh
-        env:
-          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
-          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
-          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
-          SELLER_ID: ${{ secrets.SELLER_ID }}
-          STORE_PRODUCT_ID: ${{ needs.release.outputs.store_product_id }}
-        run: |
-          $package = Get-ChildItem -LiteralPath store-package -Filter *.msix -File | Select-Object -First 1
-          if (-not $package) { throw 'The Store submission artifact does not contain an MSIX.' }
-          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
-          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
-          msstore publish store-package --inputFile $package.FullName --appId $env:STORE_PRODUCT_ID
-          if ($LASTEXITCODE -ne 0) { throw 'Partner Center submission failed.' }

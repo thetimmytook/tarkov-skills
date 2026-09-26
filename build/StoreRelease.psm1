@@ -36,7 +36,7 @@ function Get-StoreRelease {
         throw "Store release file is not valid JSON: $path. $($_.Exception.Message)"
     }
 
-    foreach ($property in 'packageVersion', 'tag', 'storeProductId', 'packageIdentity') {
+    foreach ($property in 'packageVersion', 'publishedPackageVersion', 'tag', 'storeProductId', 'packageIdentity') {
         if ([string]::IsNullOrWhiteSpace([string]$release.$property)) {
             throw "Store release file $path is missing '$property'."
         }
@@ -48,8 +48,18 @@ function Get-StoreRelease {
     if ($release.storeProductId -ne $definition.StoreProductId) {
         throw "Store release Store product ID '$($release.storeProductId)' does not match expected '$($definition.StoreProductId)'."
     }
-    if ($release.packageVersion -notmatch '^[1-9][0-9]{0,4}\.[0-9]{1,5}\.[0-9]{1,5}\.0$') {
-        throw "Store package version '$($release.packageVersion)' must have a nonzero first component and a zero fourth component."
+    foreach ($versionProperty in 'packageVersion', 'publishedPackageVersion') {
+        $versionText = [string]$release.$versionProperty
+        if ($versionText -notmatch '^[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}$') {
+            throw "Store $versionProperty '$versionText' must contain four numeric components of at most five digits each."
+        }
+        $components = @($versionText.Split('.') | ForEach-Object { [int]$_ })
+        if ($components[0] -eq 0 -or @($components | Where-Object { $_ -gt 65535 }).Count -ne 0 -or $components[3] -ne 0) {
+            throw "Store $versionProperty '$versionText' must use components from 0 through 65535, a nonzero first component, and a zero fourth component."
+        }
+    }
+    if ([Version]$release.packageVersion -le [Version]$release.publishedPackageVersion) {
+        throw "Store package version '$($release.packageVersion)' must be higher than published version '$($release.publishedPackageVersion)'."
     }
     if ($release.tag -notmatch "^$Product-v([0-9]+\.[0-9]+\.[0-9]+)$") {
         throw "Store release tag '$($release.tag)' must use the form '$Product-vX.Y.Z'."
@@ -63,6 +73,7 @@ function Get-StoreRelease {
     [pscustomobject]@{
         Product = $Product
         PackageVersion = [string]$release.packageVersion
+        PublishedPackageVersion = [string]$release.publishedPackageVersion
         Tag = [string]$release.tag
         StoreProductId = [string]$release.storeProductId
         PackageIdentity = [string]$release.packageIdentity

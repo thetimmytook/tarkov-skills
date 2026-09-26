@@ -12,5 +12,5 @@ Import-Module (Join-Path $PSScriptRoot 'StoreRelease.psm1') -Force
 $products = if ($Product -eq 'all') { @('benchmark', 'toolkit') } else { @($Product) }
 foreach ($item in $products) {
     $release = Assert-StoreRelease -Product $item -RepositoryRoot $repoRoot -ExpectedTag $ExpectedTag
-    Write-Output "$($release.Product): $($release.Tag) -> $($release.PackageVersion)"
+    Write-Output "$($release.Product): public $($release.PublishedPackageVersion) -> candidate $($release.PackageVersion) ($($release.Tag))"
 }

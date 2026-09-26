@@ -1,0 +1,181 @@
+name: Microsoft Store flight
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Product to build and submit to its private package flight
+        required: true
+        type: choice
+        options:
+          - benchmark
+          - toolkit
+          - both
+      production_api_ready:
+        description: Production desktop-auth and Academy API contracts are confirmed ready
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require production API readiness confirmation
+        if: inputs.production_api_ready != true
+        run: |
+          echo "Production API readiness must be confirmed before submitting a Store flight."
+          exit 1
+
+  build-benchmark:
+    needs: preflight
+    if: inputs.product == 'benchmark' || inputs.product == 'both'
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Validate Benchmark release version
+        shell: pwsh
+        run: ./build/test-store-release.ps1 -Product benchmark
+      - name: Verify bundled PresentMon
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+      - name: Test Benchmark
+        run: dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release
+      - name: Build and inspect unsigned Benchmark MSIX
+        shell: pwsh
+        run: ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
+      - name: Upload immutable Benchmark flight artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-flight-benchmark-${{ github.run_id }}
+          path: artifacts/msix/*.msix
+          if-no-files-found: error
+          retention-days: 90
+
+  build-toolkit:
+    needs: preflight
+    if: inputs.product == 'toolkit' || inputs.product == 'both'
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Validate Toolkit release version
+        shell: pwsh
+        run: ./build/test-store-release.ps1 -Product toolkit
+      - name: Verify bundled PresentMon
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+      - name: Test Toolkit
+        run: dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
+      - name: Build and inspect unsigned Toolkit MSIX
+        shell: pwsh
+        run: ./build/build-toolkit-msix.ps1 -OutputDirectory artifacts/msix
+      - name: Upload immutable Toolkit flight artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-flight-toolkit-${{ github.run_id }}
+          path: artifacts/msix/*.msix
+          if-no-files-found: error
+          retention-days: 90
+
+  submit-benchmark:
+    needs: build-benchmark
+    runs-on: windows-latest
+    timeout-minutes: 20
+    environment: microsoft-store-flight
+    concurrency:
+      group: microsoft-store-benchmark
+      cancel-in-progress: false
+    steps:
+      - name: Download validated Benchmark MSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: store-flight-benchmark-${{ github.run_id }}
+          path: store-package
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Submit Benchmark to private flight
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          STORE_FLIGHT_ID: ${{ vars.BENCHMARK_STORE_FLIGHT_ID }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:STORE_FLIGHT_ID)) { throw 'BENCHMARK_STORE_FLIGHT_ID is not configured.' }
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Benchmark MSIX, found $($packages.Count)." }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+          msstore publish store-package --inputFile $packages[0].FullName --appId 9PJMPQ06JL21 --flightId $env:STORE_FLIGHT_ID
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark flight submission failed.' }
+      - name: Read current Benchmark flight status once
+        continue-on-error: true
+        shell: pwsh
+        env:
+          STORE_FLIGHT_ID: ${{ vars.BENCHMARK_STORE_FLIGHT_ID }}
+        run: msstore flights submission status 9PJMPQ06JL21 $env:STORE_FLIGHT_ID
+      - name: Write Benchmark submission summary
+        shell: pwsh
+        run: |
+          "## Benchmark Store flight" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Submitted run [$env:GITHUB_RUN_ID](https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID) to the configured private flight. Certification is not polled by this workflow." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Partner Center: https://partner.microsoft.com/dashboard" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+
+  submit-toolkit:
+    needs: build-toolkit
+    runs-on: windows-latest
+    timeout-minutes: 20
+    environment: microsoft-store-flight
+    concurrency:
+      group: microsoft-store-toolkit
+      cancel-in-progress: false
+    steps:
+      - name: Download validated Toolkit MSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: store-flight-toolkit-${{ github.run_id }}
+          path: store-package
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Submit Toolkit to private flight
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          STORE_FLIGHT_ID: ${{ vars.TOOLKIT_STORE_FLIGHT_ID }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:STORE_FLIGHT_ID)) { throw 'TOOLKIT_STORE_FLIGHT_ID is not configured.' }
+          $packages = @(Get-ChildItem -LiteralPath store-package -Filter *.msix -File)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Toolkit MSIX, found $($packages.Count)." }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+          msstore publish store-package --inputFile $packages[0].FullName --appId 9N3L7DZH0K64 --flightId $env:STORE_FLIGHT_ID
+          if ($LASTEXITCODE -ne 0) { throw 'Toolkit flight submission failed.' }
+      - name: Read current Toolkit flight status once
+        continue-on-error: true
+        shell: pwsh
+        env:
+          STORE_FLIGHT_ID: ${{ vars.TOOLKIT_STORE_FLIGHT_ID }}
+        run: msstore flights submission status 9N3L7DZH0K64 $env:STORE_FLIGHT_ID
+      - name: Write Toolkit submission summary
+        shell: pwsh
+        run: |
+          "## Toolkit Store flight" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Submitted run [$env:GITHUB_RUN_ID](https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID) to the configured private flight. Certification is not polled by this workflow." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          "Partner Center: https://partner.microsoft.com/dashboard" | Out-File $env:GITHUB_STEP_SUMMARY -Append
