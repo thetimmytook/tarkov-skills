@@ -22,6 +22,12 @@ public partial class BenchmarkView : UserControl
     private Window? _owner;
 
     public event EventHandler? RequestClose;
+    public bool IsComparisonLoading => ComparisonChart.IsLoading;
+    public event EventHandler ComparisonLayoutChanged
+    {
+        add => ComparisonChart.LayoutStateChanged += value;
+        remove => ComparisonChart.LayoutStateChanged -= value;
+    }
 
     public BenchmarkView() : this(new BenchmarkFeatureOptions("1.0.0")) { }
 
@@ -71,6 +77,7 @@ public partial class BenchmarkView : UserControl
         try
         {
             var document = _store.Load();
+            ComparisonChart.SetRuns(document.Runs);
             UpdateRunCount(document.Runs.Count);
             CopyResultsButton.IsEnabled = document.Runs.Count > 0;
             SubmitButton.IsEnabled = document.Runs.Count > 0;
@@ -82,6 +89,7 @@ public partial class BenchmarkView : UserControl
             SubmitButton.IsEnabled = false;
             CopyResultsButton.IsEnabled = false;
             UpdateRunCount(0);
+            ComparisonChart.SetRuns([]);
             StatusDetailText.Text = "Existing benchmark data uses an unsupported prototype format.";
         }
     }

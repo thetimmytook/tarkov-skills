@@ -56,11 +56,15 @@ for the selected run after moderation. Deleted runs are not sent again; uncertai
 outcomes are resolved through owner lookup before any explicit retry. Live end-to-end
 validation and Store-package checks remain required before release.
 
-## Planned comparison charts (2026-09-26)
+## Comparison charts (2026-09-26)
 
-Recorded user direction; not implemented in this step. Continue the current Academy
-desktop-auth and explicit submission integration first, then implement this UI in
-`src/TarkovBenchmark.Feature` for both Benchmark and Toolkit.
+Implemented in the shared `ComparisonView` at the bottom of Benchmark in both
+applications. Horizontal paired bars show Average FPS and 1% Low on one zero-based
+scale, with exact numeric labels and a green background for the selected local run.
+Bars are 12 device-independent pixels thick. Local metrics use the existing green
+accent pair; public metrics use the blue pair, with both pairs identified in the legend.
+Before the first local run, default to Streets with a map selector and the prompt
+below. Existing-run users can also select Public runs by map.
 
 - Show a chart comparing the user's selected local benchmark run with other public
   runs, using the existing Academy public search/Position contracts.
@@ -73,10 +77,25 @@ desktop-auth and explicit submission integration first, then implement this UI i
 - Keep publication separate and explicit. Pending, rejected or deleted submissions
   must not be presented as public comparison records.
 
-Suggested UX details to agree before implementation: use the local run's map for
-the comparison, label the comparison filters and sample size, and show an honest
-empty state when there are too few comparable public runs. The initial map, chart
-type and metric selection remain open; do not invent benchmark data to fill charts.
+Local comparisons use anonymous `/cohorts/query`, matching hardware, map, execution,
+resolution and game version; the selected run is labelled local regardless of its
+publication status. Only the existing cohort DTO is sent, without run ID, metrics,
+raw captures or credentials. Query preparation reuses the submission privacy
+validation; unsupported legacy runs can still use public map browsing.
+Public browsing shows previews of up to six hardware groups, labelled as examples
+rather than a complete ranking. Display sample counts, limited results, varying
+settings/weather and Demo markers for API-designated synthetic runs. No percentile
+is invented. Network failures offer refresh without affecting local collection.
+
+The new client read three Demo public examples from the real local API. Automated
+checks cover anonymous access, field allowlisting, exact/no-match responses, error
+redaction and endpoint selection. The user approved chart layout, colors and
+thickness in both hosts. The window height is now capped at the benchmark content
+height (and screen work area); the map selector shows names rather than key/value
+pairs. The user verified the no-history state and map switching without repeated resizing.
+For that check only, Debug builds accept the process-local environment variable
+`TARKOV_BENCHMARK_TEST_DATA_DIRECTORY` with an absolute temporary directory. The
+Release/Store build does not read it. Never clear real user history to test first run.
 
 ## Benchmark MVP
 

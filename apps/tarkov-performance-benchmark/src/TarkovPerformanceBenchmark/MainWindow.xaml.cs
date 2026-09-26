@@ -16,6 +16,7 @@ public partial class MainWindow : Window
         var view = new BenchmarkView(options);
         view.RequestClose += (_, _) => Close();
         ContentRoot.Content = view;
+        ContentHeightLimit.Attach(this, BenchmarkScroll, view);
     }
 
     private void About_Click(object sender, RoutedEventArgs e) => new AboutWindow { Owner = this }.ShowDialog();
