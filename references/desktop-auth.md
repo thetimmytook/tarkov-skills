@@ -99,13 +99,17 @@ the credential because the API can also report provider outages as 401.
 the caller must inspect `StatusCode`. Failure bodies and credential headers are not
 returned to UI or reports. Success bytes still require endpoint contract validation.
 
-API configuration is independent of the OAuth issuer. Debug uses ignored
+API configuration is independent of the OAuth issuer. Ordinary Debug builds use ignored
 `config/academy-api.development.local.json` (copy the example); Release requires
 versioned `config/academy-api.production.json`. Both hosts copy the selected file as
 `academy-api.json`. Production points to `https://timmy.academy/api/bench/v1`;
 deployment readiness is a separate API-owner check. The local integration endpoint
 is `http://127.0.0.1:8787/api/bench/v1`; HTTP loopback is enabled by the configuration
-reader only in Debug. Release never falls back to the local file. Cookies and
+reader only in Debug. `AcademyApiEnvironment` selects Development or Production;
+Release requires Production. Both MSIX build scripts explicitly select Production,
+including Debug MSIX. Package validation requires the embedded `academy-api.json`
+to match the versioned production file exactly and rejects a loopback production
+endpoint. Release never falls back to the local file. Cookies and
 redirects are disabled. Tests use synthetic credentials and real local redirect
 sockets, and the generated C# DTO was checked with Academy's actual TypeScript schema.
 Live authenticated submission, WPF visual review and MSIX validation remain separate.

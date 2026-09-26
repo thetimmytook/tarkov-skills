@@ -1,13 +1,18 @@
 <Project>
   <PropertyGroup>
-    <_AcademyApiSource Condition="'$(Configuration)' == 'Debug'">$(MSBuildThisFileDirectory)..\config\academy-api.development.local.json</_AcademyApiSource>
-    <_AcademyApiSource Condition="'$(Configuration)' != 'Debug'">$(MSBuildThisFileDirectory)..\config\academy-api.production.json</_AcademyApiSource>
+    <AcademyApiEnvironment Condition="'$(AcademyApiEnvironment)' == '' and '$(Configuration)' == 'Debug'">Development</AcademyApiEnvironment>
+    <AcademyApiEnvironment Condition="'$(AcademyApiEnvironment)' == ''">Production</AcademyApiEnvironment>
+    <_AcademyApiSource Condition="'$(AcademyApiEnvironment)' == 'Development'">$(MSBuildThisFileDirectory)..\config\academy-api.development.local.json</_AcademyApiSource>
+    <_AcademyApiSource Condition="'$(AcademyApiEnvironment)' == 'Production'">$(MSBuildThisFileDirectory)..\config\academy-api.production.json</_AcademyApiSource>
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(_AcademyApiSource)')">
     <Content Include="$(_AcademyApiSource)" Link="academy-api.json" TargetPath="academy-api.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
   <Target Name="ValidateAcademyApiSource" BeforeTargets="PrepareForBuild;ComputeFilesToPublish">
-    <Error Condition="'$(Configuration)' != 'Debug' and !Exists('$(_AcademyApiSource)')" Text="Production Academy API configuration is required; development fallback is forbidden." />
+    <Error Condition="'$(AcademyApiEnvironment)' != 'Development' and '$(AcademyApiEnvironment)' != 'Production'" Text="AcademyApiEnvironment must be Development or Production." />
+    <Error Condition="'$(Configuration)' != 'Debug' and '$(AcademyApiEnvironment)' != 'Production'" Text="Release builds require Production Academy API configuration." />
+    <Error Condition="'$(AcademyApiEnvironment)' == 'Production' and !Exists('$(_AcademyApiSource)')" Text="Production Academy API configuration is required; development fallback is forbidden." />
+    <Exec Condition="Exists('$(_AcademyApiSource)')" Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)test-academy-api-config.ps1&quot; -ConfigurationPath &quot;$(_AcademyApiSource)&quot; -Environment $(AcademyApiEnvironment)" />
   </Target>
   <Target Name="RemoveUnconfiguredAcademyApi" AfterTargets="Build" Condition="!Exists('$(_AcademyApiSource)')">
     <Delete Files="$(TargetDir)academy-api.json" />

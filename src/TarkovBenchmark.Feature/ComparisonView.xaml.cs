@@ -41,7 +41,7 @@ public partial class ComparisonView : UserControl
         var choices = new[] { new RunChoice(null) }.Concat(runs.Reverse().Select(run => new RunChoice(run))).ToArray();
         RunPicker.ItemsSource = choices;
         RunPicker.SelectedItem = choices.FirstOrDefault(item => selected is not null && item.Run?.RunId == selected)
-            ?? (runs.Count > 0 ? choices[1] : choices[0]);
+            ?? choices[0];
         IntroText.Text = runs.Count == 0 ? "Run benchmark to see your position" :
             "Compare a local run with matching public runs, or explore a map. Your run is highlighted in green.";
         updating = false;
@@ -57,6 +57,7 @@ public partial class ComparisonView : UserControl
     {
         updating = true;
         var run = (RunPicker.SelectedItem as RunChoice)?.Run;
+        RefreshButton.Content = run is null ? "Refresh comparison" : "Compare selected run";
         MapPicker.IsEnabled = run is null;
         GpuPicker.Visibility = run is null ? Visibility.Collapsed : Visibility.Visible;
         try
@@ -78,9 +79,9 @@ public partial class ComparisonView : UserControl
     {
         if (!updating && IsLoaded) _ = RefreshAsync();
     }
-    private void RefreshClicked(object sender, RoutedEventArgs e) => _ = RefreshAsync();
+    private void RefreshClicked(object sender, RoutedEventArgs e) => _ = RefreshAsync(compareLocal: true);
 
-    private async Task RefreshAsync()
+    private async Task RefreshAsync(bool compareLocal = false)
     {
         pending?.Cancel();
         using var request = new CancellationTokenSource();
@@ -91,6 +92,11 @@ public partial class ComparisonView : UserControl
         DescriptionText.Text = "Loading public benchmarks…";
         try
         {
+            if ((RunPicker.SelectedItem as RunChoice)?.Run is not null && !compareLocal)
+            {
+                DescriptionText.Text = "Choose Compare selected run to send CPU/GPU models, RAM, map, mode, resolution and game version for comparison. This does not publish the run.";
+                return;
+            }
             using var client = new PublicBenchmarkClient(AcademyConfiguration.Read(Path.Combine(AppContext.BaseDirectory, "academy-api.json")));
             ComparisonResult result;
             if ((RunPicker.SelectedItem as RunChoice)?.Run is { } run)

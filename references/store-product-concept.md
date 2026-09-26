@@ -63,17 +63,18 @@ applications. Horizontal paired bars show Average FPS and 1% Low on one zero-bas
 scale, with exact numeric labels and a green background for the selected local run.
 Bars are 12 device-independent pixels thick. Local metrics use the existing green
 accent pair; public metrics use the blue pair, with both pairs identified in the legend.
-Before the first local run, default to Streets with a map selector and the prompt
-below. Existing-run users can also select Public runs by map.
+Always default to Public runs by map (Streets initially), including when local runs
+exist. Selecting a local run or reopening the view does not send local parameters;
+the user must press Compare selected run after seeing which fields will be sent.
 
 - Show a chart comparing the user's selected local benchmark run with other public
   runs, using the existing Academy public search/Position contracts.
 - Before the first completed local run, show **Run benchmark to see your position**
   in place of the personal-position chart. Still show public-run charts for a map,
   with the selected map clearly visible and changeable.
-- Once a local run exists, show its position among comparable public runs. Reading
-  public results and calculating Position must not require publication or sign-in;
-  neither operation uploads or publishes the local run.
+- Once a local run exists, offer explicit comparison with comparable public runs.
+  Public browsing sends no local benchmark parameters. Comparison sends only the
+  disclosed cohort fields and does not require publication or sign-in.
 - Keep publication separate and explicit. Pending, rejected or deleted submissions
   must not be presented as public comparison records.
 

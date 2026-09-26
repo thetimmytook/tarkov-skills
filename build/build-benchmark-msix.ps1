@@ -62,6 +62,7 @@ try {
         '-r', 'win-x64',
         '--self-contained', 'true',
         '-p:DesktopAuthEnvironment=Production',
+        '-p:AcademyApiEnvironment=Production',
         ('-p:Version=' + ($PackageVersion -replace '\.0$', '')),
         '-o', $publish
     )

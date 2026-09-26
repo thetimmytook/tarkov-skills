@@ -57,7 +57,7 @@
 
     <Grid Grid.Row="2" Margin="24,0,24,12">
       <TextBlock Text="Tarkov Performance Toolkit by TimmyTook" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock Text="Unofficial community tool · local data only" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/><Button Content="About" Padding="10,4" Click="About_Click"/></StackPanel>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock Text="No benchmark data is uploaded automatically." Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/><Button Content="About" Padding="10,4" Click="About_Click"/></StackPanel>
     </Grid>
   </Grid>
 </Window>
