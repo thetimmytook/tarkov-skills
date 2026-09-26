@@ -42,14 +42,61 @@ revokes the shared grant for both, without logging out the browser session.
 
 Authentication starts only when Submit is chosen. The shared Submit dialog restores
 the credential before opening a browser, provides Sign in / Sign out / Retry, and
-requires an explicit Open form action after sign-in. No permanent login banner is
+requires an explicit review and Send for review action after sign-in. No permanent login banner is
 shown on the ordinary collection or inspection screens.
 See `references/desktop-auth.md` for migration and the manual test checkpoint.
 
-Authentication does not affect collection, aliases or history. The existing Google
-Form opens after the new sign-in gate; submission remains manual. Neither
-authentication nor the local `submitted` flag establishes publication
-in a future backend. This phase adds no publication or owner API calls.
+Authentication does not affect collection, aliases or history. Submit now sends
+one selected run to Academy using an explicit allowlist DTO and the run's permanent
+UUID. The exact request is saved separately for retries. Pending review is not
+publication; only the validated server receipt establishes publication state.
+Neither local sign-in nor the legacy `submitted` flag proves server acceptance.
+The shared dialog persists the last confirmed server status and offers Check status
+for the selected run after moderation. Deleted runs are not sent again; uncertain
+outcomes are resolved through owner lookup before any explicit retry. Live end-to-end
+validation and Store-package checks remain required before release.
+
+## Comparison charts (2026-09-26)
+
+Implemented in the shared `ComparisonView` at the bottom of Benchmark in both
+applications. Horizontal paired bars show Average FPS and 1% Low on one zero-based
+scale, with exact numeric labels and a green background for the selected local run.
+Bars are 12 device-independent pixels thick. Local metrics use the existing green
+accent pair; public metrics use the blue pair, with both pairs identified in the legend.
+Always default to Public runs by map (Streets initially), including when local runs
+exist. Selecting a local run or reopening the view does not send local parameters;
+the user must press Compare selected run after seeing which fields will be sent.
+
+- Show a chart comparing the user's selected local benchmark run with other public
+  runs, using the existing Academy public search/Position contracts.
+- Before the first completed local run, show **Run benchmark to see your position**
+  in place of the personal-position chart. Still show public-run charts for a map,
+  with the selected map clearly visible and changeable.
+- Once a local run exists, offer explicit comparison with comparable public runs.
+  Public browsing sends no local benchmark parameters. Comparison sends only the
+  disclosed cohort fields and does not require publication or sign-in.
+- Keep publication separate and explicit. Pending, rejected or deleted submissions
+  must not be presented as public comparison records.
+
+Local comparisons use anonymous `/cohorts/query`, matching hardware, map, execution,
+resolution and game version; the selected run is labelled local regardless of its
+publication status. Only the existing cohort DTO is sent, without run ID, metrics,
+raw captures or credentials. Query preparation reuses the submission privacy
+validation; unsupported legacy runs can still use public map browsing.
+Public browsing shows previews of up to six hardware groups, labelled as examples
+rather than a complete ranking. Display sample counts, limited results, varying
+settings/weather and Demo markers for API-designated synthetic runs. No percentile
+is invented. Network failures offer refresh without affecting local collection.
+
+The new client read three Demo public examples from the real local API. Automated
+checks cover anonymous access, field allowlisting, exact/no-match responses, error
+redaction and endpoint selection. The user approved chart layout, colors and
+thickness in both hosts. The window height is now capped at the benchmark content
+height (and screen work area); the map selector shows names rather than key/value
+pairs. The user verified the no-history state and map switching without repeated resizing.
+For that check only, Debug builds accept the process-local environment variable
+`TARKOV_BENCHMARK_TEST_DATA_DIRECTORY` with an absolute temporary directory. The
+Release/Store build does not read it. Never clear real user history to test first run.
 
 ## Benchmark MVP
 

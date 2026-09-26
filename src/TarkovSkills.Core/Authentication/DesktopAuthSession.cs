@@ -70,6 +70,11 @@ public sealed class DesktopAuthSession : IDesktopAuthSession
         if (credential is null) return DesktopAuthStatus.SignedOut;
         if (credential.RevocationPending) return DesktopAuthStatus.RevocationPending;
         if (credential.ExpiresAt > clock.GetUtcNow().AddMinutes(1)) return DesktopAuthStatus.SignedIn;
+        return await RefreshCoreAsync(credential, cancellation);
+    }
+
+    private async Task<DesktopAuthStatus> RefreshCoreAsync(DesktopCredential credential, CancellationToken cancellation)
+    {
         try
         {
             var refreshed = await adapter.RefreshAsync(credential, cancellation);
@@ -81,6 +86,26 @@ public sealed class DesktopAuthSession : IDesktopAuthSession
             return DesktopAuthStatus.SignInRequired;
         }
     }
+
+    // Only the trusted API transport in Core receives a token. Keep the shared-store
+    // lease across refresh and request so another product cannot rotate or sign out midway.
+    // The callback returns true only for an explicit HTTP 401 response.
+    internal Task<DesktopAuthStatus> AuthorizeRequestAsync(Func<string, Task<bool>> send,
+        CancellationToken cancellation) => RunAsync(async () =>
+    {
+        var status = await RestoreCoreAsync(cancellation);
+        if (status != DesktopAuthStatus.SignedIn) return status;
+        var credential = store.Load()!;
+        if (!await send(credential.AccessToken)) return DesktopAuthStatus.SignedIn;
+
+        // Retry only an explicit 401, once. Network errors never replay a request.
+        status = await RefreshCoreAsync(credential, cancellation);
+        if (status != DesktopAuthStatus.SignedIn) return status;
+        await send(store.Load()!.AccessToken);
+        // A repeated API 401 may also mean a provider outage: retain the credential.
+        // The API result still reports Unauthorized, never successful authentication.
+        return DesktopAuthStatus.SignedIn;
+    }, cancellation);
 
     public Task<DesktopAuthStatus> SignInAsync(CancellationToken cancellation = default) => RunAsync(async () =>
     {

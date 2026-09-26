@@ -11,7 +11,6 @@ namespace TarkovBenchmark.Feature;
 public partial class BenchmarkView : UserControl
 {
     private const int CaptureDurationSeconds = 120;
-    private const string PerformanceFormUrl = "https://forms.gle/D692T2Umd5ktD5wj8";
     private readonly BenchmarkFeatureOptions _options;
     private readonly PresentMonRunner _presentMon = new();
     private readonly RaidLogReader _raidLogs = new();
@@ -20,12 +19,15 @@ public partial class BenchmarkView : UserControl
     private CancellationTokenSource? _captureCancellation;
     private Stopwatch? _captureClock;
     private bool _completedCommand;
-    private bool _waitingForSubmissionReturn;
-    private bool _submissionWindowLostFocus;
-    private IReadOnlyList<string> _pendingSubmissionRunIds = [];
     private Window? _owner;
 
     public event EventHandler? RequestClose;
+    public bool IsComparisonLoading => ComparisonChart.IsLoading;
+    public event EventHandler ComparisonLayoutChanged
+    {
+        add => ComparisonChart.LayoutStateChanged += value;
+        remove => ComparisonChart.LayoutStateChanged -= value;
+    }
 
     public BenchmarkView() : this(new BenchmarkFeatureOptions("1.0.0")) { }
 
@@ -46,11 +48,6 @@ public partial class BenchmarkView : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _owner = Window.GetWindow(this);
-        if (_owner is not null)
-        {
-            _owner.Activated += Owner_Activated;
-            _owner.Deactivated += Owner_Deactivated;
-        }
         RefreshDependency();
         LoadLatestResult();
         if (_options.CollectRequested) SetStatus("Ready for a skill-requested benchmark. Start the raid, then press Start collection.", false);
@@ -60,11 +57,6 @@ public partial class BenchmarkView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (_owner is not null)
-        {
-            _owner.Activated -= Owner_Activated;
-            _owner.Deactivated -= Owner_Deactivated;
-        }
         _captureCancellation?.Cancel();
         if (_options.SourceSkill && !_completedCommand)
             WriteTerminalResult("cancelled", "The benchmark window was closed.");
@@ -85,6 +77,7 @@ public partial class BenchmarkView : UserControl
         try
         {
             var document = _store.Load();
+            ComparisonChart.SetRuns(document.Runs);
             UpdateRunCount(document.Runs.Count);
             CopyResultsButton.IsEnabled = document.Runs.Count > 0;
             SubmitButton.IsEnabled = document.Runs.Count > 0;
@@ -96,6 +89,7 @@ public partial class BenchmarkView : UserControl
             SubmitButton.IsEnabled = false;
             CopyResultsButton.IsEnabled = false;
             UpdateRunCount(0);
+            ComparisonChart.SetRuns([]);
             StatusDetailText.Text = "Existing benchmark data uses an unsupported prototype format.";
         }
     }
@@ -198,54 +192,16 @@ public partial class BenchmarkView : UserControl
     {
         try
         {
-            var document = _store.Load();
-            var runs = BenchmarkSubmission.SelectUnsubmitted(document.Runs).ToList();
-            var markSubmitted = runs.Count > 0;
-            if (runs.Count == 0)
-            {
-                var copyAll = MessageBox.Show(_owner, $"All {document.Runs.Count} saved run(s) are already marked as submitted. Copy the most recent {Math.Min(document.Runs.Count, BenchmarkSubmission.MaxRuns)} again?", "Nothing new to submit", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (copyAll != MessageBoxResult.Yes) return;
-                runs = BenchmarkSubmission.SelectMostRecent(document.Runs).ToList();
-            }
-
-            var submissionWindow = new SubmissionWindow(runs.Count, _options.AuthProduct) { Owner = _owner };
-            if (submissionWindow.ShowDialog() != true) return;
-            Clipboard.SetText(BenchmarkSubmission.Serialize(runs));
-            _pendingSubmissionRunIds = markSubmitted ? runs.Select(run => run.RunId).ToList() : [];
-            _waitingForSubmissionReturn = markSubmitted;
-            _submissionWindowLostFocus = false;
-            Process.Start(new ProcessStartInfo(PerformanceFormUrl) { UseShellExecute = true });
-            SetStatus($"Copied {runs.Count} run(s) to the clipboard. Paste the JSON into the form.", false);
-            StatusDetailText.Text = "The form was opened in your browser. Nothing was uploaded automatically.";
+            var runs = _store.Load().Runs;
+            if (runs.Count == 0) return;
+            new SubmissionWindow(runs, _options.AuthProduct) { Owner = _owner }.ShowDialog();
         }
-        catch (Exception ex)
+        catch
         {
-            ResetPendingSubmission();
-            SetStatus("Benchmark submission could not be prepared.", true);
-            StatusDetailText.Text = ex.Message;
+            SetStatus("Benchmark submission could not be opened. Your local history is unchanged.", true);
         }
     }
 
-    private void Owner_Deactivated(object? sender, EventArgs e) { if (_waitingForSubmissionReturn) _submissionWindowLostFocus = true; }
-    private void Owner_Activated(object? sender, EventArgs e)
-    {
-        if (!_waitingForSubmissionReturn || !_submissionWindowLostFocus) return;
-        _waitingForSubmissionReturn = false;
-        Dispatcher.BeginInvoke(ConfirmSubmissionAfterBrowserReturn);
-    }
-
-    private void ConfirmSubmissionAfterBrowserReturn()
-    {
-        var runIds = _pendingSubmissionRunIds;
-        ResetPendingSubmission();
-        if (runIds.Count == 0) return;
-        var submitted = MessageBox.Show(_owner, "Did you paste the JSON and submit the form?", "Confirm submission", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (submitted != MessageBoxResult.Yes) return;
-        _store.MarkSubmitted(runIds);
-        SetStatus($"Marked {runIds.Count} run(s) as submitted.", false);
-    }
-
-    private void ResetPendingSubmission() { _waitingForSubmissionReturn = false; _submissionWindowLostFocus = false; _pendingSubmissionRunIds = []; }
     private void SetCollecting(bool collecting)
     {
         StartButton.IsEnabled = !collecting && _presentMon.IsDependencyReady(out _);

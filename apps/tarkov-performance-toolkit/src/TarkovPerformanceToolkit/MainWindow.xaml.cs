@@ -24,6 +24,7 @@ public partial class MainWindow : Window
         DetailText.Text = ready ? $"{message}. No data is uploaded automatically." : message;
         BenchmarkRoot.Content = new BenchmarkView(BenchmarkFeatureOptions.ForToolkit(
             typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"));
+        ContentHeightLimit.Attach(this, BenchmarkScroll, (BenchmarkView)BenchmarkRoot.Content);
     }
 
     private void Inspect_Click(object sender, RoutedEventArgs e) => SetReport(new InspectionService().Inspect(), "Report collected from read-only local sources.");

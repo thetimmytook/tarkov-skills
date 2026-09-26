@@ -9,12 +9,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Import-Module (Join-Path $PSScriptRoot 'StoreRelease.psm1') -Force
 $release = Assert-StoreRelease -Product $Product -RepositoryRoot $repoRoot
 $resolvedPackage = [IO.Path]::GetFullPath($PackagePath)
 $productionAuth = Join-Path $repoRoot 'config/desktop-auth.production.json'
 & (Join-Path $PSScriptRoot 'test-desktop-auth-config.ps1') -ConfigurationPath $productionAuth
+$productionApi = Join-Path $repoRoot 'config/academy-api.production.json'
+& (Join-Path $PSScriptRoot 'test-academy-api-config.ps1') -ConfigurationPath $productionApi -Environment Production
 
 if (-not (Test-Path -LiteralPath $resolvedPackage -PathType Leaf)) {
     throw "MSIX package was not found: $resolvedPackage"
@@ -33,7 +36,7 @@ try {
     if ($entries.ContainsKey('AppxSignature.p7x')) {
         throw 'MSIX must be unsigned before Microsoft Store submission, but AppxSignature.p7x is present.'
     }
-    foreach ($path in @('AppxManifest.xml', 'desktop-auth.json') + $requirements + $assets) {
+    foreach ($path in @('AppxManifest.xml', 'desktop-auth.json', 'academy-api.json') + $requirements + $assets) {
         if (-not $entries.ContainsKey($path)) { throw "MSIX is missing required content: $path" }
     }
 
@@ -52,6 +55,19 @@ try {
     finally { $authHash.Dispose() }
     if ($packagedAuthHash -ne (Get-FileHash -LiteralPath $productionAuth -Algorithm SHA256).Hash) {
         throw 'Packaged desktop-auth.json differs from the versioned production configuration.'
+    }
+
+    if (@($archive.Entries | Where-Object { $_.FullName -eq 'academy-api.json' }).Count -ne 1) {
+        throw 'MSIX must contain exactly one academy-api.json.'
+    }
+    $apiHash = [Security.Cryptography.SHA256]::Create()
+    try {
+        $apiStream = $entries['academy-api.json'].Open()
+        try { $packagedApiHash = ([BitConverter]::ToString($apiHash.ComputeHash($apiStream))).Replace('-', '') }
+        finally { $apiStream.Dispose() }
+    } finally { $apiHash.Dispose() }
+    if ($packagedApiHash -ne (Get-FileHash -LiteralPath $productionApi -Algorithm SHA256).Hash) {
+        throw 'Packaged academy-api.json differs from the versioned production configuration.'
     }
 
     $reader = [IO.StreamReader]::new($entries['AppxManifest.xml'].Open())

@@ -5,17 +5,35 @@
         Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
   <Grid Margin="24">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <TextBlock Text="BENCHMARK DATA READY" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+    <TextBlock Text="SUBMIT TO TIMMY ACADEMY" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
     <StackPanel Grid.Row="1" Margin="0,18,0,0">
+      <TextBlock Text="Local run"/>
+      <ComboBox x:Name="RunCombo" Margin="0,6,0,12" SelectionChanged="Run_Changed"/>
+      <TextBlock Text="GPU used for this run"/>
+      <ComboBox x:Name="GpuCombo" Margin="0,6,0,12" SelectionChanged="Gpu_Changed"/>
       <TextBlock x:Name="SummaryText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
       <TextBlock Margin="0,12,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" LineHeight="21"
-                 Text="Open form will copy the JSON and open the existing Google Form. Paste it into the Benchmark JSON field and submit the form yourself. Signing in does not upload or publish results."/>
+                 Text="Only the selected run is sent after you choose Send for review. Includes hardware models, map, conditions, approved settings and performance metrics. Signing in does not upload results."/>
+      <TextBlock x:Name="DestinationText" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
+      <Border x:Name="ResultBanner" Margin="0,16,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1"
+              Background="{StaticResource InfoBackgroundBrush}" BorderBrush="{StaticResource InfoBorderBrush}"
+              AutomationProperties.LiveSetting="Polite">
+        <StackPanel>
+          <TextBlock x:Name="ResultTitle" Text="Submission status" FontSize="17" FontWeight="SemiBold"
+                     Foreground="{StaticResource InfoBrush}" TextWrapping="Wrap"/>
+          <TextBlock x:Name="ResultText" Margin="0,6,0,0" TextWrapping="Wrap" LineHeight="21"/>
+        </StackPanel>
+      </Border>
     </StackPanel>
     <ContentControl x:Name="AccountRoot" Grid.Row="2" Margin="0,18,0,0"/>
-    <StackPanel Grid.Row="3" Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
-      <Button Content="Cancel" Width="92" IsCancel="True" Click="Cancel_Click"/>
-      <Button Content="Open form" Width="120" Margin="10,0,0,0" IsEnabled="{Binding CanContinue}"
-              Style="{StaticResource PrimaryButton}" IsDefault="True" Click="OpenForm_Click"/>
-    </StackPanel>
+    <Grid Grid.Row="3" Margin="0,16,0,0">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Button Content="Close" Width="92" Margin="0,4,12,4" VerticalAlignment="Top" IsCancel="True" Click="Cancel_Click"/>
+      <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
+      <Button x:Name="CheckButton" Content="Check status" MinWidth="110" Margin="0,4,10,4" IsEnabled="False" Click="Check_Click"/>
+      <Button x:Name="SendButton" Content="Review selected run" MinWidth="170" Margin="0,4,0,4" IsEnabled="False"
+              Style="{StaticResource PrimaryButton}" Click="Send_Click"/>
+      </WrapPanel>
+    </Grid>
   </Grid>
 </Window>

@@ -9,9 +9,21 @@ public static class AppPaths
     private const int ErrorInsufficientBuffer = 122;
     private const int AppModelErrorNoPackage = 15700;
 
-    public static string DataDirectory { get; } = ResolveDataDirectory(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        GetPackageFamilyName());
+    public static string DataDirectory { get; } = CurrentDataDirectory();
+
+    private static string CurrentDataDirectory()
+    {
+#if DEBUG
+        // Isolated manual first-run checks; never compiled into Store/Release builds.
+        var testDirectory = Environment.GetEnvironmentVariable("TARKOV_BENCHMARK_TEST_DATA_DIRECTORY");
+        if (!string.IsNullOrWhiteSpace(testDirectory))
+        {
+            if (!Path.IsPathFullyQualified(testDirectory)) throw new ArgumentException("Test data directory must be absolute.");
+            return Path.GetFullPath(testDirectory);
+        }
+#endif
+        return ResolveDataDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GetPackageFamilyName());
+    }
     public static string BenchmarkFile => Path.Combine(DataDirectory, "benchmark.json");
     public static string LastCommandResultFile => Path.Combine(DataDirectory, "last-command-result.json");
     public static string ReportsDirectory => Path.Combine(DataDirectory, "reports");

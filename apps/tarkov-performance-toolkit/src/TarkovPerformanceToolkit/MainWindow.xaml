@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Tarkov Performance Toolkit" Icon="Assets/AppIcon.png"
-        Width="940" Height="700" MinWidth="760" MinHeight="560"
+        Width="940" Height="820" MinWidth="760" MinHeight="560"
+        MaxHeight="{Binding Height, Source={x:Static SystemParameters.WorkArea}}"
         ResizeMode="CanResizeWithGrip"
         Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
   <Grid>
@@ -34,8 +35,8 @@
       </TabItem>
 
       <TabItem Header="Benchmark">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-          <ContentControl x:Name="BenchmarkRoot" MinWidth="680"/>
+        <ScrollViewer x:Name="BenchmarkScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+          <ContentControl x:Name="BenchmarkRoot" MinWidth="620" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" VerticalAlignment="Top"/>
         </ScrollViewer>
       </TabItem>
 
@@ -56,7 +57,7 @@
 
     <Grid Grid.Row="2" Margin="24,0,24,12">
       <TextBlock Text="Tarkov Performance Toolkit by TimmyTook" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock Text="Unofficial community tool · local data only" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/><Button Content="About" Padding="10,4" Click="About_Click"/></StackPanel>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock Text="No benchmark data is uploaded automatically." Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/><Button Content="About" Padding="10,4" Click="About_Click"/></StackPanel>
     </Grid>
   </Grid>
 </Window>
