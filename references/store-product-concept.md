@@ -160,6 +160,6 @@ The monorepo keeps the application under `apps/tarkov-performance-benchmark/` wi
 
 The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Benchmark history belongs to package `LocalState`; skills use the execution alias and machine-readable output rather than direct file access.
 
-Privacy-policy hosting and Partner Center submission remain separate release concerns. Both products have passed initial certification and are public. Upload packages manually until an authenticated Store deployment pipeline is deliberately introduced.
+Privacy-policy hosting and Partner Center submission remain separate release concerns. Both products have passed initial certification and are public. Manual GitHub workflows build and validate unsigned packages, submit them to private Store flights after protected approval, and promote only the exact flight-tested artifacts through a separate protected public-release workflow.
 
 Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then validate installation, alias registration, capture, and package-local persistence with the Microsoft-signed Store update. Use a closed Store flight when an update needs limited distribution before production.

@@ -23,6 +23,12 @@ Run these against the Microsoft-signed closed Store package, not a locally self-
 | TOOLKIT-17 | Use the skill from a local agent. | Agent runs `status`, `inspect`, or an explicitly approved `capture` through `tarkov-skills.exe`, receives one sanitized JSON document on stdout, and no GUI opens. |
 | TOOLKIT-18 | Use the skill from a web client. | User can collect a diagnostic report in Overview or complete a run in Benchmark, then use Copy JSON or Copy results. Copy results places only the latest completed run on the clipboard and uploads nothing. |
 | TOOLKIT-19 | Compare Benchmark behavior in Toolkit and the standalone Benchmark product. | Capture readiness, timer, cancellation, context questions, result metrics, run count, and submission flow behave the same because both host `TarkovBenchmark.Feature.dll`. Copy results appears only in Toolkit, and each product keeps its own package-local history. |
+| TOOLKIT-20 | Sign in from the Benchmark section, then close and reopen both Store products. | Toolkit and Benchmark share the Store publisher credential, restore the session without a second login, and display no email or token. |
+| TOOLKIT-21 | Sign out from either Store product. | Both products become signed out; a network failure leaves explicit pending revocation rather than a false success. |
+| TOOLKIT-22 | Cancel the submission dialog before choosing Send. | Nothing is uploaded, copied, or marked submitted. |
+| TOOLKIT-23 | Explicitly send one saved run, then choose Check status. | The Academy owner lookup and submission use the production API, the status is validated and sanitized, and a status check does not create another run. |
+| TOOLKIT-24 | Open Position and browse public examples without selecting a local comparison. | Public example groups and charts load anonymously; no local run criteria are sent. |
+| TOOLKIT-25 | Choose Compare selected run. | The documented comparison criteria are sent only after the button action, the chart renders, and the local run is not published by comparison. |
 
 ## Skill Integration Scenarios
 

@@ -9,7 +9,7 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 - The Microsoft-signed Store package is installed.
 - Escape from Tarkov is available for the real-raid capture cases.
 - Record the initial run count shown by the application and, when available, the number of entries in the package-local `benchmark.json` opened through `Open folder`.
-- The PoC Google Form uses a required paragraph field with a maximum length of 200,000 characters.
+- The Academy production owner has confirmed the deployed desktop-auth, owner lookup, submission, public browsing, and cohort-comparison contracts before the flight submission is approved.
 
 ## Store Installation And Launch
 
@@ -60,14 +60,20 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 | DATA-05 | Search the artifact for private or temporary data. | No user name, host name, IP address, serial number, machine GUID, user-specific path, settings directory, PresentMon CSV path, or raw CSV is present. |
 | DATA-06 | Observe the app and network behavior without consenting to upload. | The run remains local and no benchmark data is uploaded automatically. |
 
-## Manual Submission
+## Account, Submission, And Comparison
 
 | ID | Test | Expected result |
 | --- | --- | --- |
-| SUBMIT-01 | Select `Submit` when unsubmitted runs exist. | The app explicitly says that valid JSON for only the unsubmitted runs was copied to the clipboard and instructs the user to paste it into the form with `Ctrl+V`. The dialog offers clear `Open form` and `Cancel` commands; the form opens only after selecting `Open form`, and nothing is posted automatically. |
-| SUBMIT-02 | Paste the clipboard contents into the Google Form paragraph field, submit it, then return to the app. | The submission confirmation appears only after returning to the app. Confirming marks only the copied runs as `submitted: true` in the local JSON. |
-| SUBMIT-03 | Select `Submit` when every run is already marked submitted. | The app explains that there are no new runs and asks whether up to 20 most recent runs should be copied again. |
-| SUBMIT-04 | Keep more than 20 unsubmitted runs, then select `Submit`. | The payload contains only the 20 most recent unsubmitted runs, remains below the PoC form limit of 200,000 characters for normal run sizes, and local history is not deleted. |
+| AUTH-01 | Open `Submit` while signed out and complete the Clerk system-browser flow. | Consent is explicit, the loopback callback returns to the app, no token or email is displayed, and the run is not sent merely by signing in. |
+| AUTH-02 | Close and reopen both Store products after signing in through Benchmark. | Both products restore the shared signed-in session without opening a new browser tab. |
+| AUTH-03 | Sign out in either Store product. | Both products become signed out; incomplete remote revocation is reported as pending rather than confirmed. |
+| SUBMIT-01 | Select a completed run, open `Submit`, review the destination, and cancel. | No benchmark is uploaded and local history is unchanged. |
+| SUBMIT-02 | Explicitly send one completed run. | The app first checks the authenticated owner endpoint, posts only after a confirmed not-found result, and shows only a validated `pending_review`, `published`, `rejected`, or `deleted` server status. |
+| SUBMIT-03 | Choose `Check status` for the submitted run. | The app performs an owner lookup without another POST, shows the current confirmed server status, and stores only the sanitized status checkpoint. |
+| SUBMIT-04 | Retry after an uncertain network response. | The app performs owner lookup first and does not create a duplicate run automatically. |
+| COMPARE-01 | Open Position without selecting explicit comparison. | Public example groups may load anonymously, but no local run or hardware criteria are sent. |
+| COMPARE-02 | Select `Compare selected run`. | Only the documented CPU/GPU models, RAM, map, mode, resolution, and game version criteria are sent; the returned chart and sample counts render without publishing the local run. |
+| COMPARE-03 | Restart after a successful submission and comparison. | Local run history remains intact, the saved submission status is labelled as last confirmed, and comparison requires another explicit button action. |
 
 ## Failure Handling
 
