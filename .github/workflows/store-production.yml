@@ -159,7 +159,7 @@ jobs:
           msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
           if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
           msstore settings --enableTelemetry false
-          msstore publish store-package --inputDirectory store-package --appId 9PJMPQ06JL21
+          msstore publish $packages[0].FullName --appId 9PJMPQ06JL21
           if ($LASTEXITCODE -ne 0) { throw 'Benchmark production submission failed.' }
       - name: Read current Benchmark production status once
         continue-on-error: true
@@ -200,7 +200,7 @@ jobs:
           msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
           if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
           msstore settings --enableTelemetry false
-          msstore publish store-package --inputDirectory store-package --appId 9N3L7DZH0K64
+          msstore publish $packages[0].FullName --appId 9N3L7DZH0K64
           if ($LASTEXITCODE -ne 0) { throw 'Toolkit production submission failed.' }
       - name: Read current Toolkit production status once
         continue-on-error: true
