@@ -1,0 +1,52 @@
+name: Microsoft Store flight diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Product whose package flights should be listed
+        required: true
+        default: both
+        type: choice
+        options:
+          - benchmark
+          - toolkit
+          - both
+
+permissions:
+  contents: read
+
+jobs:
+  list-flights:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    environment: microsoft-store-flight
+    steps:
+      - name: Install Microsoft Store publisher
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Authenticate and list package flights
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          SELECTED_PRODUCT: ${{ inputs.product }}
+        run: |
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+
+          if ($env:SELECTED_PRODUCT -in @('benchmark', 'both')) {
+            Write-Output 'Benchmark package flights (Store ID 9PJMPQ06JL21):'
+            msstore flights list 9PJMPQ06JL21
+            if ($LASTEXITCODE -ne 0) { throw 'Could not list Benchmark package flights.' }
+          }
+
+          if ($env:SELECTED_PRODUCT -in @('toolkit', 'both')) {
+            Write-Output 'Toolkit package flights (Store ID 9N3L7DZH0K64):'
+            msstore flights list 9N3L7DZH0K64
+            if ($LASTEXITCODE -ne 0) { throw 'Could not list Toolkit package flights.' }
+          }
+
+          'Read-only flight lookup completed. No submission was created or modified.' | Out-File $env:GITHUB_STEP_SUMMARY -Append
