@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "tarkov-performance",
-      "source": "./",
+      "source": "./plugins/tarkov-performance",
       "description": "Read-only Escape from Tarkov performance analysis, benchmarking, and tuning skills"
     }
   ]
