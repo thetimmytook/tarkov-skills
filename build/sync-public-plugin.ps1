@@ -111,4 +111,3 @@ if ($Check) {
 elseif ($drift.Count -gt 0) {
     throw "The public plugin README is missing: plugins/tarkov-performance/README.md"
 }
-
