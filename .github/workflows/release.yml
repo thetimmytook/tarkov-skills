@@ -2,6 +2,8 @@ name: Product release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "benchmark-v*.*.*"
       - "toolkit-v*.*.*"
@@ -10,10 +12,104 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: product-release
+  cancel-in-progress: false
+
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      create_tag: ${{ steps.plan.outputs.create_tag }}
+      release_tag: ${{ steps.plan.outputs.release_tag }}
+      should_release: ${{ steps.plan.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release plan
+        id: plan
+        shell: pwsh
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          function Set-ReleasePlan {
+            param(
+              [Parameter(Mandatory)] [bool] $ShouldRelease,
+              [Parameter(Mandatory)] [bool] $CreateTag,
+              [Parameter(Mandatory)] [string] $ReleaseTag
+            )
+
+            "should_release=$($ShouldRelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "create_tag=$($CreateTag.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "release_tag=$ReleaseTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+
+          if ($env:REF_TYPE -eq 'tag') {
+            Set-ReleasePlan -ShouldRelease $true -CreateTag $false -ReleaseTag $env:REF_NAME
+            exit 0
+          }
+
+          $manifest = Get-Content -Raw .claude-plugin/plugin.json | ConvertFrom-Json
+          if ($manifest.version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Skills version must use X.Y.Z format, got '$($manifest.version)'."
+          }
+
+          $tag = "skills-v$($manifest.version)"
+          $previousVersion = $null
+          if ($env:BEFORE_SHA -and $env:BEFORE_SHA -notmatch '^0+$') {
+            $previousSpec = "{0}:.claude-plugin/plugin.json" -f $env:BEFORE_SHA
+            $previousJson = (git show $previousSpec 2>$null) -join "`n"
+            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($previousJson)) {
+              $previousVersion = ($previousJson | ConvertFrom-Json).version
+            }
+          }
+
+          $versionChanged = $null -eq $previousVersion -or $previousVersion -ne $manifest.version
+          if ($versionChanged -and $previousVersion) {
+            if ([version]$manifest.version -le [version]$previousVersion) {
+              throw "Skills version must increase from '$previousVersion' to a newer version, got '$($manifest.version)'."
+            }
+          }
+
+          $remoteTags = @(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not query remote tag '$tag'."
+          }
+
+          if ($remoteTags.Count -eq 0) {
+            Set-ReleasePlan -ShouldRelease $true -CreateTag $true -ReleaseTag $tag
+            exit 0
+          }
+
+          $tagLine = $remoteTags | Where-Object { $_.EndsWith('^{}') } | Select-Object -First 1
+          if (-not $tagLine) {
+            $tagLine = $remoteTags | Select-Object -First 1
+          }
+          $tagCommit = ($tagLine -split '\s+')[0]
+
+          if ($tagCommit -eq $env:GITHUB_SHA) {
+            Set-ReleasePlan -ShouldRelease $false -CreateTag $false -ReleaseTag $tag
+            exit 0
+          }
+
+          if ($versionChanged) {
+            throw "Tag '$tag' already points to '$tagCommit', not current main '$env:GITHUB_SHA'. Bump the skills version instead of moving an existing tag."
+          }
+
+          Set-ReleasePlan -ShouldRelease $false -CreateTag $false -ReleaseTag $tag
+
   release:
+    needs: plan
+    if: needs.plan.outputs.should_release == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      CREATE_RELEASE_TAG: ${{ needs.plan.outputs.create_tag }}
+      RELEASE_TAG: ${{ needs.plan.outputs.release_tag }}
     outputs:
       product: ${{ steps.release.outputs.product }}
     steps:
@@ -25,19 +121,19 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Require a tag on the current main commit
+      - name: Require the release commit to be current main
         shell: pwsh
         run: |
           git fetch origin main --depth=1
           $main = git rev-parse origin/main
           if ($LASTEXITCODE -ne 0) { throw "Could not resolve origin/main." }
-          if ($env:GITHUB_SHA -ne $main) { throw "Release tag must point at current main ($main), not $env:GITHUB_SHA." }
+          if ($env:GITHUB_SHA -ne $main) { throw "Release commit must be current main ($main), not $env:GITHUB_SHA." }
 
       - name: Resolve and validate release target
         id: release
         shell: pwsh
         run: |
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:RELEASE_TAG
           if ($tag -match '^skills-v([0-9]+\.[0-9]+\.[0-9]+)$') {
             $plugin = Get-Content -Raw .claude-plugin/plugin.json | ConvertFrom-Json
             if ($plugin.version -ne $Matches[1]) { throw "Tag '$tag' does not match skills version '$($plugin.version)'." }
@@ -53,6 +149,14 @@ jobs:
         if: steps.release.outputs.product != 'skills'
         shell: pwsh
         run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+
+      - name: Validate skills publication inputs
+        if: steps.release.outputs.product == 'skills'
+        shell: pwsh
+        run: |
+          ./build/sync-skills.ps1 -Check
+          ./build/sync-public-plugin.ps1 -Check
+          ./build/test-skills-plugin.ps1 -ExpectedTag $env:RELEASE_TAG
 
       - name: Test Benchmark
         if: steps.release.outputs.product == 'benchmark'
@@ -83,20 +187,23 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:RELEASE_TAG
           $staging = Join-Path $env:RUNNER_TEMP 'tarkov-skills'
           New-Item -ItemType Directory -Force $staging | Out-Null
           Copy-Item -Recurse -Path skills -Destination $staging
           Copy-Item -Path AGENTS.md, CLAUDE.md, README.md, LICENSE -Destination $staging
           $version = $tag -replace '^skills-v', ''
           Compress-Archive -Path $staging -DestinationPath "dist/tarkov-skills-$version.zip"
-          ./build/build-skills-plugin.ps1 -OutputDirectory dist
+          $openAiArchive = ./build/build-skills-plugin.ps1 -OutputDirectory dist
+          ./build/test-skills-plugin.ps1 -ExpectedTag $tag -ArchivePath $openAiArchive
+
+          ./build/build-claude-plugin.ps1 -OutputDirectory dist
 
       - name: Build source archive
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:RELEASE_TAG
           $archiveTag = if ($tag -like 'skills-v*') { $tag -replace '^skills-v', '' } else { $tag }
           git archive --format=zip --output "dist/tarkov-skills-source-$archiveTag.zip" HEAD
           if ($LASTEXITCODE -ne 0) { throw 'Source archive creation failed.' }
@@ -122,12 +229,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:RELEASE_TAG
           $product = '${{ steps.release.outputs.product }}'
           $notes = if ($product -eq 'benchmark') {
             "[Microsoft Store: Tarkov Performance Benchmark](https://apps.microsoft.com/detail/9PJMPQ06JL21)`n`nPortable builds are self-contained, not Microsoft Store-signed, do not auto-update, and do not register Store execution aliases."
           } elseif ($product -eq 'toolkit') {
             "[Microsoft Store: Tarkov Performance Toolkit](https://apps.microsoft.com/detail/9N3L7DZH0K64)`n`nPortable builds are self-contained, not Microsoft Store-signed, do not auto-update, and do not register Store execution aliases."
-          } else { 'Skills-only release.' }
+          } else {
+            'Skills-only release. The OpenAI ZIP is ready for manual portal submission. The Claude directory reads the clean plugin folder from GitHub and can receive approved updates through its configured webhook.'
+          }
           $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object { $_.FullName })
-          gh release create $tag @assets --title $tag --notes $notes
+          if ($env:CREATE_RELEASE_TAG -eq 'true') {
+            gh release create $tag @assets --target $env:GITHUB_SHA --title $tag --notes $notes
+          }
+          else {
+            gh release create $tag @assets --verify-tag --title $tag --notes $notes
+          }

@@ -32,7 +32,7 @@ $OutputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 
 $stagingRoot = Join-Path $OutputDirectory ("staging-" + [guid]::NewGuid().ToString("N"))
-$archivePath = Join-Path $OutputDirectory ("{0}-plugin-{1}.zip" -f $manifest.name, $manifest.version)
+$archivePath = Join-Path $OutputDirectory ("{0}-openai-plugin-{1}.zip" -f $manifest.name, $manifest.version)
 
 try {
     New-Item -ItemType Directory -Force -Path (Join-Path $stagingRoot ".claude-plugin") | Out-Null
@@ -52,6 +52,13 @@ try {
         $targetSkill = Join-Path $stagingRoot ("skills\" + $skillDirectory.Name)
         New-Item -ItemType Directory -Force -Path $targetSkill | Out-Null
         Copy-Item -LiteralPath $skillFile -Destination (Join-Path $targetSkill "SKILL.md")
+
+        $openAiMetadata = Join-Path $skillDirectory.FullName "agents\openai.yaml"
+        if (-not (Test-Path -LiteralPath $openAiMetadata)) {
+            throw "Missing OpenAI interface metadata: $openAiMetadata"
+        }
+        New-Item -ItemType Directory -Force -Path (Join-Path $targetSkill "agents") | Out-Null
+        Copy-Item -LiteralPath $openAiMetadata -Destination (Join-Path $targetSkill "agents\openai.yaml")
 
         $references = Join-Path $skillDirectory.FullName "references"
         if (Test-Path -LiteralPath $references) {

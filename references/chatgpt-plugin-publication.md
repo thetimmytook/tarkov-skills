@@ -16,13 +16,13 @@ Official references:
 
 ## Before Submission
 
-- [ ] Merge and tag a stable skill version on the default branch.
+- [ ] Raise `.claude-plugin/plugin.json` to the intended stable version in the release PR and merge it to `main`. The product-release workflow creates the matching `skills-v<version>` tag and GitHub Release after validation.
 - [ ] Run `build/sync-skills.ps1` and confirm all vendored references are current.
 - [ ] Review every `SKILL.md` and bundled reference for provider-neutral language and a complete web/manual path.
 - [ ] Confirm every skill works from pasted Toolkit JSON without repository files, local commands, credentials, or undeclared packages.
 - [ ] Confirm all generated or shared data excludes user names, host names, local paths, IP addresses, serial numbers, and machine identifiers.
 - [ ] Create a public `TERMS.md` and keep `PRIVACY.md` accurate for the web workflow.
-- [ ] Prepare a dedicated submission ZIP whose root contains `.claude-plugin/plugin.json` and `skills/<skill-name>/SKILL.md`.
+- [ ] Prepare a dedicated submission ZIP whose root contains `.claude-plugin/plugin.json`, `skills/<skill-name>/SKILL.md`, and `skills/<skill-name>/agents/openai.yaml`.
 - [ ] Do not rely on `.claude-plugin/marketplace.json`; OpenAI ignores marketplace declarations in a skills-only upload.
 - [ ] Exclude repository-only build files, app binaries, Store packages, capture data, and agent-specific notes that are not required by the skills.
 - [ ] Validate the final ZIP by extracting it into a clean directory and checking every referenced file.
@@ -33,7 +33,11 @@ Build the dedicated archive with:
 .\build\build-skills-plugin.ps1
 ```
 
-The script reads the version from `.claude-plugin/plugin.json` and writes a clean, provider-neutral upload artifact under `artifacts/skills-plugin/`. The same archive can be uploaded to Claude or imported by the ChatGPT submission portal.
+The script reads the version from `.claude-plugin/plugin.json` and writes `tarkov-performance-openai-plugin-<version>.zip` under `artifacts/skills-plugin/`. This archive is specific to the OpenAI submission because it includes each skill's `agents/openai.yaml` interface metadata. Claude Directory reads the clean committed folder at `plugins/tarkov-performance/` instead.
+
+CI validates the source skills, OpenAI metadata, local reference paths, clean archive inventory, public Claude folder, and version/tag relationship. CI does not upload the ZIP, accept policy attestations, submit it for review, or publish an approved version; those actions remain manual in the OpenAI portal.
+
+When `main` contains a plugin version without a matching tag, the product-release workflow validates it, creates `skills-v<version>`, and publishes a GitHub release containing the OpenAI ZIP, clean Claude ZIP, agent-skills ZIP, source ZIP, and `SHA256SUMS.txt`. An unchanged version does not produce another release. Never move or reuse an existing skills tag.
 
 ## OpenAI Account Setup
 

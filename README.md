@@ -21,7 +21,7 @@ Current public Store versions:
 
 ### GitHub Release
 
-Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes self-contained Windows x64 archives for the Toolkit and standalone Benchmark, an agent-skills archive, and a complete source archive. Extract the selected portable application and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.
+Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes the artifacts relevant to that tagged product. Skills releases include the agent-skills archive, the OpenAI submission ZIP, the clean Claude plugin ZIP, a complete source archive, and SHA-256 checksums. Application releases include the corresponding self-contained Windows x64 portable archive, Store package, source archive, and checksums. Extract a portable application archive and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.
 
 Portable builds do not require the .NET runtime, but they are not signed by Microsoft Store and do not update automatically.
 
@@ -66,6 +66,8 @@ ChatGPT web cannot run the local Toolkit command directly. Open Tarkov Performan
 Attaching a `SKILL.md` file to one chat can provide temporary instructions, but ChatGPT treats it as ordinary chat context rather than an installed skill. Use this only for development while the plugin is not yet listed.
 
 The ChatGPT and Claude publication checklists are maintained in [references/chatgpt-plugin-publication.md](references/chatgpt-plugin-publication.md) and [references/claude-plugin-publication.md](references/claude-plugin-publication.md).
+
+The clean Claude Directory source is `plugins/tarkov-performance/`. GitHub Actions verifies that it matches the master skills. Raising `.claude-plugin/plugin.json` to an unreleased version and merging it to `main` automatically creates the matching skills tag and GitHub Release with the OpenAI ZIP, Claude ZIP, agent-skills ZIP, source ZIP, and SHA-256 checksums. Initial directory submissions, policy acknowledgements, reviews, and OpenAI portal publication remain publisher-controlled steps.
 
 ### Manual and other agents
 
@@ -117,6 +119,7 @@ Any future interactive map or raid-planning work follows the [raid planner data 
 ## Repository Layout
 
 - `skills/` — the four agent skills
+- `plugins/tarkov-performance/` — clean, committed Claude Directory plugin synchronized from the master skills
 - `src/TarkovSkills.Core/` — shared read-only C# collection library
 - `src/TarkovBenchmark.Feature/` — shared benchmark workflow and WPF interface hosted by both Store applications
 - `apps/tarkov-performance-benchmark/` — C# WPF Microsoft Store application

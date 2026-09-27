@@ -5,6 +5,7 @@ This repository contains Escape from Tarkov performance skills and signed Micros
 ## Repository Layout
 
 - `skills/` - the four agent skills (`tarkov-config`, `tarkov-frametime`, `tarkov-performance-benchmark`, `tarkov-tuning`).
+- `plugins/tarkov-performance/` - the clean public Claude Directory plugin synchronized from the master skills.
 - `src/TarkovSkills.Core/` - shared read-only C# collectors and JSON contracts used by both Store products.
 - `src/TarkovBenchmark.Feature/` - the single shared WPF benchmark workflow and UI hosted by both Store products.
 - Skills contain instructions and references only. They do not ship scripts, executables, DLLs, or PresentMon.
@@ -118,6 +119,7 @@ Store-owned goal memory, reports, captures, and benchmark runs live under each p
 - Commit only as the repository author/user configured in Git. Do not add tool names, bot names, generated-by attribution text, or co-author trailers to commit messages, PR text, release notes, or other repository metadata unless the user explicitly asks.
 - Do not rewrite history or discard user changes.
 - Do not wait for or poll GitHub Actions, pull-request checks, Store certification, publication, or other remote jobs unless the user explicitly asks. After starting a remote job, return its link and current status immediately.
+- Release all four skills together. Raise `.claude-plugin/plugin.json` in the release PR; after merge to `main`, the product-release workflow creates the immutable `skills-v<version>` tag and the skills GitHub Release. Do not create, move, or reuse a skills tag manually.
 - Keep generated capture data, temporary outputs, and run results out of Git unless the user asks to version examples.
 - When creating or editing a PR body from PowerShell, pass multiline Markdown through a here-string variable (`@' ... '@`), not literal `\n` escapes. Verify the rendered body afterward with `gh pr view <number> --json body --jq .body`.
 - Keep commit messages and PR descriptions focused on the change summary. Do not add generic `Verification`/`Testing` sections or command lists unless the user asks for them or a meaningful test limitation needs disclosure.
