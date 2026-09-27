@@ -37,12 +37,16 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)
 try {
-    $archiveEntries = @($archive.Entries | ForEach-Object { $_.FullName } | Sort-Object)
+    $archiveEntries = @($archive.Entries | Where-Object {
+        -not [string]::IsNullOrEmpty($_.Name)
+    } | ForEach-Object { $_.FullName } | Sort-Object)
     $sourceEntries = @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File | ForEach-Object {
         $_.FullName.Substring($pluginRoot.Length + 1).Replace('\', '/')
     } | Sort-Object)
     if (($archiveEntries -join "`n") -cne ($sourceEntries -join "`n")) {
-        throw "Claude archive inventory does not match the public plugin folder."
+        $missing = @($sourceEntries | Where-Object { $_ -cnotin $archiveEntries })
+        $unexpected = @($archiveEntries | Where-Object { $_ -cnotin $sourceEntries })
+        throw "Claude archive inventory does not match the public plugin folder. Missing: $($missing -join ', '). Unexpected: $($unexpected -join ', ')."
     }
 }
 finally {
