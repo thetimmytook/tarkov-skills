@@ -80,7 +80,7 @@ foreach ($mapping in $mappings) {
 }
 
 if (Test-Path -LiteralPath $pluginRoot) {
-    foreach ($file in @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File)) {
+    foreach ($file in @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File -Force)) {
         $relative = $file.FullName.Substring($pluginRoot.Length + 1).Replace('\', '/')
         if ($allowedFiles.Contains($relative)) {
             continue

@@ -90,7 +90,7 @@ foreach ($skillDirectory in $skillDirectories) {
 }
 
 $publicPluginRoot = Join-Path $repoRoot "plugins\tarkov-performance"
-$publicFiles = @(Get-ChildItem -LiteralPath $publicPluginRoot -Recurse -File)
+$publicFiles = @(Get-ChildItem -LiteralPath $publicPluginRoot -Recurse -File -Force)
 if ($publicFiles.Count -gt 512) {
     throw "Public plugin contains more than 512 files."
 }

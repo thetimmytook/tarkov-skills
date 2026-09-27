@@ -40,7 +40,7 @@ try {
     $archiveEntries = @($archive.Entries | Where-Object {
         -not [string]::IsNullOrEmpty($_.Name)
     } | ForEach-Object { $_.FullName } | Sort-Object)
-    $sourceEntries = @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File | ForEach-Object {
+    $sourceEntries = @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File -Force | ForEach-Object {
         $_.FullName.Substring($pluginRoot.Length + 1).Replace('\', '/')
     } | Sort-Object)
     if (($archiveEntries -join "`n") -cne ($sourceEntries -join "`n")) {
