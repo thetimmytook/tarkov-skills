@@ -9,29 +9,72 @@
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="54"/></Grid.RowDefinitions>
     <Grid Margin="24,20,24,14">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <StackPanel>
         <TextBlock Text="TARKOV PERFORMANCE TOOLKIT" Foreground="{StaticResource AccentBrush}" FontSize="20" FontWeight="Bold"/>
         <TextBlock Text="Read-only system, configuration and benchmark diagnostics" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/>
       </StackPanel>
+      <Button x:Name="GettingStartedButton" Grid.Column="1" Content="?" Width="28" Height="28" Padding="0"
+              VerticalAlignment="Top" Margin="16,0,0,0" FontSize="16" FontWeight="SemiBold"
+              Background="Transparent" BorderBrush="Transparent" Foreground="{StaticResource MutedBrush}"
+              ToolTip="Hide getting started" AutomationProperties.Name="Hide getting started"
+              Click="ToggleGettingStarted_Click">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding SelectedIndex, ElementName=MainTabs}" Value="0">
+                <Setter Property="Visibility" Value="Visible"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
     </Grid>
 
-    <TabControl Grid.Row="1" Margin="24,0,24,12" SelectedIndex="0">
+    <TabControl x:Name="MainTabs" Grid.Row="1" Margin="24,0,24,12" SelectedIndex="0">
       <TabItem Header="Overview">
-        <Grid Margin="0,14,0,16">
-          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-          <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+        <ScrollViewer x:Name="OverviewScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+        <StackPanel Margin="0,14,0,16">
+          <Border x:Name="GettingStartedCard" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock Text="GET STARTED" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button x:Name="HideGettingStartedButton" Grid.Column="1" Width="28" Height="28" Padding="0"
+                        Background="Transparent" BorderBrush="Transparent" Foreground="{StaticResource MutedBrush}"
+                        ToolTip="Hide getting started" AutomationProperties.Name="Hide getting started"
+                        Click="ToggleGettingStarted_Click">
+                  <Path Data="M 2,2 L 10,10 M 10,2 L 2,10" Width="12" Height="12" StrokeThickness="1.5"
+                        Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                        StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                </Button>
+              </Grid>
+              <TextBlock Text="Understand your results with AI skills" Foreground="{StaticResource TextBrush}" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+              <TextBlock Text="Toolkit collects your PC details, Tarkov settings and benchmark results. The optional Tarkov Performance skills help your AI assistant interpret the data and guide repeatable settings tests." Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+              <WrapPanel Margin="0,14,0,0" TextElement.Foreground="{StaticResource TextBrush}">
+                <TextBlock Text="1. Collect report" Margin="0,0,24,6"/>
+                <TextBlock Text="2. Copy JSON" Margin="0,0,24,6"/>
+                <TextBlock Text="3. Paste into a chat with the skills" Margin="0,0,0,6"/>
+              </WrapPanel>
+              <Button Content="Set up AI skills" HorizontalAlignment="Left" Margin="0,6,0,0" Click="SkillsGuide_Click" ToolTip="Open the installation guide in your browser"/>
+              <TextBlock Text="Using a local agent? With the skills installed, it can collect through Toolkit directly. You choose what to share and change game settings yourself." Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+          <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <StackPanel><TextBlock x:Name="StatusText" Text="Ready" FontSize="15"/><TextBlock x:Name="DetailText" Text="No data is uploaded automatically." Foreground="{StaticResource MutedBrush}" Margin="0,5,16,0" TextWrapping="Wrap"/></StackPanel>
+              <StackPanel Margin="0,0,16,0"><TextBlock x:Name="StatusText" Text="Ready to collect your settings and system report" FontSize="15" TextWrapping="Wrap"/><TextBlock x:Name="DetailText" Text="No data is uploaded automatically." Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" TextWrapping="Wrap"/></StackPanel>
               <Button Grid.Column="1" x:Name="InspectButton" Content="Collect report" Click="Inspect_Click"/>
             </Grid>
           </Border>
-          <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+          <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
             <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-              <StackPanel Orientation="Horizontal"><TextBlock Text="SANITIZED REPORT" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="CopyButton" Content="Copy JSON" Margin="18,0,0,0" IsEnabled="False" Click="Copy_Click"/><Button x:Name="SaveButton" Content="Save JSON" Margin="8,0,0,0" IsEnabled="False" Click="Save_Click"/><Button Content="Open data folder" Margin="8,0,0,0" Click="OpenFolder_Click"/></StackPanel></StackPanel>
-              <TextBox Grid.Row="1" x:Name="ReportText" Margin="0,12,0,0" MinHeight="140" IsReadOnly="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="{StaticResource MetricFont}" FontSize="12" Text="Collect a report to preview sanitized JSON."/>
+              <WrapPanel><TextBlock Text="SANITIZED REPORT" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,18,6"/><Button x:Name="CopyButton" Content="Copy JSON" Margin="0,0,8,6" IsEnabled="False" Click="Copy_Click"/><Button x:Name="SaveButton" Content="Save JSON" Margin="0,0,8,6" IsEnabled="False" Click="Save_Click"/><Button Content="Open data folder" Margin="0,0,0,6" Click="OpenFolder_Click"/></WrapPanel>
+              <TextBox Grid.Row="1" x:Name="ReportText" Margin="0,6,0,0" Height="220" IsReadOnly="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="{StaticResource MetricFont}" FontSize="12" Text="Collect a report, then copy the JSON into your chat for analysis. Nothing is shared until you paste or send it."/>
             </Grid>
           </Border>
-        </Grid>
+        </StackPanel>
+        </ScrollViewer>
       </TabItem>
 
       <TabItem Header="Benchmark">

@@ -95,6 +95,33 @@ The portable archives are written to `dist/`. The build is self-contained and in
 
 ## Skills
 
+### Use Toolkit with AI skills
+
+Toolkit gathers your system details, Tarkov settings and benchmark results. The
+optional Tarkov Performance skills help an AI assistant interpret that data and
+guide repeatable settings tests. Toolkit works without the skills; it does not
+change game settings or upload reports automatically.
+
+1. [Install the skills for your client](#install).
+2. Open Toolkit's **Overview** and select **Collect report**.
+3. Select **Copy JSON**, paste it into a chat with the skills, and ask, for example:
+   "Analyze my Tarkov settings and help me plan a repeatable FPS test."
+4. Use **Benchmark** for an FPS capture. After a completed run, **Copy results**
+   copies the latest complete run for your chat. **Goal** stores your target FPS
+   and quality preferences; it does not apply settings to the game.
+
+The small **?** button at the top right of Overview hides or restores the entire
+Get started card. You can also hide it with the close (x) button at the card's top right.
+Toolkit remembers your choice across restarts and Store updates;
+uninstalling the app removes its local preferences.
+
+Local agents with the skills installed can collect through Toolkit's command
+interface directly. Web chats work with the data you explicitly paste or attach.
+Each application keeps its own benchmark history; Toolkit does not import the
+standalone Benchmark application's history.
+
+### Included skills
+
 | Skill | Purpose |
 |---|---|
 | `skills/tarkov-config` | Read current EFT settings and system context, explain FPS/stability risks |

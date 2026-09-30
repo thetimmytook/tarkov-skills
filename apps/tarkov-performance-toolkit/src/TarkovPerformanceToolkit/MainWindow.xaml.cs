@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Media;
 using TarkovBenchmark.Feature;
 using TarkovSkills.Core;
@@ -12,10 +13,14 @@ namespace TarkovPerformanceToolkit;
 public partial class MainWindow : Window
 {
     private string? _reportJson;
+    private readonly ToolkitPreferencesStore _preferencesStore = new();
+    private ToolkitPreferences _preferences;
 
     public MainWindow()
     {
         InitializeComponent();
+        _preferences = _preferencesStore.Load();
+        UpdateGettingStarted();
         var goal = new GoalStore().Load();
         GoalText.Text = goal.Goal;
         TargetText.Text = goal.TargetFpsMin.ToString();
@@ -27,7 +32,7 @@ public partial class MainWindow : Window
         ContentHeightLimit.Attach(this, BenchmarkScroll, (BenchmarkView)BenchmarkRoot.Content);
     }
 
-    private void Inspect_Click(object sender, RoutedEventArgs e) => SetReport(new InspectionService().Inspect(), "Report collected from read-only local sources.");
+    private void Inspect_Click(object sender, RoutedEventArgs e) => SetReport(new InspectionService().Inspect(), "Report ready. Copy JSON and paste it into your chat for analysis.");
     private void SaveGoal_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -47,6 +52,28 @@ public partial class MainWindow : Window
     }
     private void OpenFolder_Click(object sender, RoutedEventArgs e) { AppPaths.EnsureDataDirectory(); Process.Start(new ProcessStartInfo("explorer.exe", AppPaths.DataDirectory) { UseShellExecute = true }); }
     private void About_Click(object sender, RoutedEventArgs e) => new AboutWindow { Owner = this }.ShowDialog();
+    private void SkillsGuide_Click(object sender, RoutedEventArgs e) => SkillsGuide.Open(this);
+    private void ToggleGettingStarted_Click(object sender, RoutedEventArgs e)
+    {
+        _preferences = _preferences with { ShowGetStarted = !_preferences.ShowGetStarted };
+        UpdateGettingStarted();
+        if (_preferences.ShowGetStarted) OverviewScroll.ScrollToTop();
+        else GettingStartedButton.Focus();
+        try { _preferencesStore.Save(_preferences); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            ShowStatus("Getting started changed for this session, but the preference could not be saved.", true);
+        }
+    }
+
+    private void UpdateGettingStarted()
+    {
+        GettingStartedCard.Visibility = _preferences.ShowGetStarted ? Visibility.Visible : Visibility.Collapsed;
+        var label = _preferences.ShowGetStarted ? "Hide getting started" : "Show getting started";
+        GettingStartedButton.ToolTip = label;
+        AutomationProperties.SetName(GettingStartedButton, label);
+    }
+
     private void SetReport(object report, string status) { _reportJson = JsonSerializer.Serialize(report, JsonDefaults.Options); ReportText.Text = _reportJson; CopyButton.IsEnabled = true; SaveButton.IsEnabled = true; ShowStatus(status, false); }
     private void ShowStatus(string text, bool warning) { StatusText.Text = text; StatusText.Foreground = (Brush)FindResource(warning ? "WarningBrush" : "TextBrush"); }
 }

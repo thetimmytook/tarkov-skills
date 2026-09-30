@@ -5,7 +5,7 @@ Run these against the Microsoft-signed closed Store package, not a locally self-
 | ID | Scenario | Expected result |
 |---|---|---|
 | TOOLKIT-01 | Install from the closed Store audience and launch from Start. | The WPF GUI opens without a console, script, certificate, or UAC prompt. |
-| TOOLKIT-02 | Resize the main window, switch between Overview, Benchmark, and Goal, then open About. | Content remains reachable without clipping; About shows TimmyTook, GitHub, privacy policy, version, and the unofficial notice, and both links open correctly. |
+| TOOLKIT-02 | Resize the main window, switch between Overview, Benchmark, and Goal, then open About. | Content remains reachable without clipping; About shows TimmyTook, GitHub, privacy policy, version, the unofficial notice, and AI-assisted analysis. Its links open correctly; content scrolls on a short display. |
 | TOOLKIT-03 | Run `tarkov-skills.exe status` from a new terminal. | Exactly one JSON document is written to stdout with dependency, game, raid, and map status. |
 | TOOLKIT-04 | Run `tarkov-skills.exe inspect`. | JSON includes settings, CPU, GPU/VRAM, RAM, game-drive media, pagefile size/media, goal, and log context. |
 | TOOLKIT-05 | Inspect the JSON and saved GUI report. | No username, hostname, local path, IP, serial number, machine ID, Control.ini, or Sound.ini is present. |
@@ -29,6 +29,11 @@ Run these against the Microsoft-signed closed Store package, not a locally self-
 | TOOLKIT-23 | Explicitly send one saved run, then choose Check status. | The Academy owner lookup and submission use the production API, the status is validated and sanitized, and a status check does not create another run. |
 | TOOLKIT-24 | Open Position and browse public examples without selecting a local comparison. | Public example groups and charts load anonymously; no local run criteria are sent. |
 | TOOLKIT-25 | Choose Compare selected run. | The documented comparison criteria are sent only after the button action, the chart renders, and the local run is not published by comparison. |
+| TOOLKIT-26 | Open Overview before collecting a report, including at the minimum window size and 150% display scaling. | Get started explains Collect report, Copy JSON and pasting into a chat with the skills. All instructions and controls remain reachable by scrolling. Copy and Save stay disabled until a report exists. |
+| TOOLKIT-27 | Select Set up AI skills in Overview and About. | Both open the same repository installation guide. Opening the guide does not collect, copy, upload or install anything. Local-agent and manual web-chat workflows are distinguished. |
+| TOOLKIT-28 | Hide Get started with the small ? button or the close (x) button at the card's top right, restart Toolkit, then update the Store package. | Both controls hide the entire card and its spacing, with no collapsed title row. Keyboard focus returns to the small help button in Overview. The choice persists in package-local `TarkovSkills\toolkit-ui.json`, not in the install directory or report JSON. |
+| TOOLKIT-29 | Restore Get started with ?; restart again. Navigate by keyboard and switch tabs. | The card remains expanded after restart. The help button has Show/Hide getting started accessibility text and tooltip, works with keyboard input, and appears only in Overview. No report is collected or uploaded by toggling it. |
+| TOOLKIT-30 | Use an unreadable or malformed UI preferences file; separately deny writing that file. | Startup and collection still work with the default expanded card. A failed save changes visibility for the current session and shows a sanitized warning; no crash or false persistence promise. |
 
 ## Skill Integration Scenarios
 

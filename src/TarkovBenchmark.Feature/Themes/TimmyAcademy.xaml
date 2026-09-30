@@ -398,6 +398,7 @@
     <Style x:Key="AcademyAboutWindow" TargetType="Window" BasedOn="{StaticResource AcademyWindow}">
         <Setter Property="Width" Value="500" />
         <Setter Property="MinHeight" Value="420" />
+        <Setter Property="MaxHeight" Value="{Binding Height, Source={x:Static SystemParameters.WorkArea}}" />
         <Setter Property="SizeToContent" Value="Height" />
         <Setter Property="ResizeMode" Value="NoResize" />
         <Setter Property="WindowStyle" Value="None" />

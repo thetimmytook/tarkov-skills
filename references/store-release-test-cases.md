@@ -26,11 +26,12 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 | ID | Test | Expected result |
 | --- | --- | --- |
 | UI-01 | Inspect text, buttons, dropdowns, disabled states, and hover states. | All text is readable against its background and disabled controls are visually distinct. |
-| UI-02 | Open About. | Product name, installed version, author `TimmyTook`, PresentMon notice, privacy summary, non-affiliation notice, and working GitHub link are shown. |
+| UI-02 | Open About, including on a short display. | Product name, installed version, author `TimmyTook`, PresentMon notice, privacy summary, non-affiliation notice, and working GitHub link are shown. AI-assisted analysis points to Toolkit for the full skills workflow; Set up AI skills opens the repository installation guide. Content scrolls when needed. |
 | UI-03 | Inspect the window, taskbar, Start menu, installed-app entry, and Store listing icons. | Original product artwork is shown consistently; the default executable icon is not used. This is required before public release. |
 | UI-04 | Inspect collection controls before and during a capture. | `Start collection` is readable and enabled when PresentMon is available. `Cancel and discard` is readable but disabled before capture, then enabled during capture. |
 | UI-05 | Inspect the latest-result panel with existing data. | The heading shows `LATEST RESULT · N RUNS` with correct singular/plural text. Average FPS, 1% Low, 0.1% Low, and P95 frametime are visible. `Open folder` and `Submit` are enabled when runs exist. |
 | UI-06 | Compare the standalone latest-result actions with Toolkit. | The standalone Benchmark does not show the Toolkit-only `Copy results` action; Open folder and Submit continue to work. |
+| UI-07 | Inspect the standalone footer at minimum window size and 150% scaling. | Author and disclaimer/About actions stay in separate columns without overlap. Side padding is 24 DIP, bottom padding is at least 16 DIP, and About is vertically centered rather than stretched. Footer stays outside the scrolling content and clear of the resize grip. |
 
 ## Raid Detection And Capture
 
