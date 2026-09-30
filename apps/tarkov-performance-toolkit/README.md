@@ -19,10 +19,10 @@ Commands write sanitized JSON to standard output. Reports omit user names, host 
 Build the unsigned Store package from the repository root:
 
 ```powershell
-.\build\build-toolkit-msix.ps1 -PackageVersion 1.0.1.0
+.\build\build-toolkit-msix.ps1 -PackageVersion 1.0.2.0
 ```
 
-The current public Store version is `1.0.0.0`. Use a higher version for the next Partner Center submission; keep the fourth component at `0` because Microsoft Store reserves it.
+The current public Store version is `1.0.0.0`; the command above uses the next flight candidate. Version `1.0.1.0` was already accepted into a previous flight, so changed binaries use a higher version. Keep the fourth component at `0` because Microsoft Store reserves it.
 
 The manifest uses the reserved identity `TimmyTook.TarkovPerformanceToolkit`, publisher `CN=55890398-71D9-4366-AF45-568B3BC3A786`, and Store ID `9N3L7DZH0K64`.
 
