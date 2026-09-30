@@ -27,6 +27,33 @@ The standalone **Tarkov Performance Benchmark** remains the focused manual bench
 
 Neither Store application installs Codex, Claude, or client-specific skills. Skills call trusted installed aliases and contain no PowerShell, CMD, EXE, DLL, or PresentMon copies.
 
+### Getting started with skills
+
+Toolkit's Overview explains the complete manual workflow before the report preview:
+collect a read-only report, copy its JSON, and paste it into a chat with the Tarkov
+Performance skills. Explain that these optional skills help interpret results and
+guide repeatable settings tests; they do not automatically improve FPS or change
+game settings. Local agents with the skills installed can also collect through the
+Toolkit command interface. Show the instructions on first launch; a small help
+button in the top-right corner hides the entire card without leaving an expander
+row. A close (x) button at the card's top right also hides it; the small help button
+restores the card in Overview. Persist the expanded/collapsed
+choice immediately in `LocalState\TarkovSkills\toolkit-ui.json`, independently of
+the application version, so restarts and Store updates preserve it. Keep expanded
+instructions scrollable at the minimum window size. Uninstallation still removes
+package-local preferences.
+
+Both About windows explain AI-assisted analysis and open the same repository
+installation guide in the user's browser. Benchmark directs users to Toolkit for
+the full skills workflow. The applications do not install skills or send reports
+when the guide is opened. Refresh both Store listings with actual screenshots of
+the reviewed UI before publishing the corresponding application update.
+
+Keep the standalone Benchmark footer separate from its scrolling content, with
+24-DIP side padding and clear top/bottom spacing. Place the author label and the
+disclaimer/About actions in separate columns; About stays vertically centered
+instead of stretching to fill the footer. Labels must not overlap at minimum size.
+
 ### Desktop authentication
 
 Both products share a Clerk public-client OAuth implementation in Core and a shared

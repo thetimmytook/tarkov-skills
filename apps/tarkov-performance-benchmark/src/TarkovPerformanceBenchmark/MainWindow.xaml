@@ -7,16 +7,21 @@
         ResizeMode="CanResizeWithGrip"
         Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
   <Grid>
-    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="50"/></Grid.RowDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <ScrollViewer x:Name="BenchmarkScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
       <ContentControl x:Name="ContentRoot" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" VerticalAlignment="Top"/>
     </ScrollViewer>
-    <Grid Grid.Row="1" Margin="22,0,22,12">
-      <TextBlock Text="Tarkov Performance Benchmark by TimmyTook" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-        <TextBlock Text="Unofficial community tool" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-        <Button Content="About" Padding="10,3" BorderThickness="0" Click="About_Click"/>
-      </StackPanel>
-    </Grid>
+    <Border x:Name="Footer" Grid.Row="1" Padding="24,12,24,16" MinHeight="64"
+            BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBlock x:Name="FooterAuthor" Text="Tarkov Performance Benchmark by TimmyTook"
+                   Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,16,0" TextWrapping="Wrap"/>
+        <StackPanel x:Name="FooterActions" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="Unofficial community tool" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+          <Button x:Name="AboutButton" Content="About" MinWidth="64" Padding="12,6" VerticalAlignment="Center" Click="About_Click"/>
+        </StackPanel>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

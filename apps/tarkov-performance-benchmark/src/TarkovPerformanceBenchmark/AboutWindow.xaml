@@ -13,15 +13,20 @@
             <TextBlock Text="TARKOV PERFORMANCE BENCHMARK" Style="{StaticResource AboutHeading}" />
             <TextBlock x:Name="VersionText" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" />
         </StackPanel>
-        <StackPanel Grid.Row="1" Margin="0,24,0,24">
+        <ScrollViewer Grid.Row="1" Margin="0,24,0,24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
             <TextBlock Text="Created by TimmyTook" FontSize="14" />
             <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="A read-only community utility for repeatable Escape from Tarkov FPS and frametime measurements." />
+            <TextBlock Margin="0,20,0,0" Text="AI-assisted analysis" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Want help interpreting results and testing settings? The optional Tarkov Performance skills guide your AI assistant through performance analysis. Use Tarkov Performance Toolkit for system reports, Copy JSON and direct collection by local agents. Benchmark works on its own for measurements and comparisons." />
+            <Button Content="Set up AI skills" HorizontalAlignment="Left" Margin="0,12,0,0" Click="SkillsGuide_Click" ToolTip="Open the installation guide in your browser" />
             <TextBlock Margin="0,20,0,0" Text="Privacy" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
             <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Benchmark data stays on this PC unless you explicitly choose to upload it. The application does not read game memory or modify Tarkov files." />
             <TextBlock Margin="0,20,0,0" Text="Third-party software" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
             <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Includes PresentMon 2.5.1 under the MIT License." />
             <TextBlock Margin="0,16,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Unofficial community tool. Not affiliated with or endorsed by Battlestate Games." />
         </StackPanel>
+        </ScrollViewer>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal">

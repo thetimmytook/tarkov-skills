@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
+using TarkovBenchmark.Feature;
 
 namespace TarkovPerformanceBenchmark;
 
@@ -17,6 +18,8 @@ public partial class AboutWindow : Window
 
     private void Privacy_Click(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo("https://github.com/thetimmytook/tarkov-skills/blob/main/PRIVACY.md") { UseShellExecute = true });
+
+    private void SkillsGuide_Click(object sender, RoutedEventArgs e) => SkillsGuide.Open(this);
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }
