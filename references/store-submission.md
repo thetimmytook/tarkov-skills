@@ -152,8 +152,8 @@ Store package versions and release tags are independent per product. The version
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
-| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.4` | `1.0.4.0` |
-| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.1` | `1.0.1.0` |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.5` | `1.0.5.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.2` | `1.0.2.0` |
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 
