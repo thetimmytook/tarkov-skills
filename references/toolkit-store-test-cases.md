@@ -2,6 +2,109 @@
 
 Run these against the Microsoft-signed closed Store package, not a locally self-signed MSIX.
 
+## Automated Developer Regression
+
+Run from the repository root on Windows with the .NET 8 SDK. These tools remain under `tests/`;
+they are not shipped in MSIX, portable application archives, or skills bundles.
+
+```text
+dotnet run --project tests/TarkovSkills.StoreRegression -- --report artifacts/regression/store-smoke.json
+dotnet run --project tests/TarkovSkills.StoreRegression -- --goal-write --no-raid --report artifacts/regression/store-goal.json
+dotnet run --project tests/TarkovSkills.StoreRegression -- --capture --duration 120 --report artifacts/regression/store-capture.json
+dotnet test tests/TarkovSkills.Regression.Tests -c Debug
+```
+
+- The Store runner requires the installed Microsoft-signed x64 Toolkit and invokes its execution
+  alias, never a repository build. Default mode checks JSON, privacy, help, unknown commands,
+  Goal consistency, and unchanged GUI process count. It does not capture, upload, or mutate Goal.
+- `--goal-write` explicitly permits temporary Goal changes. A `finally` restoration uses the
+  alias and restores goal/FPS/quality/notes values, but `updated_at` and `source` may change.
+  Do not edit Goal concurrently; the runner refuses to overwrite a detected outside edit.
+  Invalid Goal setters also require this flag: a broken future validator could accept them.
+- `--no-raid` explicitly tests capture rejection outside a raid; it blocks if a raid is active.
+  `--capture` permits one real 120/240-second capture and blocks without an active raid.
+  Raw inspection, Goal text and capture JSON are not written into the test report.
+- Exit codes: `0` means all executed cases passed, `1` means failure, `2` means a requested
+  check was blocked. Optional cases are explicitly `NOT RUN`, never silently treated as passed.
+- Ctrl+C, raid exit, permission denial, external capture conflicts, and the legacy standalone
+  `collect --source skill` flow still require separate live scenarios. The runner does not kill
+  the game, revoke permissions, stop external PresentMon, or pretend to complete these tests.
+- WPF tests execute actual repository-built controls on an STA dispatcher without showing
+  windows. Debug-only AppPaths isolation protects real LocalState and unpackaged user history.
+  They cover onboarding button handlers/persistence, tab visibility, report action states,
+  both About windows, shared Copy results visibility, footer geometry and 150%-DPI rasterization.
+  They do not certify installed Store UI, keyboard focus, browser links, clipboard, auth,
+  network requests, or physical display scaling. Keep the manual signed-package checks below.
+- `.github/workflows/regression.yml` runs the isolated tests, not the installed-package runner:
+  GitHub-hosted runners do not have the user's Store packages, credentials or active Tarkov raid.
+- Installed-package observations, including the standalone command flow and shared account,
+  are recorded separately in [store-release-test-cases.md](store-release-test-cases.md).
+
+### Separate Interactive E2E
+
+The human-assisted scenarios have their own executable. They are not launched by the smoke
+runner, `dotnet test`, or CI. Run one scenario at a time in a real interactive terminal:
+
+```text
+dotnet run --project tests/TarkovSkills.InteractiveE2E -- --scenario account --report artifacts/regression/e2e-account.json
+dotnet run --project tests/TarkovSkills.InteractiveE2E -- --scenario capture --duration 120 --report artifacts/regression/e2e-capture.json
+dotnet run --project tests/TarkovSkills.InteractiveE2E -- --scenario raid-end --report artifacts/regression/e2e-raid-end.json
+```
+
+- No arguments show help, not a waiting test. Redirected input/output and unattended CI execution
+  are refused. At human steps type `ready` (permission/action complete), `pass` (observed UI result),
+  `fail`, or `skip`. Empty input is never consent. Prompts wait without a time limit; automatic
+  raid-state polling defaults to 30 minutes per wait, adjustable with `--wait-minutes 1..120`.
+- `account` verifies both signed installations, then explicitly prepares or reuses one saved GUI
+  run in Toolkit and one in standalone Benchmark before browser login, restart restoration,
+  shared sign-in and shared sign-out. If an app has no saved run, the user enters a test raid,
+  presses **Start collection**, waits two minutes and completes the context/save dialog; the
+  runner waits for confirmation that a latest result is shown and **Submit** is enabled.
+  Each product has separate GUI history, and a CLI capture does not populate either history.
+  No app compilation is needed. Opening **Submit** can automatically open the login browser. Passwords and
+  MFA are handled by the user. Never press **Send**, **Send for review**, **Check status** or comparison
+  actions in this test. Final sign-out affects both real apps and is not automatically restored.
+  UI observations are recorded as **MANUAL PASS**, not automated auth/network proof. The runner
+  never reads the credential store or package history. If interrupted midway, inspect the shared
+  account state yourself; the runner does not silently sign out or recreate your previous login.
+- `capture` waits for the user to enter a raid, verifies `status` through the signed Toolkit alias,
+  then asks for separate capture consent. It automatically validates the complete 120/240-second
+  JSON result, privacy and metrics. It does not append a GUI benchmark run or request an upload.
+- `raid-end` starts a consented 120-second command, then asks the user to manually leave the raid
+  while keeping Tarkov open. It verifies `exit 12`/`discarded`, no partial performance/context in
+  stdout, and an inactive raid afterwards. The CLI has no public capture-start event; the prompt
+  appears after the command remains running for 8 seconds, not a claimed observation of ETW start.
+  This scenario does not inspect package history or verify GUI cancellation.
+- Ctrl+C stops human waits/status polling. An already-started bounded CLI capture is awaited before
+  exit so it is not abandoned; leaving the raid lets the application discard it. No automated game
+  input, process killing, elevation, credential access, Goal change or upload is performed.
+  The shared alias timeout guard can terminate ONLY its owned CLI child on timeout and reports a
+  failure; it never kills the game or an external collector. Cleanup then requires a manual check.
+- Reports use the same exit codes (`0` pass/manual pass, `1` fail, `2` blocked) and contain generic
+  case summaries only, not typed answers, account identifiers, tokens, raw inspection or captures.
+  Isolated regression tests simulate the prompts/CLI responses to check this runner's logic without
+  performing real login, capture or a live E2E scenario.
+
+### Interactive Prompt Layout
+
+Input choices are separated from the action instructions with a blank line and displayed on
+individual menu lines. Manual observation steps show `pass` instead of `ready`. Invalid or empty
+input displays the menu again; the empty-input warning remains separate. Consent and result
+semantics are unchanged.
+
+```text
+<action instructions>
+
+Choose an action:
+  ready - continue
+  fail  - failed step
+  skip  - blocked
+
+Empty input is not consent.
+```
+
+## Manual Signed-Package Checks
+
 | ID | Scenario | Expected result |
 |---|---|---|
 | TOOLKIT-01 | Install from the closed Store audience and launch from Start. | The WPF GUI opens without a console, script, certificate, or UAC prompt. |

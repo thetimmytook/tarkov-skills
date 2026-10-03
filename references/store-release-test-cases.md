@@ -20,6 +20,7 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 | STORE-03 | Verify the installed package identity, publisher signature, version, and architecture. | Identity is `TimmyTook.TarkovPerformanceBenchmark`, the package is Microsoft-signed, architecture is x64, and the version matches the submission. |
 | STORE-04 | Launch the app a second time while it is already open. | No second application window is created. |
 | STORE-05 | Run `tarkov-benchmark.exe` from a new terminal. | The Store application opens through its execution alias. |
+| STORE-06 | Close Benchmark, then run `tarkov-benchmark.exe collect --source skill` in a terminal. Enter a raid, explicitly press Start collection, complete the capture and save its context. Reopen the app normally afterwards. | Capture waits for the user's Start action. After saving, the window closes automatically and stdout contains one JSON summary with `status: completed`, run ID, map, Average FPS, 1% Low, 0.1% Low, P95 frametime, `saved_locally: true`, and `uploaded: false`. The completed run survives reopening. |
 
 ## Main Window
 
@@ -122,3 +123,22 @@ Recorded on September 3, 2026:
 - A complete two-minute capture, completion notification, context dialog, save, metrics, run-count increment, Open folder, and Submit flow all passed.
 - Cancellation discarded the partial capture without incrementing the run count.
 - The standalone product kept the Toolkit-only Copy results action hidden.
+
+Recorded on October 3, 2026, against installed Microsoft-signed Benchmark `1.0.5.0`
+and Toolkit `1.0.2.0`:
+
+- Manual submission checks returned `Pending review`; reopening the app restored the
+  confirmed status. This observation does not independently prove the HTTP request count.
+- Both products showed the shared signed-in session. Signing out in Toolkit also signed
+  out Benchmark. Their package-local benchmark histories remained separate, as designed.
+- Standalone `collect --source skill` completed a real capture and returned the expected
+  machine-readable summary with `saved_locally: true` and `uploaded: false`. The user
+  confirmed automatic window closure and that the saved run remained after reopening.
+- Closing Tarkov during an incomplete GUI capture showed `Measurement discarded` and
+  did not increase the saved run count.
+- The user confirmed `Cancel and discard` behaved as expected; a subsequent capture
+  completed and saved successfully. These observations do not independently inspect ETW
+  cleanup, completion-sound behavior, or every failure-handling case in this checklist.
+- These are user-confirmed installed-package observations, not isolated WPF test results
+  or certification of every supported Windows version. Raw captures, account details and
+  generated test reports are not versioned.
