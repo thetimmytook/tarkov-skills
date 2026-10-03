@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <Using Include="Xunit" />
+    <Using Include="System.IO" />
+    <ProjectReference Include="../TarkovSkills.StoreRegression/TarkovSkills.StoreRegression.csproj" />
+    <ProjectReference Include="../TarkovSkills.InteractiveE2E/TarkovSkills.InteractiveE2E.csproj" />
+    <ProjectReference Include="../../apps/tarkov-performance-toolkit/src/TarkovPerformanceToolkit/TarkovPerformanceToolkit.csproj" />
+    <ProjectReference Include="../../apps/tarkov-performance-benchmark/src/TarkovPerformanceBenchmark/TarkovPerformanceBenchmark.csproj" />
+  </ItemGroup>
+  <Target Name="RequireIsolatedDebugBuild" BeforeTargets="PrepareForBuild" Condition="'$(Configuration)' != 'Debug'">
+    <Error Text="UI regression tests require Debug: AppPaths test-data isolation is not compiled into Release/Store builds." />
+  </Target>
+</Project>

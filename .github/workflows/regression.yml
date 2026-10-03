@@ -1,0 +1,46 @@
+name: CLI and WPF regression
+
+on:
+  pull_request:
+    paths:
+      - "tests/**"
+      - "apps/**"
+      - "src/**"
+      - "build/**"
+      - "config/**"
+      - ".github/workflows/regression.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tests/**"
+      - "apps/**"
+      - "src/**"
+      - "build/**"
+      - "config/**"
+      - ".github/workflows/regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Verify bundled dependency
+        shell: pwsh
+        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+      - name: Test runner contracts and isolated WPF UI
+        run: dotnet test tests/TarkovSkills.Regression.Tests -c Debug --logger "trx;LogFileName=regression.trx" --results-directory artifacts/regression
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cli-wpf-regression
+          path: artifacts/regression/*.trx
+          if-no-files-found: warn
+          retention-days: 7
