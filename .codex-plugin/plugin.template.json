@@ -1,0 +1,42 @@
+{
+  "name": "tarkov-performance",
+  "description": "Read-only Escape from Tarkov performance skills for settings analysis, FPS and frametime interpretation, repeatable benchmarks, and controlled tuning.",
+  "author": {
+    "name": "TimmyTook",
+    "url": "https://github.com/thetimmytook"
+  },
+  "homepage": "https://github.com/thetimmytook/tarkov-skills",
+  "repository": "https://github.com/thetimmytook/tarkov-skills",
+  "license": "MIT",
+  "keywords": [
+    "tarkov",
+    "performance",
+    "benchmark",
+    "frametime"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Tarkov Performance",
+    "shortDescription": "Analyze Tarkov performance",
+    "longDescription": "Analyze Escape from Tarkov settings and user-provided performance data with four read-only workflows for configuration review, FPS and frametime interpretation, repeatable benchmark comparison, and controlled tuning. Intended for players diagnosing frame-rate, stutter, and stability problems. ChatGPT cannot access the user's PC; users explicitly paste or attach sanitized Toolkit output or compatible benchmark data. The plugin does not edit game files, automate gameplay, read process memory, or upload benchmark data.",
+    "developerName": "TimmyTook",
+    "category": "Data & Analytics",
+    "capabilities": [
+      "Analyze Tarkov settings",
+      "Interpret FPS and frametime",
+      "Guide repeatable benchmarks",
+      "Compare performance changes"
+    ],
+    "websiteURL": "https://github.com/thetimmytook/tarkov-skills",
+    "supportURL": "https://github.com/thetimmytook/tarkov-skills/issues",
+    "privacyPolicyURL": "https://github.com/thetimmytook/tarkov-skills/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/thetimmytook/tarkov-skills/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Analyze this Tarkov Performance Toolkit report.",
+      "Interpret these FPS and frametime results.",
+      "Compare these two benchmark runs."
+    ],
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}
