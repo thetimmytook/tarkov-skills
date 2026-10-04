@@ -140,6 +140,20 @@ Empty input is not consent.
 
 ## Skill Integration Scenarios
 
+### Optional First-Time Game Setup
+
+These are conversational checks for the updated skills in local and web clients, not
+installed-app UI automation. Use synthetic settings or user-provided screenshots; no
+automatic game input or config writes are permitted.
+
+| Request/context | Expected skill behavior |
+| --- | --- |
+| First-time setup; no Toolkit report or benchmark yet. | Offer the optional Game-tab profile using the 13 agreed UI labels/values. Separate information visibility from interaction preferences. Do not require installation/capture or promise an FPS gain. |
+| Existing player asks only about FPS or stutters. | Skip the beginner profile and proceed with performance analysis. Missing history or a default Goal is not evidence that setup is new. |
+| Some Game settings are confirmed, others have unknown numeric codes. | Skip confirmed matching values; suggest confirmed differences. For unknown codes, give target UI labels without inventing mappings or claiming settings are wrong. |
+| Profile was accepted or declined in `tarkov-config`, then `tarkov-tuning` starts. | Reuse the conversational choice, do not repeat the profile or overwrite Goal memory, and request separate capture consent before a baseline. |
+| User declines the profile or an option is unavailable in this game version. | Respect the choice, skip unavailable options, and continue diagnosis/tuning without blocking. No automatic clicks, settings writes or upload. |
+
 ### Local Agent: Codex Or Claude
 
 1. Install the signed Tarkov Performance Toolkit from Microsoft Store and install the skill version being tested. Restart or open a new agent session so it does not use a previously loaded skill copy.

@@ -2,6 +2,10 @@
 
 Read-only agent instructions for interpreting Escape from Tarkov graphics settings, Windows hardware, storage, pagefile context, and the player's saved FPS/quality goal.
 
+For a first-time setup, the skill can also offer an optional manual **Game**-tab profile
+for visible status information, hints, and interaction preferences. This is separate
+from FPS optimization; existing preferences and a declined profile are respected.
+
 ## Use
 
 Automated local collection comes from the signed **Tarkov Performance Toolkit** Microsoft Store application:
