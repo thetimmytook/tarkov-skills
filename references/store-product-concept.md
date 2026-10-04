@@ -151,6 +151,72 @@ Extend the shared Benchmark system collector to retain useful hardware context w
 
 Apply explicit field selection and sanitization before persistence or sharing. Never include serial numbers, raw PCI/PnP identifiers, machine IDs, host/user names, or local paths in benchmark artifacts. Check Windows-reported values on varied systems, including laptops, multiple GPUs/disks, and missing WMI/Storage data. These details are context for individual runs, not additional mandatory keys for the initial CPU/GPU/RAM-capacity search grouping. Do not upload them automatically; publication still requires the user's explicit review and consent.
 
+## Accepted Next Steps (2026-10-04)
+
+### First-Time Game Profile: Skills First
+
+Implement optional beginner guidance in `tarkov-config` and `tarkov-tuning` before
+implementing resource telemetry. The agreed values and agent behavior are mastered in
+[game-starting-profile.md](game-starting-profile.md) and vendored into both skills.
+This is manual Game-tab usability guidance, not an FPS preset or automatic game-setting
+change. Offer it for first-time setup or an explicit request; skip an established setup,
+respect existing preferences, and do not repeat it between tuning captures. It requires
+no Store application or API change.
+
+### Capture-Window Resource Telemetry: Accepted, Implementation Deferred
+
+Add resource measurements to shared Core and both Store hosts in a separate application
+change. The current apps do not supply this telemetry; skills must not invent readings
+or describe this decision as an available command feature. This is distinct from the
+static hardware enrichment above and does not authorize temperature/voltage collection.
+
+- Sample resource counters over the same valid 120/240-second capture window as FPS,
+  initially targeting one sample per second. Retain average/peak summaries, sample count,
+  valid coverage, units, source, and scope. Peaks must belong to this capture window,
+  not lifetime or since-boot counters. Account for sampler overhead in validation.
+- CPU: overall utilization and logical-processor utilization. Do not infer a CPU
+  bottleneck solely from a low overall percentage.
+- GPU: graphics-engine utilization for the active adapter, dedicated VRAM capacity and
+  average/peak use, plus shared GPU memory use separately. Do not sum unrelated GPUs or
+  label shared system memory as additional VRAM. Prefer adapter-wide memory readings;
+  per-game counters are supplemental and need reliability checks. Almost-full VRAM is
+  a reason to test texture quality, not proof that textures alone caused a slowdown.
+- Memory: physically installed RAM, OS-usable RAM, used/available RAM over the capture,
+  and minimum available RAM. Keep actual allocated pagefile size and use separate from
+  RAM; support multiple and system-managed pagefiles. Also report current system commit
+  and commit limit. Never label RAM plus pagefile as physical RAM or pagefile size as
+  commit limit. Preserve useful existing backing-storage media context without paths.
+- Use C# Windows APIs/performance counters and the pinned bundled PresentMon's CPU/GPU
+  frame timings where reliable. No extra user utility, driver, custom service, overlay,
+  gameplay automation or game-memory access is required by the proposed baseline.
+  Driver-dependent or missing readings remain `unknown`/null with a warning, not zero.
+  Missing telemetry must not invalidate otherwise complete FPS data.
+- Store the sanitized summary with a completed local run and expose it to local/web
+  skill workflows. Discard interrupted captures as before; do not retain or publish a
+  partial run as a complete benchmark. Diagnostics should describe possible bottlenecks
+  with confidence and use repeatable A/B tests rather than categorical percent rules.
+- Include the summary only with a run the user explicitly sends for review/publication,
+  after updating the displayed sharing explanation. No automatic upload or raw
+  per-second trace publication. Distinguish whole-system load from game-specific load;
+  never include process IDs, other application names, device identifiers or private paths.
+- Coordinate optional allowlisted fields, validation, storage and public detail responses
+  with the Academy API before updated clients publish them. Old runs without telemetry
+  stay valid; missing readings cannot be used as measured zeros. This is not a silent
+  addition to the existing strict submission payload or a new required cohort key.
+
+Before release, validate overhead and sampling alignment, unavailable/partial counters,
+GPU selection and memory-counter reliability, physical RAM/pagefile/commit distinctions,
+privacy, old-run compatibility, consented submission, cancellation and raid/game exit in
+both signed Store products. App/API contracts and package versions remain unchanged in
+the skills-only implementation.
+
+References for the future collector: [Windows GPU telemetry](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/),
+[GPU process-memory counter limitations](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value),
+[installed RAM](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getphysicallyinstalledsystemmemory),
+[pagefile usage](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-pagefileusage),
+[system commit and physical memory](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information),
+and [PresentMon 2.5.1 console metrics](https://github.com/GameTechDev/PresentMon/blob/v2.5.1/README-ConsoleApplication.md).
+
 ## Standalone Benchmark Contract
 
 Expose a stable application execution alias and command:

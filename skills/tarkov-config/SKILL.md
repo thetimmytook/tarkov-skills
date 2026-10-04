@@ -1,11 +1,20 @@
 ---
 name: tarkov-config
-description: Analyze Escape from Tarkov graphics configuration and Windows performance context without changing game files. Use for FPS expectations, stutter risks, visibility tradeoffs, or a saved performance goal; prefer the signed Tarkov Performance Toolkit and support transparent manual review when it is unavailable.
+description: Analyze Escape from Tarkov graphics configuration and Windows performance context, or guide optional first-time Game-tab setup, without changing game files. Use for FPS expectations, stutter risks, visibility tradeoffs, or a saved performance goal; prefer the signed Toolkit for collection and support transparent manual review when it is unavailable.
 ---
 
 # Tarkov Config
 
 Analyze settings and system readiness in read-only mode. Never edit EFT files or promise a specific FPS.
+
+## Optional First-Time Setup
+
+For first-time setup or a request for beginner Game settings, use
+`references/game-starting-profile.md`. Offer its manual Game-tab profile separately from
+FPS optimization; preserve the user's preferences and skip settings already matching.
+Do not proactively repeat it during ordinary FPS troubleshooting or after the user
+accepted/declined it in the conversation; revisit it only if requested. A setup-only
+request needs no Toolkit report or capture.
 
 ## Choose The Input Path
 
@@ -27,7 +36,7 @@ In web/manual mode, keep the goal in the conversation when the local command can
 
 ## Analysis
 
-- Use only `Graphics.ini`, `PostFx.ini`, and graphically relevant `Game.ini` data. Ignore controls and sound.
+- For performance analysis, use only `Graphics.ini`, `PostFx.ini`, and graphically relevant `Game.ini` data. The optional Game-tab profile is separate manual guidance; ignore Controls/Sound settings in both paths.
 - Consider CPU, GPU/VRAM, RAM, game-drive media, pagefile size/media, resolution, and driver version.
 - Suggest only changes that are not already applied.
 - If measured performance is at least 15% below a relevant expectation, switch from ordinary graphics tuning to diagnostics such as throttling, power, RAM configuration, storage, drivers, overlays, and local PvE load.

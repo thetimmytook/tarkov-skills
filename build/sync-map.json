@@ -1,4 +1,8 @@
 {
+  "references/game-starting-profile.md": [
+    "skills/tarkov-config/references/game-starting-profile.md",
+    "skills/tarkov-tuning/references/game-starting-profile.md"
+  ],
   "references/measurement-rules.md": [
     "skills/tarkov-config/references/measurement-rules.md",
     "skills/tarkov-performance-benchmark/references/measurement-rules.md",

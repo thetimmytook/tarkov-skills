@@ -7,6 +7,14 @@ description: Orchestrate iterative Escape from Tarkov performance tuning from re
 
 Coordinate `tarkov-config` and `tarkov-frametime`; use `tarkov-performance-benchmark` when full run context matters. Never edit EFT settings automatically.
 
+## Optional Setup Before The Baseline
+
+When the user is setting up Tarkov for the first time or requests beginner Game settings,
+offer `references/game-starting-profile.md` before the first baseline. Reuse any choice
+already handled by `tarkov-config` in the conversation. It is manual usability guidance,
+not an FPS change batch; declining it does not block tuning. Skip it for an established
+setup and do not repeat it during the loop unless the user asks to revisit it.
+
 ## Loop
 
 1. Run `tarkov-skills.exe inspect` and read the saved goal. In a web client, ask the user to use **Overview → Collect report → Copy JSON** and paste it into the conversation.
