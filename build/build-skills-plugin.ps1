@@ -5,13 +5,26 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$manifestPath = Join-Path $repoRoot ".claude-plugin\plugin.json"
-$manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+$releaseManifestPath = Join-Path $repoRoot ".claude-plugin\plugin.json"
+$manifestTemplatePath = Join-Path $repoRoot ".codex-plugin\plugin.template.json"
+$iconPath = Join-Path $repoRoot "assets\tarkov-performance-icon.png"
+$releaseManifest = Get-Content -Raw -LiteralPath $releaseManifestPath | ConvertFrom-Json
+$manifest = Get-Content -Raw -LiteralPath $manifestTemplatePath | ConvertFrom-Json
 
 if ([string]::IsNullOrWhiteSpace($manifest.name) -or
     [string]::IsNullOrWhiteSpace($manifest.description) -or
-    [string]::IsNullOrWhiteSpace($manifest.version)) {
-    throw "Plugin manifest must define name, description, and version."
+    [string]::IsNullOrWhiteSpace($releaseManifest.version)) {
+    throw "Plugin manifests must define name, description, and release version."
+}
+if ($manifest.name -ne $releaseManifest.name) {
+    throw "OpenAI and release plugin manifests must define the same name."
+}
+if ($manifest.PSObject.Properties.Name -contains 'version') {
+    throw "OpenAI plugin template must not define version; it is sourced from .claude-plugin/plugin.json."
+}
+$manifest | Add-Member -MemberType NoteProperty -Name version -Value $releaseManifest.version
+if (-not (Test-Path -LiteralPath $iconPath -PathType Leaf)) {
+    throw "Missing OpenAI plugin icon: $iconPath"
 }
 
 $skillsRoot = Join-Path $repoRoot "skills"
@@ -32,11 +45,16 @@ $OutputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 
 $stagingRoot = Join-Path $OutputDirectory ("staging-" + [guid]::NewGuid().ToString("N"))
-$archivePath = Join-Path $OutputDirectory ("{0}-openai-plugin-{1}.zip" -f $manifest.name, $manifest.version)
+$archivePath = Join-Path $OutputDirectory ("{0}-openai-plugin-{1}.zip" -f $manifest.name, $releaseManifest.version)
 
 try {
-    New-Item -ItemType Directory -Force -Path (Join-Path $stagingRoot ".claude-plugin") | Out-Null
-    Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $stagingRoot ".claude-plugin\plugin.json")
+    New-Item -ItemType Directory -Force -Path (Join-Path $stagingRoot ".codex-plugin") | Out-Null
+    $generatedManifestPath = Join-Path $stagingRoot ".codex-plugin\plugin.json"
+    $generatedManifest = $manifest | ConvertTo-Json -Depth 20
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($generatedManifestPath, $generatedManifest + [Environment]::NewLine, $utf8NoBom)
+    New-Item -ItemType Directory -Force -Path (Join-Path $stagingRoot "assets") | Out-Null
+    Copy-Item -LiteralPath $iconPath -Destination (Join-Path $stagingRoot "assets\icon.png")
 
     $skillDirectories = Get-ChildItem -LiteralPath $skillsRoot -Directory
     if ($skillDirectories.Count -eq 0) {

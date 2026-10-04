@@ -2,6 +2,12 @@
 
 Tarkov Performance Benchmark and Tarkov Performance Toolkit process data locally on the user's Windows device. Tarkov Performance skills for ChatGPT and Claude analyze only information that the user explicitly pastes or attaches to a conversation.
 
+## ChatGPT And Claude Plugin Data
+
+The skills-only plugin has no MCP server, user account, analytics service, advertising service, or direct network connection operated by the project author. It receives no data directly from the user's device. The plugin processes only conversation text and files that the user explicitly provides to ChatGPT or Claude for settings analysis, FPS and frametime interpretation, benchmark comparison, or performance tuning.
+
+The project author does not receive, sell, share, or retain that conversation data. OpenAI or Anthropic processes and retains data according to the user's account settings and the applicable service privacy policy. Users control plugin data by choosing what to paste or attach and may delete chats or uploaded files using the controls provided by that service. Support requests submitted through GitHub are public unless the user uses another private contact channel, so users should remove personal or sensitive information before filing an issue.
+
 The applications may read Escape from Tarkov graphics settings and logs, non-identifying Windows hardware and driver information, and FPS/frametime data produced by the bundled PresentMon utility. They do not read game process memory, automate gameplay, collect game account credentials, or include user names, host names, local paths, IP addresses, serial numbers, or machine identifiers in generated reports.
 
 No benchmark or diagnostic data is uploaded automatically by the applications or sent to the project author by the skills. Copying, saving, attaching, or submitting a report requires an explicit user action. When a user provides data to ChatGPT, Claude, Microsoft Store, GitHub, or an external form, that service's privacy terms also apply.

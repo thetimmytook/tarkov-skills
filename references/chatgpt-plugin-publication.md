@@ -22,7 +22,7 @@ Official references:
 - [ ] Confirm every skill works from pasted Toolkit JSON without repository files, local commands, credentials, or undeclared packages.
 - [ ] Confirm all generated or shared data excludes user names, host names, local paths, IP addresses, serial numbers, and machine identifiers.
 - [ ] Create a public `TERMS.md` and keep `PRIVACY.md` accurate for the web workflow.
-- [ ] Prepare a dedicated submission ZIP whose root contains `.claude-plugin/plugin.json`, `skills/<skill-name>/SKILL.md`, and `skills/<skill-name>/agents/openai.yaml`.
+- [ ] Prepare a dedicated submission ZIP whose root contains `.codex-plugin/plugin.json`, `assets/icon.png`, `skills/<skill-name>/SKILL.md`, and `skills/<skill-name>/agents/openai.yaml`.
 - [ ] Do not rely on `.claude-plugin/marketplace.json`; OpenAI ignores marketplace declarations in a skills-only upload.
 - [ ] Exclude repository-only build files, app binaries, Store packages, capture data, and agent-specific notes that are not required by the skills.
 - [ ] Validate the final ZIP by extracting it into a clean directory and checking every referenced file.
@@ -33,7 +33,7 @@ Build the dedicated archive with:
 .\build\build-skills-plugin.ps1
 ```
 
-The script reads the version from `.claude-plugin/plugin.json` and writes `tarkov-performance-openai-plugin-<version>.zip` under `artifacts/skills-plugin/`. This archive is specific to the OpenAI submission because it includes each skill's `agents/openai.yaml` interface metadata. Claude Directory reads the clean committed folder at `plugins/tarkov-performance/` instead.
+The script reads the only release version from `.claude-plugin/plugin.json`, combines it with `.codex-plugin/plugin.template.json`, and writes `tarkov-performance-openai-plugin-<version>.zip` under `artifacts/skills-plugin/`. The generated archive contains the required versioned `.codex-plugin/plugin.json` and each skill's `agents/openai.yaml` interface metadata. Claude Directory reads the clean committed folder at `plugins/tarkov-performance/` instead.
 
 CI validates the source skills, OpenAI metadata, local reference paths, clean archive inventory, public Claude folder, and version/tag relationship. CI does not upload the ZIP, accept policy attestations, submit it for review, or publish an approved version; those actions remain manual in the OpenAI portal.
 
@@ -48,8 +48,8 @@ When `main` contains a plugin version without a matching tag, the product-releas
 ## Listing Draft
 
 - **Name:** Tarkov Performance
-- **Short description:** Analyze Escape from Tarkov settings and benchmark data with read-only, repeatable performance workflows.
-- **Category:** Developer Tools or Productivity, whichever is available and best matches the portal taxonomy.
+- **Short description:** Analyze Tarkov performance
+- **Category:** Data & Analytics
 - **Developer:** TimmyTook
 - **Website:** `https://github.com/thetimmytook/tarkov-skills`
 - **Support:** `https://github.com/thetimmytook/tarkov-skills/issues`
@@ -88,8 +88,8 @@ OpenAI requires at least five positive and three negative test cases. Each porta
 
 ## Portal Submission
 
-- [ ] Open the [plugin submission portal](https://platform.openai.com/apps-manage) and select **Create plugin**.
-- [ ] Choose **Skills only** and upload the final submission ZIP.
+- [ ] Open the [plugin submission portal](https://platform.openai.com/plugins) and select the ZIP upload action.
+- [ ] Upload the final submission ZIP. The unified upload flow detects the skills-only package from `.codex-plugin/plugin.json`; do not add an MCP server.
 - [ ] Review the generated `.codex-plugin/plugin.json` and all normalized metadata.
 - [ ] Test each imported skill in the portal's clean environment.
 - [ ] Complete listing, starter prompts, five positive tests, three negative tests, countries or regions, and policy attestations.

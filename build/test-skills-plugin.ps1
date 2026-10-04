@@ -8,6 +8,8 @@ $ErrorActionPreference = "Stop"
 $repoRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $manifestPath = Join-Path $repoRoot ".claude-plugin\plugin.json"
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+$openAiManifestPath = Join-Path $repoRoot ".codex-plugin\plugin.template.json"
+$openAiManifest = Get-Content -Raw -LiteralPath $openAiManifestPath | ConvertFrom-Json
 
 if ($manifest.name -notmatch '^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$') {
     throw "Plugin name must use lowercase letters, digits, and hyphens: $($manifest.name)"
@@ -22,6 +24,79 @@ if ([string]::IsNullOrWhiteSpace($manifest.description) -or
 }
 if ($ExpectedTag -and $ExpectedTag -ne "skills-v$($manifest.version)") {
     throw "Tag '$ExpectedTag' does not match plugin version '$($manifest.version)'."
+}
+if ($openAiManifest.name -ne $manifest.name) {
+    throw "OpenAI and release plugin manifests must define the same name."
+}
+if ($openAiManifest.PSObject.Properties.Name -contains 'version') {
+    throw "OpenAI plugin template must not define version; it is sourced from .claude-plugin/plugin.json."
+}
+
+$interface = $openAiManifest.interface
+if ([string]::IsNullOrWhiteSpace($interface.displayName) -or $interface.displayName.Length -gt 30) {
+    throw "OpenAI displayName is required and must contain at most 30 characters."
+}
+if ([string]::IsNullOrWhiteSpace($interface.shortDescription) -or $interface.shortDescription.Length -gt 30) {
+    throw "OpenAI shortDescription is required and must contain at most 30 characters."
+}
+if ([string]::IsNullOrWhiteSpace($interface.longDescription) -or $interface.longDescription.Length -gt 4000) {
+    throw "OpenAI longDescription is required and must contain at most 4000 characters."
+}
+$requiredInterfaceFields = @(
+    'developerName',
+    'category',
+    'websiteURL',
+    'supportURL',
+    'privacyPolicyURL',
+    'termsOfServiceURL',
+    'composerIcon',
+    'logo'
+)
+foreach ($field in $requiredInterfaceFields) {
+    if ([string]::IsNullOrWhiteSpace($interface.$field)) {
+        throw "OpenAI interface field '$field' is required."
+    }
+}
+if ($interface.category -ne 'Data & Analytics') {
+    throw "OpenAI category must describe the plugin's performance-analysis purpose."
+}
+if (@($interface.capabilities).Count -eq 0) {
+    throw "OpenAI capabilities must describe the plugin's main functions."
+}
+foreach ($urlField in @('websiteURL', 'supportURL', 'privacyPolicyURL', 'termsOfServiceURL')) {
+    $uri = $null
+    if (-not [System.Uri]::TryCreate([string]$interface.$urlField, [System.UriKind]::Absolute, [ref]$uri) -or
+        $uri.Scheme -ne 'https') {
+        throw "OpenAI interface field '$urlField' must be an absolute HTTPS URL."
+    }
+}
+foreach ($prompt in @($interface.defaultPrompt)) {
+    if ([string]::IsNullOrWhiteSpace($prompt) -or $prompt.Length -gt 128) {
+        throw "OpenAI starter prompts must contain 1 to 128 characters."
+    }
+}
+if (@($interface.defaultPrompt).Count -gt 3) {
+    throw "OpenAI defaultPrompt supports at most three starter prompts."
+}
+
+$iconPath = Join-Path $repoRoot "assets\tarkov-performance-icon.png"
+if (-not (Test-Path -LiteralPath $iconPath -PathType Leaf)) {
+    throw "Missing OpenAI plugin icon: $iconPath"
+}
+$iconFile = Get-Item -LiteralPath $iconPath
+if ($iconFile.Length -gt 5MB) {
+    throw "OpenAI plugin icon must not exceed 5 MiB."
+}
+$iconBytes = [System.IO.File]::ReadAllBytes($iconPath)
+$pngSignature = @(137, 80, 78, 71, 13, 10, 26, 10)
+if ($iconBytes.Length -lt 24 -or
+    (($iconBytes[0..7] | ForEach-Object { [int] $_ }) -join ',') -ne ($pngSignature -join ',')) {
+    throw "OpenAI plugin icon must be a valid PNG file."
+}
+$iconWidth = [System.Net.IPAddress]::NetworkToHostOrder([System.BitConverter]::ToInt32($iconBytes, 16))
+$iconHeight = [System.Net.IPAddress]::NetworkToHostOrder([System.BitConverter]::ToInt32($iconBytes, 20))
+if ($iconWidth -ne $iconHeight -or $iconWidth -lt 48 -or $iconWidth -gt 4096) {
+    throw "OpenAI plugin icon must be square and between 48 and 4096 pixels."
 }
 
 $marketplacePath = Join-Path $repoRoot ".claude-plugin\marketplace.json"
@@ -120,8 +195,25 @@ if ($ArchivePath) {
     $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedArchive)
     try {
         $entryNames = @($archive.Entries | ForEach-Object { $_.FullName })
-        if ('.claude-plugin/plugin.json' -notin $entryNames) {
-            throw "Archive is missing .claude-plugin/plugin.json."
+        if ('.codex-plugin/plugin.json' -notin $entryNames) {
+            throw "Archive is missing .codex-plugin/plugin.json."
+        }
+        if ('assets/icon.png' -notin $entryNames) {
+            throw "Archive is missing assets/icon.png."
+        }
+
+        $manifestEntry = $archive.GetEntry('.codex-plugin/plugin.json')
+        $manifestStream = $manifestEntry.Open()
+        $manifestReader = New-Object System.IO.StreamReader($manifestStream)
+        try {
+            $archivedManifest = $manifestReader.ReadToEnd() | ConvertFrom-Json
+        }
+        finally {
+            $manifestReader.Dispose()
+            $manifestStream.Dispose()
+        }
+        if ($archivedManifest.name -ne $manifest.name -or $archivedManifest.version -ne $manifest.version) {
+            throw "Archived OpenAI manifest must use release name '$($manifest.name)' and version '$($manifest.version)'."
         }
 
         foreach ($skillDirectory in $skillDirectories) {
@@ -135,7 +227,7 @@ if ($ArchivePath) {
         }
 
         $unexpected = @($entryNames | Where-Object {
-            $_ -notmatch '^(\.claude-plugin/plugin\.json|skills/[^/]+/(SKILL\.md|agents/openai\.yaml|references/[^/]+))$'
+            $_ -notmatch '^(\.codex-plugin/plugin\.json|assets/icon\.png|skills/[^/]+/(SKILL\.md|agents/openai\.yaml|references/[^/]+))$'
         })
         if ($unexpected.Count -gt 0) {
             throw "Archive contains unexpected entries: $($unexpected -join ', ')"
