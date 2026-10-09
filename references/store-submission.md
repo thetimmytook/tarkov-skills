@@ -154,8 +154,13 @@ Store package versions and release tags are independent per product. The version
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
-| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.5` | `1.0.5.0` |
-| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.2` | `1.0.2.0` |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.6` | `1.0.6.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.3` | `1.0.3.0` |
+
+Partner Center package screenshots supplied on 2026-10-09 confirm that Benchmark
+`1.0.5.0` and Toolkit `1.0.2.0` are already uploaded. The resource-telemetry update
+therefore uses the higher candidates above. Keep `publishedPackageVersion` at its
+recorded public baseline until public publication is confirmed separately.
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 

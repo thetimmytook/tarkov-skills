@@ -866,6 +866,22 @@ hosts (CAP-12), and Microsoft-signed closed-flight delivery validation remain pe
 At the end of this verification phase, no commit, PR, flight dispatch, application
 publication or production deploy had occurred.
 
+### Store candidate version correction (2026-10-09)
+
+Partner Center screenshots supplied by the user show already uploaded Benchmark
+1.0.5.0 and Toolkit 1.0.2.0 packages. The telemetry update now uses Benchmark
+1.0.6.0 (`benchmark-v1.0.6`) and Toolkit 1.0.3.0 (`toolkit-v1.0.3`). The recorded
+public baselines remain unchanged because a package upload does not establish public
+publication. The earlier artifact hashes and versioned checks above remain historical
+evidence, including the existing staging Radeon packet.
+
+Both higher-version unsigned MSIX packages passed MakeAppx, pinned PresentMon and
+package-content validation. Direct inspection confirmed the new manifest versions and
+matching file versions in Benchmark, Toolkit and Toolkit CLI executables. Release
+validation rejects the old candidate overrides. This correction changes release
+metadata and documentation; collector logic and the 542-test source remain unchanged.
+No flight submission or production deployment was performed.
+
 Primary references: [Windows GPU telemetry](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/),
 [GPU process-memory limitations](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value),
 [installed RAM](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getphysicallyinstalledsystemmemory),
