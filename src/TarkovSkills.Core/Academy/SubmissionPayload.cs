@@ -6,39 +6,31 @@ namespace TarkovSkills.Core.Academy;
 
 public static class SubmissionPayload
 {
-    // Reproject a saved DTO before reuse. Unknown fields or changed schema cannot bypass
+    internal const int MaxPayloadBytes = 262144;
+    internal const string UnsupportedSavedPayload = "This saved submission uses an unsupported pre-telemetry contract. It was not changed or sent. Collect a new run and review it before sending.";
+    // Validate the frozen request directly. Unknown fields or changed schema cannot bypass
     // the privacy allowlist merely because a file already exists in local storage.
     internal static void ValidateStored(string json, Guid id)
     {
-        var dto = JsonNode.Parse(json) ?? throw new InvalidDataException();
-        var hardware = dto["hardware"]!;
-        var conditions = dto["context"]!;
-        var metrics = dto["metrics"]!;
-        var map = dto["map"]!.GetValue<string>() switch
-        {
-            "streets" => "Streets of Tarkov", "customs" => "Customs", "lighthouse" => "Lighthouse", "woods" => "Woods",
-            "factory" => "Factory", "the-lab" => "The Lab", "reserve" => "Reserve", "ground-zero" => "Ground Zero",
-            "interchange" => "Interchange", "shoreline" => "Shoreline", "labyrinth" => "Labyrinth",
-            _ => throw new InvalidDataException()
-        };
-        var run = new BenchmarkRun(id.ToString("D"), dto["captured_day"]!.GetValue<string>(), 120,
-            dto["app_version"]!.GetValue<string>(),
-            new { cpu = new { name = hardware["cpu_name"]!.GetValue<string>() },
-                gpu = new[] { new { name = hardware["gpu_name"]!.GetValue<string>() } },
-                ram = new { total_gb = hardware["ram_gb"]!.GetValue<double>() } },
-            dto["settings_snapshot"]?.DeepClone() ?? new JsonObject(),
-            new { map, execution = dto["execution"]!.GetValue<string>(),
-                weather = conditions["weather"]!.GetValue<string>(), time_of_day = conditions["time_of_day"]!.GetValue<string>(),
-                game_version = dto["game_version"]?.GetValue<string>() },
-            new PerformanceMetrics(dto["capture"]!["sample_count"]!.GetValue<int>(), dto["capture"]!["duration_sec"]!.GetValue<double>(),
-                metrics["average_fps"]!.GetValue<double>(), metrics["one_percent_low_fps"]!.GetValue<double>(),
-                metrics["zero_point_one_percent_low_fps"]!.GetValue<double>(), metrics["average_frametime_ms"]!.GetValue<double>(),
-                metrics["p95_frametime_ms"]!.GetValue<double>(), metrics["p99_frametime_ms"]!.GetValue<double>()), []);
-        var projected = JsonNode.Parse(Create(run, hardware["gpu_name"]!.GetValue<string>()));
-        if (!JsonNode.DeepEquals(dto, projected)) throw new InvalidDataException("Saved submission does not match the current contract.");
+        try { SubmissionRequestContract.Validate(json, id); }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or NullReferenceException)
+        { throw new InvalidDataException("Saved submission does not match the supported Academy contract. Nothing was sent."); }
     }
 
     private static JsonNode? Node(object value) => JsonSerializer.SerializeToNode(value, JsonDefaults.Options);
+    private static JsonNode Resource(ResourceTelemetry telemetry, PerformanceMetrics performance)
+    {
+        try
+        {
+            // ResourceTelemetry contains summaries only. Validate all fixed scopes/sources,
+            // labels and metadata before this typed allowlist crosses the upload boundary.
+            var element = JsonSerializer.SerializeToElement(telemetry, JsonDefaults.Options);
+            ResourceTelemetryContract.Read(element, performance.DurationSec, performance.SampleCount);
+            return JsonNode.Parse(element.GetRawText())!;
+        }
+        catch (Exception ex) when (ex is JsonException or ArgumentException)
+        { throw new InvalidDataException("Capture-resource summary does not match the supported Academy contract. Nothing was sent."); }
+    }
     public static IReadOnlyList<string> GpuNames(BenchmarkRun run) =>
         (Node(run.System)?["gpu"] as JsonArray)?.Select(gpu => Label(gpu?["name"])).Distinct().ToArray() ?? [];
 
@@ -50,21 +42,17 @@ public static class SubmissionPayload
         var system = Node(run.System);
         var context = Node(run.Context);
         var settings = SubmissionSettings.Project(Node(run.Settings));
-        var map = Label(context?["map"]) switch
-        {
-            "Streets of Tarkov" => "streets", "Customs" => "customs",
-            "Lighthouse" => "lighthouse", "Woods" => "woods",
-            "Factory" => "factory", "The Lab" => "the-lab", "Reserve" => "reserve", "Ground Zero" => "ground-zero",
-            "Interchange" => "interchange", "Shoreline" => "shoreline", "Labyrinth" => "labyrinth",
-            _ => throw new InvalidDataException("This run has an unknown map.")
-        };
+        if (!SubmissionRequestContract.Maps.TryGetValue(Label(context?["map"]), out var map))
+            throw new InvalidDataException("This run has an unknown map.");
         if (!GpuNames(run).Contains(selectedGpu)) throw new InvalidDataException("Select the GPU used for this run.");
         var ram = system?["ram"]?["total_gb"]?.GetValue<double>() ?? 0;
         if (!double.IsFinite(ram) || ram <= 0 || ram != Math.Truncate(ram))
             throw new InvalidDataException("This run does not contain a supported RAM capacity.");
         var resolution = settings?["graphics"]?["DisplaySettings"]?["Resolution"];
         var performance = run.Performance;
-        ValidateMetrics(performance);
+        SubmissionRequestContract.ValidateMetrics(new(performance.DurationSec, performance.SampleCount),
+            new(performance.AverageFps, performance.OnePercentLowFps, performance.ZeroPointOnePercentLowFps,
+                performance.AverageFrametimeMs, performance.P95FrametimeMs, performance.P99FrametimeMs));
         var dto = new JsonObject
         {
             ["schema_version"] = 1, ["client_run_id"] = id.ToString("D"),
@@ -82,7 +70,8 @@ public static class SubmissionPayload
                 ["average_fps"] = performance.AverageFps, ["one_percent_low_fps"] = performance.OnePercentLowFps,
                 ["zero_point_one_percent_low_fps"] = performance.ZeroPointOnePercentLowFps,
                 ["average_frametime_ms"] = performance.AverageFrametimeMs,
-                ["p95_frametime_ms"] = performance.P95FrametimeMs, ["p99_frametime_ms"] = performance.P99FrametimeMs }
+                ["p95_frametime_ms"] = performance.P95FrametimeMs, ["p99_frametime_ms"] = performance.P99FrametimeMs },
+            ["resource_telemetry"] = Resource(run.ResourceTelemetry, performance)
         };
         return dto.ToJsonString();
     }
@@ -90,26 +79,13 @@ public static class SubmissionPayload
     private static string Label(JsonNode? node)
     {
         var text = node?.GetValue<string>();
-        if (string.IsNullOrWhiteSpace(text) || text.Length > 160 || text.Any(char.IsControl) || text.Contains('\\') || text.Contains('/'))
-            throw new InvalidDataException("Required run information is missing or invalid.");
-        return text;
+        SubmissionRequestContract.Label(text);
+        return text!;
     }
     private static string Choice(JsonNode? node, params string[] values)
     {
         var value = Label(node);
         if (!values.Contains(value)) throw new InvalidDataException("Saved run conditions are not supported.");
         return value;
-    }
-    private static void ValidateMetrics(PerformanceMetrics p)
-    {
-        double[] values = [p.DurationSec, p.AverageFps, p.OnePercentLowFps, p.ZeroPointOnePercentLowFps, p.AverageFrametimeMs, p.P95FrametimeMs, p.P99FrametimeMs];
-        if (values.Any(v => !double.IsFinite(v) || v < 0) || p.DurationSec < 110 || p.SampleCount < 120 ||
-            p.AverageFps <= 0 || p.AverageFrametimeMs <= 0 || p.P95FrametimeMs <= 0 ||
-            p.OnePercentLowFps > p.AverageFps || p.ZeroPointOnePercentLowFps > p.OnePercentLowFps || p.P95FrametimeMs > p.P99FrametimeMs)
-            throw new InvalidDataException("This run does not meet Academy capture requirements.");
-        var earliest = Math.Max(p.DurationSec - .0005, Math.Max(p.SampleCount * (p.AverageFrametimeMs - .005) / 1000, p.SampleCount / (p.AverageFps + .005)));
-        var latest = Math.Min(p.DurationSec + .0005, Math.Min(p.SampleCount * (p.AverageFrametimeMs + .005) / 1000,
-            p.AverageFps > .005 ? p.SampleCount / (p.AverageFps - .005) : double.PositiveInfinity));
-        if (earliest > latest + 1e-9) throw new InvalidDataException("Saved capture metrics are inconsistent.");
     }
 }

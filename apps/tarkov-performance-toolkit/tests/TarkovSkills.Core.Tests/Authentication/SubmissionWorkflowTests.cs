@@ -27,6 +27,7 @@ public sealed class SubmissionWorkflowTests
         Assert.DoesNotContain("fixture-access", cached);
         Assert.DoesNotContain("hardware", cached);
         Assert.DoesNotContain("public_run_id", cached);
+        Assert.DoesNotContain("resource_telemetry", cached);
     }
 
     [Fact]
@@ -160,6 +161,10 @@ public sealed class SubmissionWorkflowTests
             item["execution"] = "bsg_servers";
             item["game_resolution"] = null;
             item["metrics"] = new JsonObject { ["average_fps"] = 50, ["one_percent_low_fps"] = 40 };
+            var resources = System.Text.Json.JsonSerializer.SerializeToNode(ResourceSubmissionFixtures.Collected(), JsonDefaults.Options)!;
+            resources["cpu"]!.AsObject().Remove("logical_processors");
+            resources["pagefile"]!.AsObject().Remove("files");
+            item["resource_telemetry"] = resources;
             item["status_reason"] = status == "rejected" ? "rejected" : null;
         }
         return new(HttpStatusCode.OK) { Content = new StringContent(new JsonObject { ["item"] = item }.ToJsonString()) };
@@ -191,7 +196,7 @@ public sealed class SubmissionWorkflowTests
             session = new(new("https://fixture.clerk.accounts.dev", "fixture-client", DesktopAuthProduct.Benchmark), new Adapter(), Store, TimeProvider.System, _ => throw new InvalidOperationException());
             Api = new(new("https://academy.example/api/bench/v1"), session, Handler);
             Outbox = NewOutbox();
-            Prepared = Outbox.Prepare(SubmissionTests.Run(), "NVIDIA GeForce RTX 4070");
+            Prepared = Outbox.Prepare(ResourceSubmissionFixtures.Run(ResourceSubmissionFixtures.Collected(partial: true)), "NVIDIA GeForce RTX 4070");
             Workflow = new(Api, Outbox);
         }
         public void Dispose() { Api.Dispose(); session.Dispose(); System.IO.Directory.Delete(Directory, true); }

@@ -27,7 +27,8 @@ public sealed record CaptureReport(
     [property: JsonPropertyName("schema_version")] int SchemaVersion,
     [property: JsonPropertyName("generated_at")] DateTimeOffset GeneratedAt,
     [property: JsonPropertyName("inspection")] InspectionReport Inspection,
-    [property: JsonPropertyName("performance")] PerformanceMetrics Performance);
+    [property: JsonPropertyName("performance")] PerformanceMetrics Performance,
+    [property: JsonPropertyName("resource_telemetry")] ResourceTelemetry ResourceTelemetry);
 
 public sealed class GoalStore
 {
@@ -65,7 +66,7 @@ public sealed class InspectionService
         var settings = new SettingsReader().Read();
         var system = new SystemInfoCollector().Collect();
         RaidContext raid;
-        try { raid = new RaidLogReader().Read(startedAt); }
+        try { raid = new RaidLogReader().ReadCurrent(process is not null, startedAt); }
         catch (Exception) { raid = new(false, false, "unknown", "unknown", null, null, null); system.Warnings.Add("Tarkov logs could not be read."); }
         var goal = PrivacySanitizer.Sanitize(new GoalStore().Load());
         return new InspectionReport(1, DateTimeOffset.Now, process is not null, raid, goal, system.System, settings.Settings, settings.Warnings.Concat(system.Warnings).Distinct().ToList());
@@ -76,8 +77,6 @@ public sealed class CaptureDiscardedException(string message) : Exception(messag
 
 public sealed class FrametimeCaptureService
 {
-    private static readonly TimeSpan RaidPollInterval = TimeSpan.FromSeconds(4);
-
     public async Task<CaptureReport> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
     {
         if (durationSeconds is not (120 or 240)) throw new ArgumentOutOfRangeException(nameof(durationSeconds), "Capture duration must be 120 or 240 seconds.");
@@ -87,41 +86,14 @@ public sealed class FrametimeCaptureService
         var raid = logs.Read(processStartedAt);
         if (!raid.Active || !raid.StartedAt.HasValue) throw new InvalidOperationException("Enter a raid before starting capture.");
 
-        var inspection = new InspectionService().Inspect();
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var raidEnded = 0;
-        var monitor = MonitorRaidEndAsync(logs, raid.StartedAt.Value, () => { Interlocked.Exchange(ref raidEnded, 1); linked.Cancel(); }, linked.Token);
-        try
-        {
-            var metrics = await new PresentMonRunner().CaptureAsync(durationSeconds, started, linked.Token);
-            var finalContext = logs.Read(processStartedAt);
-            CaptureValidation.EnsureComplete(metrics, finalContext, HasExited(process));
-            return new CaptureReport(1, DateTimeOffset.Now, inspection, metrics);
-        }
-        catch (OperationCanceledException) when (Volatile.Read(ref raidEnded) == 1)
-        {
-            throw new CaptureDiscardedException("The raid ended before capture completed. Partial data was discarded.");
-        }
-        catch (Exception) when (HasExited(process))
-        {
-            throw new CaptureDiscardedException("Tarkov closed before capture completed. Partial data was discarded.");
-        }
-        finally
-        {
-            linked.Cancel();
-            try { await monitor; } catch (OperationCanceledException) { }
-        }
-    }
-
-    private static async Task MonitorRaidEndAsync(RaidLogReader logs, DateTime startedAt, Action ended, CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(RaidPollInterval, cancellationToken).ConfigureAwait(false);
-            try { if (logs.HasRaidEndedSince(startedAt)) { ended(); return; } }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
-        }
+        var inspection = await Task.Run(() => new InspectionService().Inspect(), cancellationToken).ConfigureAwait(false);
+        await using var resources = new ResourceSampler(process.Id, durationSeconds);
+        await resources.StartAsync(cancellationToken).ConfigureAwait(false);
+        var capture = await CaptureLifecycle.RunAsync(durationSeconds, new(
+            token => new PresentMonRunner().CaptureWindowAsync(durationSeconds, started, token),
+            resources.CompleteAsync, () => logs.Read(processStartedAt), () => HasExited(process),
+            () => logs.HasRaidEndedSince(raid.StartedAt.Value)), cancellationToken).ConfigureAwait(false);
+        return new CaptureReport(1, DateTimeOffset.Now, inspection with { Raid = capture.Context }, capture.Performance, capture.ResourceTelemetry);
     }
 
     private static bool HasExited(System.Diagnostics.Process process) { try { return process.HasExited; } catch { return true; } }
@@ -129,11 +101,11 @@ public sealed class FrametimeCaptureService
 
 public static class CaptureValidation
 {
-    public static void EnsureComplete(PerformanceMetrics metrics, RaidContext context, bool tarkovExited)
+    public static void EnsureComplete(PerformanceMetrics metrics, RaidContext context, bool tarkovExited, int durationSeconds = 120)
     {
         if (tarkovExited) throw new CaptureDiscardedException("Tarkov closed before the measurement completed. The partial result was discarded.");
         if (!context.Active) throw new CaptureDiscardedException("The raid ended before the measurement completed. The partial result was discarded.");
-        if (metrics.DurationSec < 110) throw new CaptureDiscardedException($"Only {metrics.DurationSec:0.0} seconds of valid frametime data were captured. The partial result was discarded.");
+        if (metrics.DurationSec < durationSeconds - 10) throw new CaptureDiscardedException($"Only {metrics.DurationSec:0.0} seconds of valid frametime data were captured. The partial result was discarded.");
     }
 }
 

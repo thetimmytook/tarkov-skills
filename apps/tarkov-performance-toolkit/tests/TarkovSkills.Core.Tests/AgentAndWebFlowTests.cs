@@ -18,6 +18,8 @@ public sealed class AgentAndWebFlowTests
         Assert.Equal(1, document.RootElement.GetProperty("schema_version").GetInt32());
         Assert.True(document.RootElement.TryGetProperty("system", out _));
         Assert.True(document.RootElement.TryGetProperty("settings", out _));
+        Assert.True(document.RootElement.GetProperty("tarkov_running").GetBoolean()
+            || !document.RootElement.GetProperty("raid").GetProperty("active").GetBoolean());
         Assert.DoesNotContain(Environment.UserName, output.ToString(), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(Environment.MachineName, output.ToString(), StringComparison.OrdinalIgnoreCase);
 
@@ -25,6 +27,19 @@ public sealed class AgentAndWebFlowTests
         Assert.DoesNotContain("PresentationFramework", references);
         Assert.DoesNotContain("TarkovPerformanceToolkit", references);
         Assert.DoesNotContain("TarkovBenchmark.Feature", references);
+    }
+
+    [Fact]
+    public async Task AgentStatusCannotReportAnActiveRaidWithoutTarkov()
+    {
+        using var output = new StringWriter();
+
+        var exitCode = await new ToolkitCli(output).RunAsync(["status"]);
+
+        Assert.True(exitCode is 0 or 3); // Dependency readiness is independent of raid state.
+        using var document = JsonDocument.Parse(output.ToString());
+        Assert.True(document.RootElement.GetProperty("tarkov_running").GetBoolean()
+            || !document.RootElement.GetProperty("raid_active").GetBoolean());
     }
 
     [Fact]
