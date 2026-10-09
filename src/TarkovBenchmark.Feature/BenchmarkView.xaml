@@ -41,7 +41,7 @@
 
     <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
       <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBlock x:Name="LatestResultTitle" Text="LATEST RESULT · NO RUNS" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
         <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -55,6 +55,7 @@
           <StackPanel><TextBlock Text="0.1% Low" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="PointOneLowText" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
           <StackPanel><TextBlock Text="P95 frametime" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="P95Text" Text="—" Style="{StaticResource MetricText}" Margin="0,5,0,0"/></StackPanel>
         </UniformGrid>
+        <local:ResourceTelemetryView x:Name="ResourceResults" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,16,0,0"/>
       </Grid>
     </Border>
     <local:ComparisonView x:Name="ComparisonChart" Grid.Row="5" Margin="0,16,0,0"/>

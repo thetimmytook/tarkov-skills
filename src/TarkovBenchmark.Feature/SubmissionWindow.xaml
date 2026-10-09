@@ -1,8 +1,11 @@
 <Window Style="{StaticResource AcademyWindow}" x:Class="TarkovBenchmark.Feature.SubmissionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Submit benchmark" Width="620" SizeToContent="Height" ResizeMode="NoResize" WindowStyle="None"
+        MaxHeight="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Height}"
         BorderBrush="{StaticResource StrongBorderBrush}" BorderThickness="1" WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
+        Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}"
+        xmlns:feature="clr-namespace:TarkovBenchmark.Feature">
+  <ScrollViewer x:Name="ReviewScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <Grid Margin="24">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <TextBlock Text="SUBMIT TO TIMMY ACADEMY" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
@@ -12,8 +15,11 @@
       <TextBlock Text="GPU used for this run"/>
       <ComboBox x:Name="GpuCombo" Margin="0,6,0,12" SelectionChanged="Gpu_Changed"/>
       <TextBlock x:Name="SummaryText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
-      <TextBlock Margin="0,12,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" LineHeight="21"
-                 Text="Only the selected run is sent after you choose Send for review. Includes hardware models, map, conditions, approved settings and performance metrics. Signing in does not upload results."/>
+      <feature:ResourceTelemetryView x:Name="ResourceReview" Visibility="Collapsed" Margin="0,12,0,0"/>
+      <TextBlock x:Name="SharingText" Margin="0,12,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" LineHeight="21"
+                 Text="Only the selected run is sent after you choose Send for review. It includes hardware models, map, conditions, approved settings, FPS/frametime metrics and capture-resource summaries for CPU, GPU, RAM, pagefiles and system commit. CPU and memory describe the whole system; GPU measurements describe the selected adapter, including other applications. Signing in does not upload results. The summary becomes public only after moderator approval."/>
+      <TextBlock x:Name="DeletionText" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" LineHeight="21"
+                 Text="Deleting a publication removes its resource summary. A smaller measurement without dates, source IDs or your account link remains in an internal analysis archive."/>
       <TextBlock x:Name="DestinationText" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
       <Border x:Name="ResultBanner" Margin="0,16,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1"
               Background="{StaticResource InfoBackgroundBrush}" BorderBrush="{StaticResource InfoBorderBrush}"
@@ -36,4 +42,5 @@
       </WrapPanel>
     </Grid>
   </Grid>
+  </ScrollViewer>
 </Window>

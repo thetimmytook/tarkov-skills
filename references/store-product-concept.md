@@ -165,10 +165,11 @@ no Store application or API change.
 
 ### Capture-Window Resource Telemetry: Accepted, Implementation Deferred
 
-Add resource measurements to shared Core and both Store hosts in a separate application
-change. The current apps do not supply this telemetry; skills must not invent readings
-or describe this decision as an available command feature. This is distinct from the
-static hardware enrichment above and does not authorize temperature/voltage collection.
+The accepted application change is implemented in the repository, pending release
+validation. The public Store versions do not yet supply this telemetry; skills must
+not invent readings or describe it as available in those versions. The implementation
+and validation limits are described in [resource-telemetry.md](resource-telemetry.md).
+This is distinct from static hardware enrichment and excludes temperatures/voltages.
 
 - Sample resource counters over the same valid 120/240-second capture window as FPS,
   initially targeting one sample per second. Retain average/peak summaries, sample count,
@@ -179,43 +180,105 @@ static hardware enrichment above and does not authorize temperature/voltage coll
 - GPU: graphics-engine utilization for the active adapter, dedicated VRAM capacity and
   average/peak use, plus shared GPU memory use separately. Do not sum unrelated GPUs or
   label shared system memory as additional VRAM. Prefer adapter-wide memory readings;
-  per-game counters are supplemental and need reliability checks. Almost-full VRAM is
+  per-game memory and analysis of other applications are excluded. UI and JSON identify
+  readings as whole-adapter values. Almost-full VRAM is
   a reason to test texture quality, not proof that textures alone caused a slowdown.
+  The accepted vendor update uses NVAPI graphics load for NVIDIA and ADLX GPUUsage for
+  AMD in the same utilization field, with explicit source semantics. Exact internal
+  LUID matching is required; unavailable vendor readings are not replaced with PDH.
+  Dedicated/shared memory stays on the whole-adapter Windows path.
 - Memory: physically installed RAM, OS-usable RAM, used/available RAM over the capture,
   and minimum available RAM. Keep actual allocated pagefile size and use separate from
   RAM; support multiple and system-managed pagefiles. Also report current system commit
   and commit limit. Never label RAM plus pagefile as physical RAM or pagefile size as
   commit limit. Preserve useful existing backing-storage media context without paths.
-- Use C# Windows APIs/performance counters and the pinned bundled PresentMon's CPU/GPU
-  frame timings where reliable. No extra user utility, driver, custom service, overlay,
+- Use C# Windows APIs/performance counters, installed GPU driver APIs and QPC timestamps from pinned PresentMon
+  to align the window. CPU/GPU frame timings are not utilization percentages.
+  No extra user utility, driver, custom service, overlay,
   gameplay automation or game-memory access is required by the proposed baseline.
   Driver-dependent or missing readings remain `unknown`/null with a warning, not zero.
   Missing telemetry must not invalidate otherwise complete FPS data.
 - Store the sanitized summary with a completed local run and expose it to local/web
-  skill workflows. Discard interrupted captures as before; do not retain or publish a
+  skill workflows. `resource_telemetry` is mandatory on new completed runs, including
+  explicit unavailable states. Old runs open with `not_collected`. Discard interrupted
+  captures as before; do not retain or publish a
   partial run as a complete benchmark. Diagnostics should describe possible bottlenecks
   with confidence and use repeatable A/B tests rather than categorical percent rules.
 - Include the summary only with a run the user explicitly sends for review/publication,
   after updating the displayed sharing explanation. No automatic upload or raw
   per-second trace publication. Distinguish whole-system load from game-specific load;
   never include process IDs, other application names, device identifiers or private paths.
-- Coordinate optional allowlisted fields, validation, storage and public detail responses
-  with the Academy API before updated clients publish them. Old runs without telemetry
-  stay valid; missing readings cannot be used as measured zeros. This is not a silent
-  addition to the existing strict submission payload or a new required cohort key.
+- The Academy contract coordinated on 2026-10-06 requires the complete allowlisted
+  block in submissions, including nullable keys. Updated desktop builds project and
+  validate it before selected-run Send for review, with matching consent/privacy text.
+  Old local runs stay valid and submit explicit `not_collected`; missing readings are
+  not measured zeros. Frozen pre-telemetry outbox requests fail explicitly without
+  rewriting, new IDs or automatic sends. Both saved and new request limits are 256 KiB.
+  Comparison requests and cohort keys exclude telemetry. Deletion removes the resource
+  block; Academy's smaller closed measurement archive does not retain it. Backend
+  deployment and dataset changes belong to the separate Academy task.
+  The coordinated Academy allowlist now supports Windows, NVAPI and ADLX utilization
+  sources in the same field and schema version. Staging/production rollout and
+  selected-run verification are recorded in `references/resource-telemetry.md`.
+  Preserve each collector's source and frozen request; never relabel or regenerate
+  a request to bypass validation.
 
 Before release, validate overhead and sampling alignment, unavailable/partial counters,
 GPU selection and memory-counter reliability, physical RAM/pagefile/commit distinctions,
 privacy, old-run compatibility, consented submission, cancellation and raid/game exit in
-both signed Store products. App/API contracts and package versions remain unchanged in
-the skills-only implementation.
+both signed Store products. The current application change leaves the Academy API,
+skills and package versions unchanged.
 
-References for the future collector: [Windows GPU telemetry](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/),
+Primary collector references: [Windows GPU telemetry](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/),
 [GPU process-memory counter limitations](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value),
 [installed RAM](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getphysicallyinstalledsystemmemory),
 [pagefile usage](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-pagefileusage),
 [system commit and physical memory](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information),
 and [PresentMon 2.5.1 console metrics](https://github.com/GameTechDev/PresentMon/blob/v2.5.1/README-ConsoleApplication.md).
+
+### Local Temperature Diagnostics: Future Option (2026-10-07)
+
+Record this as an optional future troubleshooting feature; implementation is deferred.
+The current capture-resource contract continues to exclude temperatures and voltages.
+Temperature readings would provide local context for agents and users investigating
+possible thermal limitations. A temperature alone, or one capture, must not be treated
+as proof of thermal throttling or the cause of FPS drops.
+
+- Initial scope: the selected GPU's core temperature through installed NVIDIA NVAPI
+  or AMD ADLX, plus a separate AMD hotspot reading when supported. Keep core, hotspot
+  and memory temperature meanings distinct; VRAM temperature is outside this initial
+  proposal and requires its own validated support.
+- CPU temperature needs separate source research before implementation. Standard
+  `Win32_TemperatureProbe.CurrentReading` is not populated; do not substitute a thermal
+  zone or another sensor as an identified CPU temperature.
+- Future skill and UI interpretation should express temperature-based warning levels
+  for possible thermal limitations. Use the identified CPU/GPU model, sensor meaning
+  and a documented applicable limit; do not apply a universal normal-temperature table.
+  When the sensor or limit cannot be established, report insufficient data. Temperature
+  warnings must not claim confirmed throttling. If a later collector exposes a verified
+  thermal-limiting flag, report it separately; attributing FPS drops still requires
+  aligned performance evidence and repeatable tests.
+- Target approximately 1 Hz during workload, using the valid FPS window when collected
+  alongside a benchmark. Summaries should expose average, sampled peak, last reading,
+  valid sample count, duration coverage, degrees Celsius, source and sensor scope.
+  Peaks belong to that diagnostic window; missing/unsupported readings remain null
+  with a clear reason. Temperature failure must not invalidate a successful FPS capture.
+- Implement collection in shared Core and expose a separate local diagnostic output
+  through Toolkit UI and sanitized headless/Copy JSON for local and web skill workflows.
+  Exact command, output schema, storage and UI behavior remain to be agreed before
+  implementation. Keep adapter identity and raw samples internal.
+- Never include this diagnostic block in Academy submission payloads, moderation/public
+  projections or benchmark grouping keys, including after Send for review. No backend
+  contract expansion or automatic upload is part of this option. Test the exclusion at
+  the submission boundary.
+- Use installed driver APIs without requiring another utility, driver, service or
+  overlay. Validate native bindings, sensor identity, unavailable/partial readings,
+  window alignment, overhead and cancellation on actual supported hardware before
+  enabling the feature. No tuning controls or voltage collection are included.
+
+References: [NVAPI thermal readings](https://docs.nvidia.com/nvapi/group__gputhermal.html),
+[ADLX GPU metric sensors](https://gpuopen.com/manuals/adlx/adlx-sdk-references/adlx-interfaces/performance-monitoring/iadlxgpumetrics/),
+and [Windows temperature-probe limitations](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-temperatureprobe).
 
 ## Standalone Benchmark Contract
 

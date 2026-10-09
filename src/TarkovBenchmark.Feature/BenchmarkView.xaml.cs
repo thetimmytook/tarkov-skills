@@ -82,7 +82,7 @@ public partial class BenchmarkView : UserControl
             CopyResultsButton.IsEnabled = document.Runs.Count > 0;
             SubmitButton.IsEnabled = document.Runs.Count > 0;
             var latest = document.Runs.LastOrDefault();
-            if (latest is not null) DisplayMetrics(latest.Performance);
+            if (latest is not null) { DisplayMetrics(latest.Performance); ResourceResults.Show(latest.ResourceTelemetry); }
         }
         catch
         {
@@ -109,44 +109,44 @@ public partial class BenchmarkView : UserControl
         _captureCancellation = new CancellationTokenSource();
         try
         {
-            var settingsTask = Task.Run(() => new SettingsReader().Read());
-            var systemTask = Task.Run(() => new SystemInfoCollector().Collect());
-            await Task.WhenAll(settingsTask, systemTask);
-            var metrics = await new FrametimeCaptureService().CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
-            {
-                _captureClock = Stopwatch.StartNew();
-                _timer.Start();
-                SetStatus("Collecting frametime data: 00:00 / 02:00", false);
-            }), _captureCancellation.Token);
-
-            _timer.Stop();
-            _captureClock?.Stop();
-            var finalContext = _raidLogs.Read(tarkov.StartTime);
-            SetStatus("Measurement complete. Return to the benchmark window.", false);
-            await WindowAttention.NotifyAsync(_owner ?? Window.GetWindow(this));
-
-            var contextDialog = new ContextWindow(finalContext) { Owner = _owner };
-            if (contextDialog.ShowDialog() != true || contextDialog.Answers is null)
+            var saved = await BenchmarkCollectionWorkflow.RunAsync(CaptureDurationSeconds, _options.ApplicationVersion, new(
+                () => _raidLogs.Read(tarkov.StartTime), () => HasExited(tarkov),
+                token => new FrametimeCaptureService().CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
+                {
+                    _captureClock = Stopwatch.StartNew();
+                    _timer.Start();
+                    SetStatus("Collecting frametime data: 00:00 / 02:00", false);
+                }), token),
+                async context =>
+                {
+                    _timer.Stop();
+                    _captureClock?.Stop();
+                    SetStatus("Measurement complete. Return to the benchmark window.", false);
+                    await WindowAttention.NotifyAsync(_owner ?? Window.GetWindow(this));
+                    _captureCancellation.Token.ThrowIfCancellationRequested();
+                    var dialog = new ContextWindow(context) { Owner = _owner };
+                    return dialog.ShowDialog() == true ? dialog.Answers : null;
+                }, _store.Append), _captureCancellation.Token);
+            if (saved is null)
             {
                 SetStatus("Measurement completed but was not saved.", true);
                 return;
             }
 
-            var answers = contextDialog.Answers;
-            var warnings = settingsTask.Result.Warnings.Concat(systemTask.Result.Warnings).Distinct().ToList();
-            var run = new BenchmarkRun(Guid.NewGuid().ToString(), DateTime.Now.ToString("yyyy-MM-dd"), CaptureDurationSeconds, _options.ApplicationVersion, systemTask.Result.System, settingsTask.Result.Settings, new { map = answers.Map, execution = answers.Execution, weather = answers.Weather, time_of_day = answers.TimeOfDay, game_version = finalContext.GameVersion }, metrics.Performance, warnings);
-            _store.Append(run);
+            var run = saved.Run;
+            var metrics = run.Performance;
+            var map = saved.Map;
             LoadLatestResult();
             SetStatus("Benchmark saved locally. No data was uploaded.", false);
-            StatusDetailText.Text = $"{answers.Map} · {metrics.Performance.SampleCount:N0} frames · {warnings.Count} warning(s)";
-            WriteResult(new CommandResult("completed", run.RunId, answers.Map, metrics.Performance.AverageFps, metrics.Performance.OnePercentLowFps, metrics.Performance.ZeroPointOnePercentLowFps, metrics.Performance.P95FrametimeMs, true, false));
+            StatusDetailText.Text = $"{map} · {metrics.SampleCount:N0} frames · {run.Warnings.Count} warning(s)";
+            WriteResult(new CommandResult("completed", run.RunId, map, metrics.AverageFps, metrics.OnePercentLowFps, metrics.ZeroPointOnePercentLowFps, metrics.P95FrametimeMs, true, false)
+            { ResourceTelemetry = run.ResourceTelemetry });
             if (_options.SourceSkill) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
         }
         catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("discarded", ex.Message); }
         catch (OperationCanceledException) { SetStatus("Collection canceled. Partial data was discarded.", true); WriteTerminalResult("cancelled", "Collection canceled by the user."); }
         catch (PresentMonPermissionException ex) { SetStatus("PresentMon needs permission to access Windows performance tracing.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("permission_required", ex.Message); }
         catch (PresentMonSessionException ex) { ShowCollectionUnavailable(ex.Message); WriteTerminalResult("capture_conflict", ex.Message); }
-        catch (Exception) when (HasExited(tarkov)) { const string message = "Tarkov closed before the measurement completed. The partial result was discarded."; SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = message; WriteTerminalResult("discarded", message); }
         catch (Exception ex) { SetStatus("Measurement failed. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("failed", ex.Message); }
         finally
         {

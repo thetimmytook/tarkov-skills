@@ -17,6 +17,8 @@ TarkovPerformanceBenchmark.exe collect --source skill
 
 The application reads Tarkov logs and `Graphics.ini`, `PostFx.ini`, and `Game.ini` without modifying game files. Development builds append completed runs to `%LOCALAPPDATA%\TarkovSkills\benchmark.json`; nothing is uploaded automatically.
 
+Repository builds collect CPU, GPU, physical RAM, pagefile and commit summaries during the FPS window and save mandatory `resource_telemetry` with completed runs. The shared benchmark feature displays the summary in both products. GPU readings refer to the whole selected adapter; shared memory is system RAM. NVIDIA/AMD graphics load uses installed NVAPI/ADLX driver APIs. Explicit Send for review includes supported frozen selected-run summaries, with publication after moderator approval; vendor-source runs stay local until Academy's allowlist supports those sources. Comparison requests exclude telemetry. See [measurement definitions and release checks](../../references/resource-telemetry.md). This feature is not yet in the public Store version.
+
 PresentMon is an external MIT-licensed dependency pinned in `third_party/presentmon/dependency.json`.
 
 ## Microsoft Store package

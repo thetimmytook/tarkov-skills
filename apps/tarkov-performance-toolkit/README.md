@@ -16,6 +16,8 @@ tarkov-skills.exe goal set --goal stable-fps --target-fps 60 --quality "balanced
 
 Commands write sanitized JSON to standard output. Reports omit user names, host names, local paths, IP addresses, serial numbers, and machine identifiers. Nothing is uploaded automatically.
 
+Repository capture builds include mandatory `resource_telemetry` summaries in completed capture JSON and saved benchmark runs. Both hosts show the shared summary; Toolkit Copy results includes it. GPU memory is for the whole selected adapter, with dedicated and shared usage separate. NVIDIA/AMD graphics load uses installed NVAPI/ADLX driver APIs. Explicit Send for review includes supported frozen selected-run summaries, with publication after moderator approval; vendor-source runs stay local until Academy's allowlist supports those sources. Comparison requests exclude telemetry. See [measurement definitions and release checks](../../references/resource-telemetry.md). This feature is not yet in the public Store version.
+
 Build the unsigned Store package from the repository root:
 
 ```powershell
