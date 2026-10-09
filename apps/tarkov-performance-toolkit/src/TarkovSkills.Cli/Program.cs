@@ -35,7 +35,7 @@ public sealed class ToolkitCli(TextWriter output)
         var presentMon = new PresentMonRunner();
         var ready = presentMon.IsDependencyReady(out var dependencyMessage);
         RaidContext raid;
-        try { raid = new RaidLogReader().Read(TryStartTime(process)); }
+        try { raid = new RaidLogReader().ReadCurrent(process is not null, TryStartTime(process)); }
         catch { raid = new(false, false, "unknown", "unknown", null, null, null); }
         Write(new { status = ready ? "ok" : "not_ready", toolkit_version = typeof(ToolkitCli).Assembly.GetName().Version?.ToString(3), presentmon_ready = ready, presentmon_status = dependencyMessage, tarkov_running = process is not null, raid_active = raid.Active, map = raid.Map });
         return ready ? 0 : 3;

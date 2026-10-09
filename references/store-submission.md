@@ -105,6 +105,8 @@ Effective date: set when the auth-enabled release is published
 
 Tarkov Performance Benchmark processes performance and diagnostic information locally on the user's device. This may include FPS and frame-time metrics, Windows hardware and driver information, Escape from Tarkov graphics settings, game version, map, raid environment, weather, and time-of-day context.
 
+Updated capture builds also retain summary CPU and logical-processor utilization, whole-adapter graphics utilization and dedicated/shared GPU memory, physical RAM, pagefile allocation/use and system commit. Resource samples are transient; raw time series, process IDs, other application names, paths, drive letters, LUID/PCI/PnP/device identifiers and native error text are not included in saved, exported or submitted summaries. Copied completed runs include this summary. After explicit Send for review, updated builds send the selected run's allowlisted summary to Timmy Academy. CPU and memory describe the whole system; GPU measurements describe the whole selected adapter, including other applications without identifying them. It becomes public only after moderator approval. Signing in does not upload results. Deleting a publication removes telemetry; a smaller measurement without dates, source IDs or the user's account link remains in a closed internal analysis archive and does not retain telemetry. Authentication and ownership information remain separate from the public benchmark DTO.
+
 Generated benchmark and diagnostic reports do not contain names, email addresses, account identifiers, IP addresses, device serial numbers, machine identifiers, or precise location data. The application does not read game process memory, automate input, or modify game files.
 
 Benchmark results are stored locally in the application's private Microsoft Store data folder. No benchmark or diagnostic data is uploaded automatically. Users can open the storage folder from the application and delete the benchmark JSON file, or remove all package-local data by uninstalling the application.
@@ -152,8 +154,13 @@ Store package versions and release tags are independent per product. The version
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
-| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.5` | `1.0.5.0` |
-| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.2` | `1.0.2.0` |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.6` | `1.0.6.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.3` | `1.0.3.0` |
+
+Partner Center package screenshots supplied on 2026-10-09 confirm that Benchmark
+`1.0.5.0` and Toolkit `1.0.2.0` are already uploaded. The resource-telemetry update
+therefore uses the higher candidates above. Keep `publishedPackageVersion` at its
+recorded public baseline until public publication is confirmed separately.
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 

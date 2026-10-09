@@ -49,6 +49,7 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 | CAP-09 | Restart the application after a successful capture. | The latest saved metrics are restored and `Open folder` remains enabled. |
 | CAP-10 | Start capture, then close Tarkov or reproduce a game crash before the two-minute capture completes. | The partial measurement is discarded, no success sound plays, no benchmark-details dialog opens, the JSON run count is unchanged, the main window reports that Tarkov closed, and the app-owned ETW session is removed. |
 | CAP-11 | Start capture in a raid, extract after 20-30 seconds, and remain on the first post-raid screen. | The app detects the post-raid profile marker within approximately four seconds, stops capture, discards partial data, plays no success sound, opens no details dialog, leaves the JSON run count unchanged, and removes the app-owned ETW session. |
+| CAP-12 | Wait for `Measurement complete`, then leave the raid or close Tarkov before saving the benchmark-details dialog. | Save appends exactly one completed run with the captured map, game version, capture date, FPS and resource summary. Later game/raid state does not discard or relabel it. Repeat in both hosts. |
 
 ## Benchmark Data Contract
 

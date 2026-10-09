@@ -9,6 +9,7 @@ public sealed class PreparedSubmission
 {
     internal string Json { get; }
     public Guid ClientRunId { get; }
+    public ResourceTelemetry ResourceTelemetry { get; }
     public string Summary
     {
         get
@@ -16,13 +17,15 @@ public sealed class PreparedSubmission
             var dto = JsonNode.Parse(Json)!;
             return $"{dto["captured_day"]} · {dto["map"]} · {dto["execution"]}\n" +
                 $"{dto["hardware"]!["cpu_name"]} · {dto["hardware"]!["gpu_name"]} · {dto["hardware"]!["ram_gb"]} GB RAM\n" +
-                $"Average {dto["metrics"]!["average_fps"]} FPS · 1% low {dto["metrics"]!["one_percent_low_fps"]} FPS";
+                $"Average {dto["metrics"]!["average_fps"]} FPS · 1% low {dto["metrics"]!["one_percent_low_fps"]} FPS\n" +
+                $"Resource summary: {ResourceTelemetry.Status.Replace('_', ' ')} · GPU: {ResourceTelemetry.Gpu.AdapterName ?? "unknown"} (whole adapter)";
         }
     }
     internal PreparedSubmission(string json)
     {
         Json = json;
         ClientRunId = Guid.Parse(JsonNode.Parse(json)!["client_run_id"]!.GetValue<string>());
+        ResourceTelemetry = JsonSerializer.Deserialize<ResourceTelemetry>(JsonNode.Parse(json)!["resource_telemetry"]!.ToJsonString(), JsonDefaults.Options)!;
     }
     public override string ToString() => "Prepared benchmark submission";
 }
@@ -68,13 +71,16 @@ public sealed class SubmissionOutbox(string dataDirectory, Uri apiBaseUri, strin
         using var lease = new FileStream(file + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         if (File.Exists(file))
         {
-            if (new FileInfo(file).Length > 32768) throw new InvalidDataException("Saved submission is invalid.");
-            var saved = File.ReadAllText(file);
+            if (new FileInfo(file).Length > SubmissionPayload.MaxPayloadBytes) throw new InvalidDataException("Saved submission exceeds the API size limit.");
+            string saved;
+            try { saved = File.ReadAllText(file, new UTF8Encoding(false, true)); }
+            catch (DecoderFallbackException) { throw new InvalidDataException("Saved submission has invalid text encoding. It was not changed or sent."); }
+            if (Encoding.UTF8.GetByteCount(saved) > SubmissionPayload.MaxPayloadBytes) throw new InvalidDataException("Saved submission exceeds the API size limit.");
             SubmissionPayload.ValidateStored(saved, id);
             return new(saved);
         }
         var json = SubmissionPayload.Create(run, selectedGpu);
-        if (Encoding.UTF8.GetByteCount(json) > 32768) throw new InvalidDataException("This submission exceeds the API size limit.");
+        if (Encoding.UTF8.GetByteCount(json) > SubmissionPayload.MaxPayloadBytes) throw new InvalidDataException("This submission exceeds the API size limit.");
         AppPaths.AtomicWrite(file, json);
         return new(json);
     }

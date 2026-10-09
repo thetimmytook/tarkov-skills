@@ -105,9 +105,7 @@ public partial class SubmissionWindow : Window
             try
             {
                 prepared = outbox.Prepare(((RunChoice)RunCombo.SelectedItem).Run, (string)GpuCombo.SelectedItem);
-                SummaryText.Text = prepared.Summary;
-                RunCombo.IsEnabled = GpuCombo.IsEnabled = false;
-                SendButton.Content = "Send for review";
+                DisplayPrepared(prepared);
                 ShowResult("Ready to send", "Only this run will be sent. It becomes public only after approval. No raw captures or private device identifiers are included.");
             }
             catch (InvalidDataException ex) { ShowResult("Error", ex.Message, "Error"); }
@@ -115,6 +113,15 @@ public partial class SubmissionWindow : Window
             return;
         }
         await StartOperationAsync(() => workflow!.SubmitAsync(prepared!, lifetime.Token));
+    }
+
+    private void DisplayPrepared(PreparedSubmission submission)
+    {
+        SummaryText.Text = submission.Summary;
+        ResourceReview.Show(submission.ResourceTelemetry);
+        ResourceReview.Visibility = Visibility.Visible;
+        RunCombo.IsEnabled = GpuCombo.IsEnabled = false;
+        SendButton.Content = "Send for review";
     }
 
     private async void Check_Click(object sender, RoutedEventArgs e)

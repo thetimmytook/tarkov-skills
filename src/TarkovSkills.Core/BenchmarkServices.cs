@@ -65,7 +65,7 @@ public sealed class SystemInfoCollector
             return new { name, vendor, vram_gb = registryVram > 0 ? registryVram : fallbackVram > 0 ? fallbackVram : (double?)null, vram_source = registryVram > 0 ? "registry" : fallbackVram > 0 ? "wmi_capped_4gb" : "unknown", driver_version = Text(o, "DriverVersion"), driver_latest_check = "manual", current_resolution = Resolution(o) };
         }, warnings);
         var modules = QueryMany("SELECT Manufacturer,Capacity,Speed,ConfiguredClockSpeed FROM Win32_PhysicalMemory", o => new { manufacturer = Text(o, "Manufacturer"), capacity_gb = Math.Round(Number(o, "Capacity") / 1073741824d, 2), speed_mhz = Number(o, "Speed"), configured_clock_speed_mhz = Number(o, "ConfiguredClockSpeed") }, warnings);
-        var pagefiles = QueryMany("SELECT Name,AllocatedBaseSize,CurrentUsage,PeakUsage FROM Win32_PageFileUsage", o => new { drive_media_type = HardwareInfo.GetDriveMediaType(Text(o, "Name")), allocated_gb = Math.Round(Number(o, "AllocatedBaseSize") / 1024d, 2), current_usage_gb = Math.Round(Number(o, "CurrentUsage") / 1024d, 2), peak_usage_gb = Math.Round(Number(o, "PeakUsage") / 1024d, 2) }, warnings);
+        var pagefiles = QueryMany("SELECT Name,AllocatedBaseSize,CurrentUsage FROM Win32_PageFileUsage", o => new { drive_media_type = HardwareInfo.GetDriveMediaType(Text(o, "Name")), allocated_gb = Math.Round(Number(o, "AllocatedBaseSize") / 1024d, 2), current_usage_gb = Math.Round(Number(o, "CurrentUsage") / 1024d, 2) }, warnings);
         var totalRam = modules.Sum(m => Convert.ToDouble(m.GetType().GetProperty("capacity_gb")!.GetValue(m), CultureInfo.InvariantCulture));
         var totalPagefile = pagefiles.Sum(item => Convert.ToDouble(item.GetType().GetProperty("allocated_gb")!.GetValue(item), CultureInfo.InvariantCulture));
         var install = HardwareInfo.FindTarkovInstallLocation();
@@ -81,13 +81,18 @@ public sealed class SystemInfoCollector
 
 public sealed class RaidLogReader
 {
+    private readonly Func<string?> _findLogsDirectory;
+
+    public RaidLogReader() : this(FindLogsDirectory) { }
+    internal RaidLogReader(Func<string?> findLogsDirectory) => _findLogsDirectory = findLogsDirectory;
+
     private static readonly Regex Timestamp = new(@"^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+)", RegexOptions.Compiled);
     private static readonly Dictionary<string, string> MapNames = new(StringComparer.OrdinalIgnoreCase) { ["TarkovStreets"] = "Streets of Tarkov", ["bigmap"] = "Customs", ["factory4_day"] = "Factory", ["factory4_night"] = "Factory", ["laboratory"] = "The Lab", ["Labyrinth"] = "Labyrinth", ["Lighthouse"] = "Lighthouse", ["RezervBase"] = "Reserve", ["Sandbox"] = "Ground Zero", ["Sandbox_high"] = "Ground Zero", ["Interchange"] = "Interchange", ["Shoreline"] = "Shoreline", ["Woods"] = "Woods" };
     private static readonly Dictionary<string, string> Bundles = new(StringComparer.OrdinalIgnoreCase) { ["city_preset"] = "TarkovStreets", ["customs_preset"] = "bigmap", ["factory_day_preset"] = "factory4_day", ["factory_night_preset"] = "factory4_night", ["laboratory_preset"] = "laboratory", ["labyrinth_preset"] = "Labyrinth", ["lighthouse_preset"] = "Lighthouse", ["rezerv_base_preset"] = "RezervBase", ["sandbox_preset"] = "Sandbox", ["sandbox_high_preset"] = "Sandbox_high", ["shopping_mall"] = "Interchange", ["shoreline_preset"] = "Shoreline", ["woods_preset"] = "Woods" };
 
     public RaidContext Read(DateTime? processStartedAt)
     {
-        var logs = FindLogsDirectory(); if (logs is null) return new(false, false, "unknown", "unknown", null, null, null);
+        var logs = _findLogsDirectory(); if (logs is null) return new(false, false, "unknown", "unknown", null, null, null);
         var folders = Directory.EnumerateDirectories(logs).Select(x => new DirectoryInfo(x)).OrderByDescending(x => x.LastWriteTimeUtc).Take(5);
         foreach (var folder in folders)
         {
@@ -97,9 +102,16 @@ public sealed class RaidLogReader
         return new(true, false, "unknown", "unknown", null, null, null);
     }
 
+    public RaidContext ReadCurrent(bool tarkovRunning, DateTime? processStartedAt)
+    {
+        var context = Read(processStartedAt);
+        // Closing Tarkov can leave GameStarted without a raid-end log marker.
+        return tarkovRunning ? context : context with { Active = false };
+    }
+
     public bool HasRaidEndedSince(DateTime startedAt)
     {
-        var logs = FindLogsDirectory();
+        var logs = _findLogsDirectory();
         if (logs is null) return false;
 
         var folders = Directory.EnumerateDirectories(logs)
@@ -175,7 +187,10 @@ public sealed class PresentMonRunner
         catch (Exception ex) { message = ex.Message; return false; }
     }
 
-    public async Task<PerformanceMetrics> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
+    public async Task<PerformanceMetrics> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken) =>
+        (await CaptureWindowAsync(durationSeconds, started, cancellationToken).ConfigureAwait(false)).Metrics;
+
+    internal async Task<FrameCapture> CaptureWindowAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
     {
         VerifyDependency();
         await CleanupLegacyOrphanedSessionAsync();
@@ -191,7 +206,7 @@ public sealed class PresentMonRunner
             await process.WaitForExitAsync(cancellationToken); var error = await stderr; _ = await stdout;
             if (process.ExitCode != 0) throw CreateExitException(process.ExitCode, error);
             if (!File.Exists(csv)) throw new InvalidOperationException("PresentMon did not create capture data.");
-            return PresentMonCsvParser.Parse(csv);
+            return PresentMonCsvParser.ParseCapture(csv);
         }
         finally
         {
@@ -209,6 +224,7 @@ public sealed class PresentMonRunner
         "--terminate_after_timed",
         "--terminate_on_proc_exit",
         "--no_console_stats",
+        "--qpc_time",
         "--output_file", outputFile
     ];
 
@@ -289,23 +305,6 @@ public sealed class PresentMonRunner
         using var manifest = JsonDocument.Parse(File.ReadAllText(AppPaths.PresentMonManifestFile)); var expected = manifest.RootElement.GetProperty("sha256").GetString(); using var stream = File.OpenRead(AppPaths.PresentMonFile); var actual = Convert.ToHexString(SHA256.HashData(stream));
         if (!actual.Equals(expected, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The bundled PresentMon checksum is invalid.");
     }
-}
-
-public static class PresentMonCsvParser
-{
-    public static PerformanceMetrics Parse(string path)
-    {
-        using var parser = new TextFieldParser(path) { HasFieldsEnclosedInQuotes = true, TrimWhiteSpace = true }; parser.SetDelimiters(DetectDelimiter(File.ReadLines(path).First()));
-        var headers = parser.ReadFields() ?? throw new InvalidDataException("PresentMon CSV has no header.");
-        var index = FindHeader(headers, "MsBetweenPresents", "FrameTime", "CPUFrameTime", "MsBetweenDisplayChange"); if (index < 0) index = Array.FindIndex(headers, h => h.Contains("frametime", StringComparison.OrdinalIgnoreCase)); if (index < 0) throw new InvalidDataException("PresentMon CSV has no supported frametime column.");
-        var values = new List<double>(); while (!parser.EndOfData) { var row = parser.ReadFields(); if (row is null || row.Length <= index) continue; if (double.TryParse(row[index].Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && value > 0 && value < 10000) values.Add(value); }
-        if (values.Count < 120) throw new InvalidDataException("PresentMon capture contains too few frame samples.");
-        values.Sort(); var total = values.Sum(); var oneCount = Math.Max(1, (int)Math.Ceiling(values.Count * 0.01)); var pointOneCount = Math.Max(1, (int)Math.Ceiling(values.Count * 0.001)); var oneMs = values.TakeLast(oneCount).Average(); var pointOneMs = values.TakeLast(pointOneCount).Average();
-        return new(values.Count, Math.Round(total / 1000, 3), Math.Round(values.Count / (total / 1000), 2), Math.Round(1000 / oneMs, 2), Math.Round(1000 / pointOneMs, 2), Math.Round(total / values.Count, 3), Percentile(values, .95), Percentile(values, .99));
-    }
-    private static int FindHeader(string[] headers, params string[] names) { foreach (var name in names) { var index = Array.FindIndex(headers, x => x.Equals(name, StringComparison.OrdinalIgnoreCase)); if (index >= 0) return index; } return -1; }
-    private static string DetectDelimiter(string header) => new[] { ",", ";", "\t" }.OrderByDescending(x => header.Split(x).Length).First();
-    private static double Percentile(List<double> sorted, double percentile) => Math.Round(sorted[Math.Clamp((int)Math.Ceiling(percentile * sorted.Count) - 1, 0, sorted.Count - 1)], 3);
 }
 
 public sealed class BenchmarkStore
