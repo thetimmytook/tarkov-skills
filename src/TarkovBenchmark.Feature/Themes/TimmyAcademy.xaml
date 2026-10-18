@@ -413,4 +413,38 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="TextWrapping" Value="Wrap" />
-    </Style></ResourceDictionary>
+    </Style>
+    <Style x:Key="DetailsExpander" TargetType="Expander">
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Expander">
+            <StackPanel>
+              <ToggleButton x:Name="HeaderToggle" Content="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}"
+                            IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                            HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0" Padding="0,4">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="Arrow" Text="▸" Foreground="{StaticResource AccentBrush}" Width="20"/>
+                        <ContentPresenter Content="{TemplateBinding Content}" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                      </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True"><Setter TargetName="Arrow" Property="Text" Value="▾"/></Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <ContentPresenter x:Name="Body" ContentSource="Content" Visibility="Collapsed"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsExpanded" Value="True"><Setter TargetName="Body" Property="Visibility" Value="Visible"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{StaticResource MutedBrush}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+</ResourceDictionary>

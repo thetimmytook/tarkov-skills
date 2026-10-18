@@ -1,7 +1,7 @@
 {
-  "packageVersion": "1.0.6.0",
+  "packageVersion": "1.1.0.0",
   "publishedPackageVersion": "1.0.3.0",
-  "tag": "benchmark-v1.0.6",
+  "tag": "benchmark-v1.1.0",
   "storeProductId": "9PJMPQ06JL21",
   "packageIdentity": "TimmyTook.TarkovPerformanceBenchmark"
 }

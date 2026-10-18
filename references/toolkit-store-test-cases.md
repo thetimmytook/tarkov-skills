@@ -108,11 +108,11 @@ Empty input is not consent.
 | ID | Scenario | Expected result |
 |---|---|---|
 | TOOLKIT-01 | Install from the closed Store audience and launch from Start. | The WPF GUI opens without a console, script, certificate, or UAC prompt. |
-| TOOLKIT-02 | Resize the main window, switch between Overview, Benchmark, and Goal, then open About. | Content remains reachable without clipping; About shows TimmyTook, GitHub, privacy policy, version, the unofficial notice, and AI-assisted analysis. Its links open correctly; content scrolls on a short display. |
+| TOOLKIT-02 | Resize the main window, switch between Overview, Benchmark, and Settings, then open About. | Content remains reachable without clipping; Settings contains Access and Goal, and no separate Goal tab remains. About shows TimmyTook, GitHub, privacy policy, version, the unofficial notice, and AI-assisted analysis. Its links open correctly; content scrolls on a short display. |
 | TOOLKIT-03 | Run `tarkov-skills.exe status` from a new terminal. | Exactly one JSON document is written to stdout with dependency, game, raid, and map status. |
 | TOOLKIT-04 | Run `tarkov-skills.exe inspect`. | JSON includes settings, CPU, GPU/VRAM, RAM, game-drive media, pagefile size/media, goal, and log context. |
 | TOOLKIT-05 | Inspect the JSON and saved GUI report. | No username, hostname, local path, IP, serial number, machine ID, Control.ini, or Sound.ini is present. |
-| TOOLKIT-06 | Save a new goal in GUI, then run `goal get`. | The same goal is returned from package LocalState. |
+| TOOLKIT-06 | Save a new goal in Settings → Goal, then run `goal get`. | The same goal is returned from package LocalState. |
 | TOOLKIT-07 | Run `goal set`, then reopen GUI. | GUI shows the updated goal and validates target FPS between 20 and 360. |
 | TOOLKIT-08 | Use Collect report, Copy JSON, and Save JSON. | Preview, clipboard, and saved file contain equivalent sanitized JSON; nothing is uploaded. |
 | TOOLKIT-09 | Open Benchmark and start collection while Tarkov is closed or outside a raid. | Collection does not start and gives a concise readiness message. |
@@ -121,7 +121,7 @@ Empty input is not consent.
 | TOOLKIT-12 | Extract or leave the raid during Benchmark collection. | Polling detects the raid-end marker within roughly 4 seconds and discards the partial run. |
 | TOOLKIT-13 | Close or crash Tarkov during Benchmark collection. | The run is discarded and no partial metrics are saved as valid. |
 | TOOLKIT-14 | Keep an external PresentMon capture active, then start Benchmark collection or CLI capture. | Toolkit refuses with `capture_conflict` and does not stop the external process/session. |
-| TOOLKIT-15 | Deny ETW access. | CLI returns nonzero with `permission_required`; the Benchmark UI explains the permission problem without silent elevation. |
+| TOOLKIT-15 | Deny ETW access. | CLI returns nonzero with `permission_required` and no UAC; the Benchmark UI offers explicit access-setup consent after the ordinary attempt fails, without silently elevating the main application. |
 | TOOLKIT-16 | Update the Store package over an existing version. | Package LocalState goal data remains available and both GUI and alias use the new version. |
 | TOOLKIT-17 | Use the skill from a local agent. | Agent runs `status`, `inspect`, or an explicitly approved `capture` through `tarkov-skills.exe`, receives one sanitized JSON document on stdout, and no GUI opens. |
 | TOOLKIT-18 | Use the skill from a web client. | User can collect a diagnostic report in Overview or complete a run in Benchmark, then use Copy JSON or Copy results. Copy results places only the latest completed run on the clipboard and uploads nothing. |
@@ -137,6 +137,10 @@ Empty input is not consent.
 | TOOLKIT-28 | Hide Get started with the small ? button or the close (x) button at the card's top right, restart Toolkit, then update the Store package. | Both controls hide the entire card and its spacing, with no collapsed title row. Keyboard focus returns to the small help button in Overview. The choice persists in package-local `TarkovSkills\toolkit-ui.json`, not in the install directory or report JSON. |
 | TOOLKIT-29 | Restore Get started with ?; restart again. Navigate by keyboard and switch tabs. | The card remains expanded after restart. The help button has Show/Hide getting started accessibility text and tooltip, works with keyboard input, and appears only in Overview. No report is collected or uploaded by toggling it. |
 | TOOLKIT-30 | Use an unreadable or malformed UI preferences file; separately deny writing that file. | Startup and collection still work with the default expanded card. A failed save changes visibility for the current session and shows a sanitized warning; no crash or false persistence promise. |
+| TOOLKIT-31 | Open Settings in both Microsoft-signed hosts at 150%/200% display scaling. | Access management is inline, removal is always visible, and help starts collapsed. Toolkit also has Goal; standalone Benchmark has Access only. No three-second diagnostic capture button is available. |
+| TOOLKIT-32 | On an account without ETW access, start a real capture, approve setup, and complete another capture before signing out. Repeat in both hosts using the [permission matrix](etw-permission-setup.md#manual-validation-matrix). | UAC launches only the verified helper; the original requesting account gets the approved membership. Immediate and repeated captures work without another UAC in the same app session. Another administrator's credentials do not change which account is configured. |
+| TOOLKIT-33 | Cancel an elevated capture, repeat it, then close the host during capture. | Cancellation discards the run and permits helper reuse. Host closure disconnects the helper and stops its owned PresentMon/ETW session; no partial run is saved. |
+| TOOLKIT-34 | Exercise a genuine capture/save failure and review Report a problem. Separately cancel a capture or leave the raid. | Failure creates a bounded sanitized local report/archive and offers manual GitHub/Show log archive actions. The browser is not opened automatically and no attachment/upload occurs. Expected cancellation or raid/game exit does not offer a bug report. Support ZIP excludes raw CSV, settings, history, credentials, identifiers and paths. |
 
 ## Skill Integration Scenarios
 

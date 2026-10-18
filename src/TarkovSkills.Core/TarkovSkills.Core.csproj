@@ -7,6 +7,8 @@
     <RootNamespace>TarkovSkills.Core</RootNamespace>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants Condition="'$(CaptureDiagnostics)' == 'true'">$(DefineConstants);CAPTURE_DIAGNOSTICS</DefineConstants>
+    <DefineConstants Condition="'$(CaptureDiagnostics)' == 'true' and '$(CapturePermissionProbe)' == 'true'">$(DefineConstants);CAPTURE_PERMISSION_PROBE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

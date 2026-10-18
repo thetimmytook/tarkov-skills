@@ -1,5 +1,25 @@
 # Microsoft Store Submission
 
+ETW permission recovery implemented in the isolated development checkout on
+2026-10-17 is not yet a validated Store candidate. See
+[ETW permission setup](etw-permission-setup.md) for the account-change scope,
+consent, native helper boundary and remaining signed-flight checks. The existing
+`runFullTrust` declarations remain unchanged; no `allowElevation` declaration or
+new capability submission has been made.
+
+The 2026-10-18 support revision retains bounded local capture diagnostics and
+offers a user-opened GitHub issue with a manually attached sanitized support ZIP.
+Nothing is uploaded automatically. Keep Store privacy wording aligned with
+[PRIVACY.md](../PRIVACY.md); this source change is not a Store publication.
+
+The next candidates are Toolkit `1.1.0.0` and Benchmark `1.1.0.0`, above the
+previous `1.0.3.0` / `1.0.6.0` telemetry flights. They include FPS-only PresentMon
+tracking, shared inline Settings/access management and sanitized support archives.
+The integrated portable AMD capture passed. Before production, validate the new
+permission/helper path and support actions in both Microsoft-signed flight hosts;
+previous-flight cancellation checks do not validate this new permission flow.
+The recorded public baselines below remain unchanged pending actual publication.
+
 Status: both products publicly published
 
 ## Published Products
@@ -154,13 +174,14 @@ Store package versions and release tags are independent per product. The version
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
-| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.6` | `1.0.6.0` |
-| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.3` | `1.0.3.0` |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.1.0` | `1.1.0.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.1.0` | `1.1.0.0` |
 
-Partner Center package screenshots supplied on 2026-10-09 confirm that Benchmark
-`1.0.5.0` and Toolkit `1.0.2.0` are already uploaded. The resource-telemetry update
-therefore uses the higher candidates above. Keep `publishedPackageVersion` at its
-recorded public baseline until public publication is confirmed separately.
+Partner Center package screenshots supplied on 2026-10-09 confirmed uploaded
+Benchmark `1.0.5.0` and Toolkit `1.0.2.0`; the user subsequently installed the
+`1.0.6.0` / `1.0.3.0` telemetry flights from Store. The capture/access/diagnostics
+update therefore uses the higher candidates above. Keep `publishedPackageVersion`
+at its recorded public baseline until public publication is confirmed separately.
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 

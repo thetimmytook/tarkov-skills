@@ -10,7 +10,36 @@ The project author does not receive, sell, share, or retain that conversation da
 
 The applications may read Escape from Tarkov graphics settings and logs, non-identifying Windows hardware and driver information, and FPS/frametime data produced by the bundled PresentMon utility. Capture telemetry in updated builds includes summary CPU and logical-processor utilization, whole-adapter graphics utilization and dedicated/shared GPU memory, physical RAM, pagefiles and system commit. Raw resource samples are transient and are not saved in benchmark reports. Reports exclude process IDs, other application names and device identifiers. The applications do not read game process memory, automate gameplay, collect game account credentials, or include user names, host names, local paths, IP addresses, serial numbers, or machine identifiers in generated reports.
 
-No benchmark or diagnostic data is uploaded automatically by the applications or sent to the project author by the skills. Copying, saving, attaching, or submitting a report requires an explicit user action. When a user provides data to ChatGPT, Claude, Microsoft Store, GitHub, or an external form, that service's privacy terms also apply.
+No benchmark or diagnostic data is uploaded automatically by the applications or sent to the project author by the skills. Exporting benchmark data, attaching files, and submitting reports require an explicit user action. Local diagnostics and support reports may be saved automatically on failure, and the short sanitized support report is copied to the clipboard. When a user provides data to ChatGPT, Claude, Microsoft Store, GitHub, or an external form, that service's privacy terms also apply.
+
+Capture diagnostics remain local in ordinary builds. They record fixed diagnostic
+events and numeric summaries, not raw frametime/resource series, application paths,
+process IDs, account identifiers, credentials or unrestricted exception text. Up to
+20 capture logs and 10 support ZIPs/text reports are retained. On capture/save errors,
+the app prepares a local support ZIP with a short sanitized report and revalidated
+recent logs, then offers a GitHub issue and access to that archive. Opening the issue
+prefills only the sanitized report; the ZIP is attached only by the user's manual
+action. GitHub issues and attachments are public. Reports use temporary local storage
+if the normal data directory is unavailable. Fatal managed failures may leave a pending
+report offered at the next GUI launch. No report is transmitted automatically.
+
+Builds with Windows capture access setup offer an optional, explicitly requested
+administrator operation to add the requesting account to the Windows Performance
+Log Users group. This is a persistent account permission that other applications
+running as that account can also use. It is not automatically removed when the
+application is uninstalled. An explicit removal action removes only that account's
+direct membership; access through other groups is unchanged. Ordinary Windows
+permissions reflect the change at the next Windows sign-in. To allow immediate
+capture without signing out, the user may approve a temporary elevated collector
+that runs only the bundled PresentMon and its trace cleanup. It is available until
+the application closes; reopening before the next Windows sign-in may require
+administrator approval again. Capture starts with ordinary rights and requests
+approval only after Windows denies tracing access. The main application, settings,
+history and account/submission handling continue to run with ordinary user rights.
+Permissions can be inspected and revoked in Settings. A local latest-attempt diagnostic records only the
+action, outcome, Windows error code, time and Windows version; it contains no
+account identifiers and is not automatically uploaded. Packaged setup remains
+subject to signed Store validation before release.
 
 Copied or exported completed runs include their sanitized telemetry summary when available. Updated application builds send the selected run's allowlisted capture-resource summary to Timmy Academy only after explicit Send for review. CPU, RAM, pagefile and commit measurements describe the whole system; GPU measurements describe the whole selected adapter, including use by other applications, without identifying those applications. The summary becomes public only after moderator approval. A missing legacy measurement is explicitly marked not_collected; no measured values are invented.
 
