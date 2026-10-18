@@ -8,10 +8,12 @@ param(
     [string] $ToolkitVersion,
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
-    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\dist')
+    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\dist'),
+    [string] $PublishedDirectory
 )
 
 $ErrorActionPreference = 'Stop'
+if ($PublishedDirectory -and $Product -eq 'all') { throw 'PublishedDirectory requires a single product.' }
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 Import-Module (Join-Path $PSScriptRoot 'StoreRelease.psm1') -Force
@@ -46,16 +48,24 @@ try {
         $layout = Join-Path $staging $portableProduct.Name
         New-Item -ItemType Directory -Path $layout | Out-Null
 
-        $assemblyVersion = $portableProduct.PackageVersion -replace '\.0$', ''
-        dotnet publish $portableProduct.Project -c $Configuration -r win-x64 --self-contained true -p:Version=$assemblyVersion -o $layout
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to publish $($portableProduct.Name)."
+        if ($PublishedDirectory) {
+            if (-not (Test-Path -LiteralPath (Join-Path $PublishedDirectory "$($portableProduct.Name).exe"))) {
+                throw 'Published application is missing; portable packaging never falls back to publishing.'
+            }
+            Copy-Item -Path (Join-Path $PublishedDirectory '*') -Destination $layout -Recurse
         }
-
-        if ($portableProduct.AdditionalProject) {
-            dotnet publish $portableProduct.AdditionalProject -c $Configuration -r win-x64 --self-contained true -p:Version=$assemblyVersion -o $layout
+        else {
+            $assemblyVersion = $portableProduct.PackageVersion -replace '\.0$', ''
+            dotnet publish $portableProduct.Project -c $Configuration -r win-x64 --self-contained true -p:DesktopAuthEnvironment=Production -p:AcademyApiEnvironment=Production -p:Version=$assemblyVersion -o $layout
             if ($LASTEXITCODE -ne 0) {
-                throw "Failed to publish the $($portableProduct.Name) command-line tool."
+                throw "Failed to publish $($portableProduct.Name)."
+            }
+
+            if ($portableProduct.AdditionalProject) {
+                dotnet publish $portableProduct.AdditionalProject -c $Configuration -r win-x64 --self-contained true -p:DesktopAuthEnvironment=Production -p:AcademyApiEnvironment=Production -p:Version=$assemblyVersion -o $layout
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to publish the $($portableProduct.Name) command-line tool."
+                }
             }
         }
 

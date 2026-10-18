@@ -1,0 +1,63 @@
+name: Build Store release artifacts
+
+on:
+  workflow_call:
+    inputs:
+      product:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test release validators
+        run: node --test build/tests/release-artifacts.test.mjs
+      - name: Verify release version and PresentMon
+        shell: pwsh
+        env:
+          PRODUCT: ${{ inputs.product }}
+        run: |
+          ./build/test-store-release.ps1 -Product $env:PRODUCT
+          ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+      - name: Test application
+        shell: pwsh
+        env:
+          PRODUCT: ${{ inputs.product }}
+        run: |
+          $solution = if ($env:PRODUCT -eq 'benchmark') { 'TarkovPerformanceBenchmark' } else { 'TarkovPerformanceToolkit' }
+          dotnet test "apps/tarkov-performance-$env:PRODUCT/$solution.sln" -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Application tests failed.' }
+      - name: Publish once and package both formats
+        id: build
+        shell: pwsh
+        env:
+          PRODUCT: ${{ inputs.product }}
+        run: ./build/build-store-artifacts.ps1 -Product $env:PRODUCT -OutputDirectory artifacts/release
+      - name: Upload release or PR-check bundle
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.build.outputs.artifact_name }}
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 90
+      - name: Record artifact identity
+        shell: pwsh
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_NAME: ${{ steps.build.outputs.artifact_name }}
+        run: |
+          "Release bundle: $env:ARTIFACT_NAME (ID $env:ARTIFACT_ID), source $env:GITHUB_SHA, attempt $env:GITHUB_RUN_ATTEMPT." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          Get-Content artifacts/release/release-manifest.json | Out-File $env:GITHUB_STEP_SUMMARY -Append

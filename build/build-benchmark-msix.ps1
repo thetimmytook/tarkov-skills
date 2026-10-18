@@ -4,7 +4,8 @@ param(
     [string] $PackageVersion,
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
-    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\msix')
+    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\msix'),
+    [string] $PublishedDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,16 +57,24 @@ New-Item -ItemType Directory -Path $publish -Force | Out-Null
 try {
     & (Join-Path $PSScriptRoot 'check-presentmon-dependency.ps1') -SkipUpstreamCheck
     $makeAppx = Find-MakeAppx
-    Invoke-Checked -FilePath 'dotnet' -ArgumentList @(
-        'publish', $project,
-        '-c', $Configuration,
-        '-r', 'win-x64',
-        '--self-contained', 'true',
-        '-p:DesktopAuthEnvironment=Production',
-        '-p:AcademyApiEnvironment=Production',
-        ('-p:Version=' + ($PackageVersion -replace '\.0$', '')),
-        '-o', $publish
-    )
+    if ($PublishedDirectory) {
+        if (-not (Test-Path -LiteralPath (Join-Path $PublishedDirectory 'TarkovPerformanceBenchmark.exe'))) {
+            throw 'Published Benchmark application is missing; packaging never falls back to publishing.'
+        }
+        Copy-Item -Path (Join-Path $PublishedDirectory '*') -Destination $publish -Recurse
+    }
+    else {
+        Invoke-Checked -FilePath 'dotnet' -ArgumentList @(
+            'publish', $project,
+            '-c', $Configuration,
+            '-r', 'win-x64',
+            '--self-contained', 'true',
+            '-p:DesktopAuthEnvironment=Production',
+            '-p:AcademyApiEnvironment=Production',
+            ('-p:Version=' + ($PackageVersion -replace '\.0$', '')),
+            '-o', $publish
+        )
+    }
 
     Get-ChildItem -LiteralPath $publish -File -Filter '*.pdb' | Remove-Item -Force
 

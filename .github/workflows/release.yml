@@ -5,11 +5,25 @@ on:
     branches:
       - main
     tags:
-      - "benchmark-v*.*.*"
-      - "toolkit-v*.*.*"
       - "skills-v*.*.*"
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Application whose flight-tested release artifacts will be released
+        required: true
+        type: choice
+        options: [benchmark, toolkit]
+      flight_run_id:
+        description: Exact successful flight run ID containing the original release bundle
+        required: true
+        type: string
+      flight_attempt:
+        description: Exact successful flight attempt
+        required: true
+        type: string
 
 permissions:
+  actions: read
   contents: write
 
 concurrency:
@@ -35,6 +49,7 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           REF_NAME: ${{ github.ref_name }}
           REF_TYPE: ${{ github.ref_type }}
+          PRODUCT: ${{ inputs.product }}
         run: |
           function Set-ReleasePlan {
             param(
@@ -46,6 +61,14 @@ jobs:
             "should_release=$($ShouldRelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
             "create_tag=$($CreateTag.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
             "release_tag=$ReleaseTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Application releases must be dispatched from main.' }
+            Import-Module ./build/StoreRelease.psm1 -Force
+            $release = Assert-StoreRelease -Product $env:PRODUCT -RepositoryRoot $env:GITHUB_WORKSPACE
+            Set-ReleasePlan -ShouldRelease $true -CreateTag $false -ReleaseTag $release.Tag
+            exit 0
           }
 
           if ($env:REF_TYPE -eq 'tag') {
@@ -117,10 +140,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 8.0.x
-
       - name: Require the release commit to be current main
         shell: pwsh
         run: |
@@ -145,11 +164,6 @@ jobs:
           $storeRelease = Assert-StoreRelease -Product $product -RepositoryRoot $env:GITHUB_WORKSPACE -ExpectedTag $tag
           "product=$product" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Verify bundled PresentMon
-        if: steps.release.outputs.product != 'skills'
-        shell: pwsh
-        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
-
       - name: Validate skills publication inputs
         if: steps.release.outputs.product == 'skills'
         shell: pwsh
@@ -158,29 +172,28 @@ jobs:
           ./build/sync-public-plugin.ps1 -Check
           ./build/test-skills-plugin.ps1 -ExpectedTag $env:RELEASE_TAG
 
-      - name: Test Benchmark
-        if: steps.release.outputs.product == 'benchmark'
-        run: dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release
-
-      - name: Test Toolkit
-        if: steps.release.outputs.product == 'toolkit'
-        run: dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
-
-      - name: Build unsigned Benchmark MSIX and portable ZIP
-        if: steps.release.outputs.product == 'benchmark'
+      - name: Require the existing application tag at the release commit
+        if: steps.release.outputs.product != 'skills'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist, artifacts/msix | Out-Null
-          ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
-          ./build/build-portable.ps1 -Product benchmark -OutputDirectory dist
+          $tagCommit = git rev-parse "refs/tags/$env:RELEASE_TAG^{commit}"
+          if ($LASTEXITCODE -ne 0 -or $tagCommit -ne $env:GITHUB_SHA) { throw 'The existing application release tag must point to current main. This workflow never creates or moves application tags.' }
 
-      - name: Build unsigned Toolkit MSIX and portable ZIP
-        if: steps.release.outputs.product == 'toolkit'
+      - name: Receive the original application release bundle
+        if: steps.release.outputs.product != 'skills'
+        uses: ./.github/actions/receive-store-artifact
+        with:
+          product: ${{ steps.release.outputs.product }}
+          kind: flight
+          run-id: ${{ inputs.flight_run_id }}
+          attempt: ${{ inputs.flight_attempt }}
+
+      - name: Copy unchanged application release assets
+        if: steps.release.outputs.product != 'skills'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist, artifacts/msix | Out-Null
-          ./build/build-toolkit-msix.ps1 -OutputDirectory artifacts/msix
-          ./build/build-portable.ps1 -Product toolkit -OutputDirectory dist
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item -Path store-package/* -Destination dist
 
       - name: Build skills archive
         if: steps.release.outputs.product == 'skills'
@@ -215,14 +228,14 @@ jobs:
             "{0} *{1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
           } | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding ascii
 
-      - name: Upload Store submission package
+      - name: Preserve original application release bundle
         if: steps.release.outputs.product != 'skills'
         uses: actions/upload-artifact@v7
         with:
-          name: store-submission-${{ steps.release.outputs.product }}
-          path: artifacts/msix/*.msix
+          name: github-release-${{ steps.release.outputs.product }}-${{ github.run_id }}-a${{ github.run_attempt }}
+          path: store-package
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
 
       - name: Create GitHub release
         shell: pwsh
@@ -237,6 +250,11 @@ jobs:
             "[Microsoft Store: Tarkov Performance Toolkit](https://apps.microsoft.com/detail/9N3L7DZH0K64)`n`nPortable builds are self-contained, not Microsoft Store-signed, do not auto-update, and do not register Store execution aliases."
           } else {
             'Skills-only release. The OpenAI ZIP is ready for manual portal submission. The Claude directory reads the clean plugin folder from GitHub and can receive approved updates through its configured webhook.'
+          }
+          if ($product -ne 'skills') {
+            $manifest = Get-Content dist/release-manifest.json -Raw | ConvertFrom-Json
+            $receipt = Get-Content dist/flight-receipt.json -Raw | ConvertFrom-Json
+            $notes += "`n`nOriginal build: $($manifest.source.runId), attempt $($manifest.source.attempt), commit $($manifest.source.sha). Flight: $($receipt.flight.runId), attempt $($receipt.flight.attempt). MSIX SHA-256: $($manifest.files.msix.sha256)."
           }
           $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object { $_.FullName })
           if ($env:CREATE_RELEASE_TAG -eq 'true') {

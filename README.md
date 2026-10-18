@@ -23,6 +23,8 @@ Current public Store versions:
 
 Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes the artifacts relevant to that tagged product. Skills releases include the agent-skills archive, the OpenAI submission ZIP, the clean Claude plugin ZIP, a complete source archive, and SHA-256 checksums. Application releases include the corresponding self-contained Windows x64 portable archive, Store package, source archive, and checksums. Extract a portable application archive and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.
 
+Application releases also include the original build provenance manifest. Main-push builds create each application's MSIX and portable ZIP once; manual Store flight, production promotion, and application GitHub Release workflows consume explicit run/attempt artifacts. See [the release pipeline](references/store-submission.md#one-build-explicit-promotion) for checks and operator inputs. Skills publication remains independent.
+
 Portable builds do not require the .NET runtime, but they are not signed by Microsoft Store and do not update automatically.
 
 ### Claude Code

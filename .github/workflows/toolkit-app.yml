@@ -3,29 +3,16 @@ name: Performance toolkit
 on:
   pull_request:
     paths:
-      - "apps/tarkov-performance-toolkit/**"
-      - "src/TarkovSkills.Core/**"
-      - "src/TarkovBenchmark.Feature/**"
-      - "build/build-toolkit-msix.ps1"
-      - "build/check-presentmon-dependency.ps1"
-      - "build/StoreRelease.psm1"
-      - "build/test-msix-package.ps1"
-      - "build/test-store-release.ps1"
-      - "apps/tarkov-performance-toolkit/packaging/store-release.json"
-      - ".github/workflows/toolkit-app.yml"
+      - 'apps/tarkov-performance-toolkit/**'
+      - 'apps/tarkov-performance-benchmark/src/TarkovPerformanceBenchmark/third_party/**'
+      - 'src/**'
+      - 'config/**'
+      - 'build/**'
+      - '.github/actions/receive-store-artifact/**'
+      - '.github/workflows/toolkit-app.yml'
+      - '.github/workflows/store-build.yml'
   push:
     branches: [main]
-    paths:
-      - "apps/tarkov-performance-toolkit/**"
-      - "src/TarkovSkills.Core/**"
-      - "src/TarkovBenchmark.Feature/**"
-      - "build/build-toolkit-msix.ps1"
-      - "build/check-presentmon-dependency.ps1"
-      - "build/StoreRelease.psm1"
-      - "build/test-msix-package.ps1"
-      - "build/test-store-release.ps1"
-      - "apps/tarkov-performance-toolkit/packaging/store-release.json"
-      - ".github/workflows/toolkit-app.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,24 +20,6 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 8.0.x
-      - name: Verify bundled PresentMon
-        shell: pwsh
-        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
-      - name: Test
-        run: dotnet test apps/tarkov-performance-toolkit/TarkovPerformanceToolkit.sln -c Release
-      - name: Build Store MSIX
-        shell: pwsh
-        run: ./build/build-toolkit-msix.ps1 -OutputDirectory artifacts/toolkit-msix
-      - uses: actions/upload-artifact@v7
-        with:
-          name: tarkov-performance-toolkit-msix
-          path: artifacts/toolkit-msix/*.msix
-          if-no-files-found: error
-          retention-days: 7
+    uses: ./.github/workflows/store-build.yml
+    with:
+      product: toolkit
