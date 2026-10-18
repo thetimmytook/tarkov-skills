@@ -313,4 +313,10 @@ Creating a Microsoft Entra tenant does not associate it with the Windows develop
 
 Create both GitHub Environments with required reviewers. Store these secrets separately in each Environment: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. Store `BENCHMARK_STORE_FLIGHT_ID` and `TOOLKIT_STORE_FLIGHT_ID` as variables on `microsoft-store-flight`. The personal Store test account is unrelated to these CI credentials: add its Microsoft-account email to a known-user group and attach that group to one package flight per product.
 
+Both promotion callers explicitly pass those four secret names to `store-submit.yml`,
+which declares them required. GitHub resolves their values from the protected
+Environment on the submit job after approval; keep them there rather than adding
+repository-level copies. Omitting a mapping fails workflow validation. A missing or
+blank value fails before invoking the Store CLI and reports only the missing names.
+
 Before approving a flight submission, the Academy owner must confirm that `https://timmy.academy/api/bench/v1` implements the deployed desktop contracts: Clerk authorization/token/revocation, authenticated `GET /me/runs/by-client-id/{clientRunId}`, authenticated `POST /me/runs`, anonymous grouped run browsing, and cohort comparison. Local API evidence does not satisfy this gate. Never put Clerk tokens, Partner Center secrets, the personal test email, or API response bodies in workflow configuration or logs.

@@ -65,6 +65,11 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
     uses: ./.github/workflows/store-submit.yml
+    secrets:
+      AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+      AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+      AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+      SELLER_ID: ${{ secrets.SELLER_ID }}
     with:
       product: ${{ matrix.product }}
       stage: flight
