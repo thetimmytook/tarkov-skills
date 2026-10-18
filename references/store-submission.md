@@ -285,14 +285,24 @@ an external submission, so inspect Partner Center before rerunning a submission.
 When `both` is selected, each product must have its own submitted artifact in the
 chosen successful flight attempt. Never mix attempts implicitly.
 
-Do not merge this pipeline migration until the in-progress legacy flight
-`37982351957` at `d71d5c5bd333b8f71979c4818320de05deb0fab4` (Benchmark `1.0.6.0`,
-Toolkit `1.0.3.0`) has completed its existing production promotion. Its artifacts
-lack the new manifest/receipt contract and intentionally are not accepted by the
-new validator. Keep its commit, candidate versions, and old workflows intact until
-that release finishes. This migration does not bump those versions or start another
-flight. After the migration, changed binaries for an already accepted version still
-require a deliberate higher candidate version before any new flight submission.
+The next rollout uses Benchmark and Toolkit `1.1.0.0` from main containing PR #39.
+Merge this pipeline migration before starting that flight. Preserve those candidate
+versions and the recorded public baselines; the pipeline change does not require
+another version bump or publish an application.
+
+The legacy telemetry flight `37982351957` (Benchmark `1.0.6.0`, Toolkit `1.0.3.0`)
+lacks the new manifest/receipt contract and is not a source for this rollout. The
+premature legacy workflow run `39156304088` for `1.1.0.0` was cancelled while building,
+before either Store submission started. Do not rerun it or use its outputs. After
+merging this migration, select the new main-push build run/attempt for each product
+and submit those explicit bundles through the new flight workflow.
+
+Keep main unchanged from the selected build through flight testing, production
+promotion and application GitHub Release: every consumer rechecks current main,
+including after Environment approval. A later merge invalidates an older source
+even if it changes only documentation. If a candidate has already been accepted
+into a Store flight, changed binaries still require a deliberate higher version;
+never rebuild and reuse an accepted package version as a recovery shortcut.
 
 Local automated checks: `node --test build/tests/release-artifacts.test.mjs` exercises
 validators with injected GitHub responses and byte-preserving stage transfers;
