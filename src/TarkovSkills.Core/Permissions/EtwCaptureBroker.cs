@@ -73,7 +73,7 @@ internal sealed class EtwCaptureConnection(Stream pipe) : IEtwCaptureConnection
                 }
             }
         }
-        catch (Exception error) when ((error is IOException or JsonException or InvalidDataException) && !collectorFailure || deadline.IsCancellationRequested)
+        catch (Exception error) when ((error is IOException or JsonException or InvalidDataException or ObjectDisposedException) && !collectorFailure || deadline.IsCancellationRequested)
         {
             Dispose();
             cancellation.ThrowIfCancellationRequested();

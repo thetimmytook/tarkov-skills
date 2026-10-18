@@ -7,6 +7,29 @@ namespace TarkovSkills.Core.Tests;
 
 public sealed class EtwCaptureBrokerTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DisposedHostPipeReturnsSanitizedDisconnectOrCancellation(bool cancelled)
+    {
+        using var stream = new ClosingStream();
+        using var connection = new EtwCaptureConnection(stream);
+        using var cancellation = new CancellationTokenSource();
+        var capture = connection.CaptureAsync(120, () => { }, null, cancellation.Token);
+        await stream.Reading.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        if (cancelled) cancellation.Cancel();
+        connection.Dispose();
+        if (cancelled)
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => capture.WaitAsync(TimeSpan.FromSeconds(5)));
+        else
+        {
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => capture.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Contains("disconnected", error.Message);
+            Assert.DoesNotContain("private-pipe", error.Message);
+        }
+        Assert.False(connection.IsConnected);
+    }
+
     [Fact]
     public async Task OneAuthenticatedConnectionSupportsRepeatedCapturesAndExactWindowAlignment()
     {
@@ -144,6 +167,27 @@ public sealed class EtwCaptureBrokerTests
     }
 
     private static FrameCapture Frames() => new(new(7200, 120, 60, 50, 40, 16.667, 20, 25), new([new(100, 220)]));
+
+    private sealed class ClosingStream : Stream
+    {
+        internal TaskCompletionSource Reading { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<int> _read = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellation = default)
+        { Reading.TrySetResult(); return new(_read.Task); }
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellation = default) => ValueTask.CompletedTask;
+        protected override void Dispose(bool disposing)
+        { if (disposing) _read.TrySetException(new ObjectDisposedException("private-pipe")); base.Dispose(disposing); }
+        public override bool CanRead => true;
+        public override bool CanWrite => true;
+        public override bool CanSeek => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+    }
 
     private sealed class Pipes(NamedPipeServerStream server, NamedPipeClientStream client) : IDisposable
     {

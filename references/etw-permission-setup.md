@@ -31,8 +31,8 @@ submission, tags, production promotion and backend deployment remain separate
 actions. The local unsigned packages are review artifacts; CI builds and signed
 flight validation follow the source review.
 
-Local preparation passed 547 ordinary Release Core tests, 26 Release Benchmark
-tests and 116 isolated Debug UI regressions. Both `1.1.0.0` MSIX packages passed
+Local preparation after review passed 549 ordinary Release Core tests, 26 Release
+Benchmark tests and 119 isolated Debug UI regressions. Both `1.1.0.0` MSIX packages passed
 MakeAppx and package-content checks, with production configuration, matching host
 assembly/manifest versions and verified pinned PresentMon. Their Core and Feature
 hashes are identical across products. Inspection of the actual packaged DLLs
@@ -40,12 +40,24 @@ confirmed ordinary data paths, no diagnostic label/probe, hidden probe UI, and
 FPS-only QPC capture flags for 120/240 seconds. No package was installed and no
 UAC or group change was performed during these checks.
 
-Local candidates: `C:\projects\Tarkov-Release-Candidate-1.1.0-20261018`, with
+Local candidates: `C:\projects\Tarkov-Release-Candidate-1.1.0-20261018-review`, with
 `candidates.json` provenance and `SHA256SUMS.txt`. Toolkit MSIX SHA-256:
-`D43D1409AB93EB7133B93DB547DD3652BB96454C0C479873583AC4520458FFF6`.
+`40E861CB9866BAA9855AE1F7461C48E908600390198859B57D1EBA4A351CD5CA`.
 Benchmark MSIX SHA-256:
-`06536C5094247CD502A0CD7D97EC74064BA46A631BC61A1923A32C4FF7EB3DD0`.
-These are review artifacts from uncommitted source, not an immutable CI release.
+`0484B9CD47AABEC1DE377EF73D7F39D3E60DE43B427E6701B043B4EB7F681F46`.
+These supersede the preserved pre-review packages in the directory without the
+`-review` suffix. They are review artifacts from uncommitted source, not an
+immutable CI release.
+
+The PR review reproduced three failures before fixing them: Settings navigation
+emitted a premature `cancelled` command result; an output/checkpoint failure after
+a successful save escaped into the save-failure path and could emit a replacement
+terminal result; disposing an in-flight helper pipe could escape as an unexpected
+error instead of cancellation. Command cancellation now follows the owning window
+closing, terminal output is attempted only once per collection, and output failure
+leaves a saved run intact with local support visible. A disposed pipe maps to the
+caller cancellation or a fixed disconnect message. The new regressions cover
+navigation, successful/failed command output, closing and both pipe outcomes.
 
 ## PresentMon FPS tracking isolation — 2026-10-18
 

@@ -56,7 +56,7 @@ public partial class BenchmarkView : UserControl
         _owner = Window.GetWindow(this);
         if (!_ownerAttached && _owner is not null)
         {
-            _owner.Closed += (_, _) => { _captureCancellation?.Cancel(); CaptureAccess.Dispose(); };
+            _owner.Closed += OnOwnerClosed;
             _ownerAttached = true;
         }
         RefreshDependency();
@@ -69,7 +69,13 @@ public partial class BenchmarkView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _captureCancellation?.Cancel();
-        if (_options.SourceSkill && !_completedCommand)
+    }
+
+    private void OnOwnerClosed(object? sender, EventArgs e)
+    {
+        _captureCancellation?.Cancel();
+        CaptureAccess.Dispose();
+        if (_options.SourceSkill)
             WriteTerminalResult("cancelled", "The benchmark window was closed.");
     }
 
@@ -152,9 +158,9 @@ public partial class BenchmarkView : UserControl
             LoadLatestResult();
             SetStatus("Benchmark saved locally. No data was uploaded.", false);
             StatusDetailText.Text = $"{map} · {metrics.SampleCount:N0} frames · {run.Warnings.Count} warning(s)";
-            WriteResult(new CommandResult("completed", run.RunId, map, metrics.AverageFps, metrics.OnePercentLowFps, metrics.ZeroPointOnePercentLowFps, metrics.P95FrametimeMs, true, false)
+            var summaryWritten = WriteResult(new CommandResult("completed", run.RunId, map, metrics.AverageFps, metrics.OnePercentLowFps, metrics.ZeroPointOnePercentLowFps, metrics.P95FrametimeMs, true, false)
             { ResourceTelemetry = run.ResourceTelemetry });
-            if (_options.SourceSkill) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
+            if (_options.SourceSkill && summaryWritten) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
         }
         catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; OfferFailure(operation, ex); WriteTerminalResult("discarded", ex.Message); }
         catch (OperationCanceledException) { SetStatus("Collection canceled. Partial data was discarded.", true); WriteTerminalResult("cancelled", "Collection canceled by the user."); }
@@ -240,7 +246,23 @@ public partial class BenchmarkView : UserControl
     private void ShowCollectionUnavailable(string message) { SetStatus("Collection could not start.", true); StatusDetailText.Text = message; MessageBox.Show(_owner, message, "Collection unavailable", MessageBoxButton.OK, MessageBoxImage.Warning); }
     private void DisplayMetrics(PerformanceMetrics metrics) { AverageFpsText.Text = metrics.AverageFps.ToString("0.0"); OneLowText.Text = metrics.OnePercentLowFps.ToString("0.0"); PointOneLowText.Text = metrics.ZeroPointOnePercentLowFps.ToString("0.0"); P95Text.Text = $"{metrics.P95FrametimeMs:0.0} ms"; }
     private void UpdateRunCount(int count) { LatestResultTitle.Text = count switch { 0 => "LATEST RESULT · NO RUNS", 1 => "LATEST RESULT · 1 RUN", _ => $"LATEST RESULT · {count} RUNS" }; }
-    private void WriteResult(CommandResult result) { _options.ResultWriter?.Invoke(result); _completedCommand = true; }
+    private bool WriteResult(CommandResult result)
+    {
+        if (_completedCommand) return false;
+        // The writer may emit stdout before its local checkpoint fails. Never emit
+        // a replacement terminal record or treat that as a failed benchmark save.
+        _completedCommand = true;
+        try { _options.ResultWriter?.Invoke(result); return true; }
+        catch (Exception error)
+        {
+            SetStatus(result.SavedLocally
+                ? "Benchmark saved locally. The command summary could not be written."
+                : "The command summary could not be written.", true);
+            StatusDetailText.Text = "See the local support report. No data was uploaded.";
+            OfferFailure(SupportOperation.Save, error);
+            return false;
+        }
+    }
     private void WriteTerminalResult(string status, string message) { if (_completedCommand) return; WriteResult(new CommandResult(status, Message: message)); }
     private static bool HasExited(Process process) { try { return process.HasExited; } catch { return true; } }
 }
