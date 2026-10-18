@@ -296,6 +296,116 @@ PresentMon is an external MIT-licensed dependency bundled inside the MSIX. Pin i
 
 Attempt ETW capture without elevation first. If Windows denies access, the future Store package may offer a one-time elevated setup that adds the user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
 
+### ETW Permission Recovery: Accepted Implementation Plan (2026-10-17)
+
+A clean Windows 11 manual check with the pinned PresentMon and Terraria returned
+`failed to start trace session: access denied` without elevation. An elevated retry
+reported recording start and stop. A subsequent ordinary-user capture after manual
+account-specific setup succeeded: 1,787 positive frame intervals total 29.92 seconds
+in the supplied Terraria CSV, without access denied in its console log. This predates
+diagnostic build `.4` and does not validate its setup UI/helper or Store launch.
+A subsequent Windows 11 portable `.4` test confirmed revocation followed by access
+denied after a new sign-in, then setup through Toolkit followed by a successful
+ordinary-user capture after another sign-in. The supplied success CSV contains
+1,794 positive frame intervals totaling 29.95 seconds; both console logs match the
+reported deny/success sequence. Store activation and different-administrator UAC
+credentials still require their own checks. The developer's existing Windows
+account already has effective access through INTERACTIVE membership in Performance
+Log Users, so that machine cannot establish clean-account readiness.
+
+- Keep the normal application and capture at medium integrity. Both hosts expose
+  one permission recovery dialog from the shared Feature project, using Core APIs.
+- Explain that this changes a persistent Windows account permission, used by other
+  applications too, and that uninstall does not remove membership. Require an
+  explicit action before the Windows UAC prompt. Provide an explicit removal action.
+- Add only the original requesting account to the built-in Performance Log Users
+  group, resolving the group by SID for localized Windows. Preserve existing members;
+  never add INTERACTIVE, Everyone or another broad group. A different administrator
+  supplying UAC credentials must not become the target account.
+- Use a short C# helper mode before normal host startup, mutex/history/authentication
+  initialization. Authenticate the requesting process through a local restricted
+  named pipe. The normal host sets the pipe's kernel-controlled owner from its token
+  user; the helper accepts only a user owner and verifies the server executable.
+  The host authenticates the elevated helper using identification-level pipe
+  impersonation, without opening another account's process token. Do not accept a
+  target account or group from command-line text. The helper performs only the
+  chosen fixed group operation.
+- Require sign-out/sign-in after a membership change. Distinguish current-token
+  access, direct membership awaiting a new sign-in, UAC cancellation and setup errors.
+  Only a real subsequent capture establishes that ETW access works.
+- Keep CLI failures as sanitized `permission_required`; never open a UAC prompt or
+  an interactive setup window from headless capture. No new benchmark/API fields,
+  uploads, executable scripts, services or drivers are introduced.
+- Investigate explicit Windows Shell activation (`shell:AppsFolder` and `runas`),
+  as used in Microsoft's Windows Terminal elevation shim, for packaged hosts.
+  Unpackaged hosts use their own executable. This is not evidence of Store acceptance
+  or of successful execution in our signed packages. Do not add `allowElevation`,
+  submit packages or contact Microsoft without the separately agreed Store path.
+- Cover account selection, localized group resolution, idempotent operations,
+  cancellation, rejected helper requests, sanitized outcomes and both host entry
+  points with automated tests. Native UAC and changed-token behavior require manual
+  clean-account checks on Windows 10/11 and the signed closed flight.
+
+The separate intermittent AMD/Tarkov incomplete-frametime issue was subsequently
+reproduced directly in pinned PresentMon on 2026-10-18. The accepted FPS-only
+invocation disables GPU/display tracking while keeping adapter telemetry separate;
+the integrated portable RX 9070 capture then completed with its ADLX summary.
+See [the diagnostic evidence and signed-flight gates](etw-permission-setup.md).
+
+### Immediate First Capture and Settings: Accepted Revision (2026-10-17)
+
+The user approved removing mandatory Windows sign-out/sign-in from first capture.
+Move permission inspection and explicit revocation into Settings in both hosts.
+Ordinary capture remains the first attempt. On ETW denial the GUI explains the
+persistent account change and temporary collector, requests explicit UAC consent,
+then restarts capture preparation with an authenticated elevated helper. This
+helper runs only pinned PresentMon and capture cleanup; settings, raid context,
+resource sampling, local history, authentication and uploads remain in the normal
+host. UAC waiting must precede the new FPS/resource window.
+
+Keep the helper available until application closure so later captures in the same
+application session reuse it. Closing/crashing the host must stop the helper and
+its capture; Cancel, game exit and raid exit must still discard incomplete data.
+No service, scheduled task or automatic startup is introduced. After the next
+ordinary Windows sign-in, the account permission is effective without the helper.
+Repeated elevation after reopening before that sign-in is explicitly acceptable.
+Revocation stops this application's temporary collector before removing direct
+membership; other existing group access is preserved. CLI never opens UAC.
+Store activation and integrated AMD captures remain separate release gates.
+
+### Settings Composition: Accepted UI Revision (2026-10-17)
+
+Use one shared Settings view with explicitly selected sections. Toolkit shows
+Access and Goal; standalone Benchmark shows Access only and does not instantiate
+Goal. Move Toolkit's existing goal editor into this view and remove its separate
+Goal tab. Render access controls directly in Settings, without a Manage modal or
+intermediate button. Keep revocation permanently visible, with confirmation and
+clear direct-membership scope. Use consistent spacing/wrapping between all access
+actions. The short ETW test remains diagnostic-only and is hidden in Store builds.
+
+Keep the Settings overview concise: show a short access status and management
+actions, with explanations under a collapsed-by-default "How capture access works"
+section using the same disclosure style as resource telemetry. Revocation controls
+stay outside that section and remain visible. Explicit setup/removal confirmations
+continue to explain account-wide effects before administrator approval.
+
+### Local Failure Diagnostics And GitHub Support: Accepted (2026-10-18)
+
+Keep sanitized capture logging in ordinary builds independently of the optional
+three-second permission experiment. On capture/save errors and insufficient valid
+frame duration, save a short report and a local ZIP, copy the report, and offer an
+explicit GitHub issue action plus access to the archive. Revalidate recent log
+contents before export; exclude benchmark history, settings, raw CSV, account data,
+arbitrary files, paths and identifiers. Opening an issue never uploads the archive;
+the user reviews and attaches it manually. Explain that GitHub issues are public.
+Expected cancellation and game/raid exit keep their existing discard behavior.
+
+Bound retention to 20 capture logs and 10 support ZIPs/text reports, with temporary
+local storage as a best-effort fallback. Share support UI and unhandled GUI failure
+handling between hosts. Terminate after an unknown UI error instead of continuing
+in an uncertain state; record fatal managed failures for an offer on the next launch
+when possible. Elevated collectors remain outside the application-report writer.
+
 ## Future Result Comparison
 
 A completed benchmark must eventually explain what the run means, not only display isolated FPS numbers. The agreed design for the Benchmark screen, public search, submission, and backend contract is in [community-benchmark-design.md](community-benchmark-design.md). Its two lower tabs are **Diff** (local comparison with previous runs) and **Position** (consented comparison with community runs). The temporary Google Form is collection-only and is not a runtime data source for the application.
