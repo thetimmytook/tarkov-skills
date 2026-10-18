@@ -164,11 +164,119 @@ recorded public baseline until public publication is confirmed separately.
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 
-The tag workflow refuses a tag that does not match its version file or does not point to the current `main` commit. It tests only the tagged product, verifies PresentMon, builds and inspects an unsigned MSIX, creates the matching portable ZIP and GitHub Release, and publishes SHA-256 checksums. A tag never submits a package to Microsoft Store.
+### One build, explicit promotion
 
-`Microsoft Store flight` is a manual workflow with a `benchmark`, `toolkit`, or `both` choice. It requires an explicit production-API readiness confirmation, runs the applicable Release tests, verifies PresentMon, builds with the versioned Production `desktop-auth.json` and `academy-api.json`, creates the unsigned MSIX with MakeAppx, and inspects the package before any Store credential is available. Its submission jobs use the protected `microsoft-store-flight` Environment and send each validated package only to its configured private package flight. Store mutations are serialized per product. The workflow reads status once after submission and does not poll certification.
+Every push to `main` runs `Benchmark app` and `Performance toolkit`, each calling
+`store-build.yml`. Each product's executable is published once with Production
+auth/API configuration (Toolkit has two executables). `build-store-artifacts.ps1`
+passes the same publish directory to the MSIX and portable packagers. MakeAppx
+semantic validation, release-version checks, application tests, PresentMon checksum
+verification, and unsigned package-content inspection run in this build. No later
+stage runs `dotnet publish`, MakeAppx packing, or portable compression.
 
-`Microsoft Store production promotion` is a separate manual workflow. It requires the successful flight workflow run ID and an explicit public-release confirmation. Both runs must be dispatched from `main`; the workflow refuses a source run from another workflow, a failed run, or a different commit. It downloads the immutable flight artifact, repeats package inspection, and stages the same bytes for an approval-protected `microsoft-store-production` job. Production promotion does not rebuild the MSIX and does not use a flight ID.
+The build uploads one `release-<product>-<run ID>-a<attempt>` bundle containing:
+
+- the unsigned x64 MSIX;
+- the self-contained Windows x64 portable ZIP;
+- `release-manifest.json` with schema version, product, package version, repository,
+  source SHA, workflow path, event, branch, build run ID/attempt, artifact name,
+  filenames, byte sizes and SHA-256 for both files.
+
+The artifact ID is returned by GitHub after upload and recorded in the job summary.
+The manifest uses the immutable artifact name because its own upload ID does not
+exist when the manifest is created. Downstream stages resolve that exact name to
+one ID through the API and download by ID. All pipeline bundles are retained for
+90 days; repository/organization retention settings must permit at least 90 days.
+PR and manually dispatched diagnostic builds use `check-...` names and set
+`eligible: false`; they cannot be Store or application-release sources.
+
+### Closed preflight
+
+Dispatch `Microsoft Store flight` on `main`, select `benchmark`, `toolkit`, or
+`both`, and supply each selected product's `*_build_run_id` and
+`*_build_attempt`. These are separate product workflows, so `both` requires two
+explicit build sources. Confirm production API readiness as before.
+
+The shared validator requires a completed successful **selected attempt**, the
+registered product workflow ID and path, a `push` event from this repository
+(forks are rejected), `main`, and a source SHA equal to both the dispatch SHA and
+current remote `main`. It validates the artifact's repository/run/commit metadata,
+manifest identity/version/origin and both file checksums. It also repeats PresentMon,
+Production configuration, release-version and MSIX-content checks. Missing, deleted,
+expired, ambiguous or mismatched artifacts fail with an error; no rebuild fallback
+or implicit search for latest is permitted.
+
+`store-submit.yml` validates before any Store credentials are available, then
+repeats download and validation after approval in `microsoft-store-flight`. Store
+mutations remain serialized per product. It sends only the existing MSIX to the
+configured private flight. **After a successful publisher command**, it creates
+`flight-receipt.json` and uploads `store-flight-<product>-<flight run ID>-a<attempt>`
+with the unchanged build bundle. The receipt records the original build artifact
+ID/name and run/attempt, source commit/version/product, manifest and MSIX checksums,
+and the submitting flight workflow/run/attempt/artifact name. A staged package
+without a successful submission receipt is not a production source. Status is read
+once; certification is not polled. A successful workflow means submission succeeded;
+Microsoft certification and signed-package manual testing must still complete.
+
+### Production and GitHub Releases
+
+After certification and the applicable signed-package checks, dispatch
+`Microsoft Store production promotion` on `main` with `flight_run_id`,
+`flight_attempt`, selected product(s), and the explicit public-release confirmation.
+The validator requires a successful manual flight attempt from the registered
+`store-flight.yml` workflow at the **same current main commit**. It downloads its
+submitted bundle, verifies the receipt and checks the original build attempt and
+artifact ID again. Both original build and flight artifacts must still be available.
+The protected `microsoft-store-production` job repeats validation after approval
+and sends the identical MSIX bytes without a flight ID. Only metadata sidecars and
+GitHub artifact transport containers are created; the MSIX is never repacked.
+
+For an application GitHub Release, first arrange the existing approved
+`benchmark-vX.Y.Z` or `toolkit-vX.Y.Z` tag at current `main` through the normal
+manual tagging process, then dispatch `Product release` from `main` with the product,
+`flight_run_id` and `flight_attempt`. The tag and version file must match. This workflow
+downloads and validates that submitted flight bundle and its original build, attaches
+the unchanged MSIX, ZIP, manifest and flight receipt, creates a source archive, and
+writes `SHA256SUMS.txt`. App tag pushes
+alone no longer build or publish. The workflow never creates or moves application
+tags and never submits to Store. The receipt binds the release to the tested build,
+including its attempt; no source is inferred from a tag or latest run.
+Portable builds remain unsigned by Microsoft Store, do not auto-update, and do not
+register Store execution aliases.
+
+Skills publication stays independent: a plugin version change on `main` still
+validates and publishes all four skills together with the immutable `skills-v<version>`
+tag. Existing skills-tag handling and the skills/source archives are unchanged and
+do not depend on any Store build or flight.
+
+### Attempts and transition
+
+Always record both run ID and attempt. Artifact names include the attempt, so a
+rerun cannot overwrite an earlier bundle. The API checks the specified historical
+attempt, not the latest attempt's status. An explicitly selected earlier successful
+attempt remains eligible if its artifacts and commit still pass every check. A
+failed-jobs-only rerun that reuses an earlier build/validation job does not create
+new build artifacts: selecting its newer attempt fails rather than silently using
+old output. To create a new complete build set, rerun all build jobs deliberately.
+A rerun of the protected submission job downloads the explicit original source
+again and writes a new receipt/artifact for the submitting attempt; it can repeat
+an external submission, so inspect Partner Center before rerunning a submission.
+When `both` is selected, each product must have its own submitted artifact in the
+chosen successful flight attempt. Never mix attempts implicitly.
+
+Do not merge this pipeline migration until the in-progress legacy flight
+`37982351957` at `d71d5c5bd333b8f71979c4818320de05deb0fab4` (Benchmark `1.0.6.0`,
+Toolkit `1.0.3.0`) has completed its existing production promotion. Its artifacts
+lack the new manifest/receipt contract and intentionally are not accepted by the
+new validator. Keep its commit, candidate versions, and old workflows intact until
+that release finishes. This migration does not bump those versions or start another
+flight. After the migration, changed binaries for an already accepted version still
+require a deliberate higher candidate version before any new flight submission.
+
+Local automated checks: `node --test build/tests/release-artifacts.test.mjs` exercises
+validators with injected GitHub responses and byte-preserving stage transfers;
+`build/test-store-artifact-formats.ps1` compares the actual MSIX/ZIP payloads. CI also
+parses all PowerShell and checks workflow syntax with pinned actionlint `v1.7.7`.
 
 Creating a Microsoft Entra tenant does not associate it with the Windows developer account. After creation, return to Partner Center **Account settings > Tenants > Developer**, select **Associate Microsoft Entra ID**, sign in with that tenant's Global Administrator, and confirm that the tenant appears under **Current tenant associations**. Only then does **User management > Microsoft Entra applications** become available. Add the CI app registration there and grant only the `Manager (Windows)` role required by Microsoft Store Developer CLI. Record the tenant ID, application client ID, one-time client-secret value, and the Seller ID from **Legal info > Developer > Publisher IDs**; do not confuse Seller ID with Windows publisher ID.
 

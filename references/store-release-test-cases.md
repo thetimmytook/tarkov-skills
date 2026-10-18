@@ -10,6 +10,7 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 - Escape from Tarkov is available for the real-raid capture cases.
 - Record the initial run count shown by the application and, when available, the number of entries in the package-local `benchmark.json` opened through `Open folder`.
 - The Academy production owner has confirmed the deployed desktop-auth, owner lookup, submission, public browsing, and cohort-comparison contracts before the flight submission is approved.
+- Record the original build run ID/attempt and artifact ID, flight run ID/attempt and submitted MSIX SHA-256 from `release-manifest.json` / `flight-receipt.json`. Before production approval, confirm the validator reports the same source commit, version and MSIX checksum. This compares the original unsigned submission bytes; Microsoft signing changes the delivered Store package.
 
 ## Store Installation And Launch
 

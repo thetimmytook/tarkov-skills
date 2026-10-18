@@ -2,7 +2,8 @@
 param(
     [ValidatePattern('^[1-9][0-9]{0,4}\.[0-9]{1,5}\.[0-9]{1,5}\.0$')] [string] $PackageVersion,
     [ValidateSet('Debug', 'Release')] [string] $Configuration = 'Release',
-    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\toolkit-msix')
+    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\toolkit-msix'),
+    [string] $PublishedDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,8 +41,18 @@ New-Item -ItemType Directory -Path $resolvedOutput,$layout -Force | Out-Null
 try {
     & (Join-Path $PSScriptRoot 'check-presentmon-dependency.ps1') -SkipUpstreamCheck
     $makeAppx = Find-MakeAppx
-    foreach ($project in @($guiProject, $cliProject)) {
-        Invoke-Checked 'dotnet' @('publish', $project, '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:DesktopAuthEnvironment=Production', '-p:AcademyApiEnvironment=Production', ('-p:Version=' + ($PackageVersion -replace '\.0$', '')), '-o', $layout)
+    if ($PublishedDirectory) {
+        foreach ($executable in 'TarkovPerformanceToolkit.exe', 'TarkovSkills.exe') {
+            if (-not (Test-Path -LiteralPath (Join-Path $PublishedDirectory $executable))) {
+                throw "Published Toolkit application is missing $executable; packaging never falls back to publishing."
+            }
+        }
+        Copy-Item -Path (Join-Path $PublishedDirectory '*') -Destination $layout -Recurse
+    }
+    else {
+        foreach ($project in @($guiProject, $cliProject)) {
+            Invoke-Checked 'dotnet' @('publish', $project, '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:DesktopAuthEnvironment=Production', '-p:AcademyApiEnvironment=Production', ('-p:Version=' + ($PackageVersion -replace '\.0$', '')), '-o', $layout)
+        }
     }
     Get-ChildItem $layout -Filter '*.pdb' -File | Remove-Item -Force
     Copy-Item $assets (Join-Path $layout 'Assets') -Recurse

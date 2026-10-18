@@ -3,30 +3,15 @@ name: Benchmark app
 on:
   pull_request:
     paths:
-      - "apps/tarkov-performance-benchmark/**"
-      - "src/TarkovSkills.Core/**"
-      - "src/TarkovBenchmark.Feature/**"
-      - "build/check-presentmon-dependency.ps1"
-      - "build/build-benchmark-msix.ps1"
-      - "build/StoreRelease.psm1"
-      - "build/test-msix-package.ps1"
-      - "build/test-store-release.ps1"
-      - "apps/tarkov-performance-benchmark/packaging/store-release.json"
-      - ".github/workflows/benchmark-app.yml"
+      - 'apps/tarkov-performance-benchmark/**'
+      - 'src/**'
+      - 'config/**'
+      - 'build/**'
+      - '.github/actions/receive-store-artifact/**'
+      - '.github/workflows/benchmark-app.yml'
+      - '.github/workflows/store-build.yml'
   push:
-    branches:
-      - main
-    paths:
-      - "apps/tarkov-performance-benchmark/**"
-      - "src/TarkovSkills.Core/**"
-      - "src/TarkovBenchmark.Feature/**"
-      - "build/check-presentmon-dependency.ps1"
-      - "build/build-benchmark-msix.ps1"
-      - "build/StoreRelease.psm1"
-      - "build/test-msix-package.ps1"
-      - "build/test-store-release.ps1"
-      - "apps/tarkov-performance-benchmark/packaging/store-release.json"
-      - ".github/workflows/benchmark-app.yml"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -34,47 +19,6 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up .NET 8
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Verify bundled PresentMon
-        shell: pwsh
-        run: ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
-
-      - name: Restore
-        run: dotnet restore apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln
-
-      - name: Test
-        run: dotnet test apps/tarkov-performance-benchmark/TarkovPerformanceBenchmark.sln -c Release --no-restore
-
-      - name: Publish self-contained app
-        run: dotnet publish apps/tarkov-performance-benchmark/src/TarkovPerformanceBenchmark/TarkovPerformanceBenchmark.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts/win-x64
-
-      - name: Build Store MSIX
-        shell: pwsh
-        run: ./build/build-benchmark-msix.ps1 -OutputDirectory artifacts/msix
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: tarkov-performance-benchmark-win-x64
-          path: artifacts/win-x64
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload Store MSIX
-        uses: actions/upload-artifact@v7
-        with:
-          name: tarkov-performance-benchmark-msix
-          path: artifacts/msix/*.msix
-          if-no-files-found: error
-          retention-days: 7
+    uses: ./.github/workflows/store-build.yml
+    with:
+      product: benchmark

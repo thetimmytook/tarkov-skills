@@ -33,6 +33,18 @@ jobs:
         shell: pwsh
         run: ./build/test-store-release.ps1
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Test release provenance and byte preservation
+        run: node --test build/tests/release-artifacts.test.mjs
+
+      - name: Validate GitHub workflow syntax
+        shell: bash
+        run: |
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= -pyflakes=
+
       - name: PowerShell syntax check
         shell: pwsh
         run: |
