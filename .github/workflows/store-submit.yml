@@ -15,6 +15,15 @@ on:
       attempt:
         required: true
         type: string
+    secrets:
+      AZURE_AD_TENANT_ID:
+        required: true
+      AZURE_AD_APPLICATION_CLIENT_ID:
+        required: true
+      AZURE_AD_APPLICATION_SECRET:
+        required: true
+      SELLER_ID:
+        required: true
 
 permissions:
   actions: read
@@ -76,6 +85,9 @@ jobs:
           PACKAGE_PATH: ${{ steps.package.outputs.package-path }}
           EXPECTED_SHA256: ${{ steps.package.outputs.msix-sha256 }}
         run: |
+          $requiredCredentials = @('AZURE_AD_TENANT_ID', 'AZURE_AD_APPLICATION_CLIENT_ID', 'AZURE_AD_APPLICATION_SECRET', 'SELLER_ID')
+          $missingCredentials = @($requiredCredentials | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) })
+          if ($missingCredentials.Count) { throw "Missing Microsoft Store secrets in the protected Environment: $($missingCredentials -join ', '). Check the caller's secret mappings and Environment configuration." }
           $appId = if ($env:PRODUCT -eq 'benchmark') { '9PJMPQ06JL21' } else { '9N3L7DZH0K64' }
           $flightId = if ($env:PRODUCT -eq 'benchmark') { $env:BENCHMARK_FLIGHT_ID } else { $env:TOOLKIT_FLIGHT_ID }
           if ((Get-FileHash -LiteralPath $env:PACKAGE_PATH -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:EXPECTED_SHA256) { throw 'MSIX changed after validation.' }
