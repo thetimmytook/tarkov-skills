@@ -8,9 +8,16 @@
         Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}">
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <ScrollViewer x:Name="BenchmarkScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
-      <ContentControl x:Name="ContentRoot" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" VerticalAlignment="Top"/>
-    </ScrollViewer>
+    <TabControl x:Name="MainTabs" Margin="0,12,0,0">
+      <TabItem Header="Benchmark">
+        <ScrollViewer x:Name="BenchmarkScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+          <ContentControl x:Name="ContentRoot" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" VerticalAlignment="Top"/>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem x:Name="SettingsTab" Header="Settings">
+        <ContentControl x:Name="SettingsRoot" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+      </TabItem>
+    </TabControl>
     <Border x:Name="Footer" Grid.Row="1" Padding="24,12,24,16" MinHeight="64"
             BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
       <Grid>

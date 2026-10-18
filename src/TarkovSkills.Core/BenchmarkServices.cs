@@ -177,8 +177,11 @@ public sealed class RaidLogReader
 public sealed class PresentMonPermissionException(string message) : Exception(message);
 public sealed class PresentMonSessionException(string message) : Exception(message);
 
-public sealed class PresentMonRunner
+public sealed partial class PresentMonRunner
 {
+    private readonly Action<Process>? _ownProcess;
+    public PresentMonRunner() { }
+    internal PresentMonRunner(Action<Process> ownProcess) => _ownProcess = ownProcess;
     internal const string OwnedSessionName = "TimmyTook.TarkovPerformanceBenchmark";
 
     public bool IsDependencyReady(out string message)
@@ -190,27 +193,67 @@ public sealed class PresentMonRunner
     public async Task<PerformanceMetrics> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken) =>
         (await CaptureWindowAsync(durationSeconds, started, cancellationToken).ConfigureAwait(false)).Metrics;
 
-    internal async Task<FrameCapture> CaptureWindowAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
+    internal async Task<FrameCapture> CaptureWindowAsync(int durationSeconds, Action started, CancellationToken cancellationToken,
+        CaptureDiagnosticLog? diagnostic = null)
     {
+        diagnostic?.Stage(CaptureDiagnosticStage.presentmon_preparing);
         VerifyDependency();
-        await CleanupLegacyOrphanedSessionAsync();
-        await StopSessionAsync(OwnedSessionName);
+        await CleanupLegacyOrphanedSessionAsync(diagnostic);
+        await StopSessionAsync(OwnedSessionName, diagnostic, CaptureProcessRole.prepare_cleanup);
         var tempDirectory = Path.Combine(Path.GetTempPath(), "TarkovBenchmark-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tempDirectory); var csv = Path.Combine(tempDirectory, "capture.csv");
         try
         {
             var info = new ProcessStartInfo(AppPaths.PresentMonFile) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
             foreach (var arg in BuildArguments(durationSeconds, csv)) info.ArgumentList.Add(arg);
-            using var process = new Process { StartInfo = info }; if (!process.Start()) throw new InvalidOperationException("PresentMon could not start."); started();
-            using var registration = cancellationToken.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
-            var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken); var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
-            await process.WaitForExitAsync(cancellationToken); var error = await stderr; _ = await stdout;
-            if (process.ExitCode != 0) throw CreateExitException(process.ExitCode, error);
-            if (!File.Exists(csv)) throw new InvalidOperationException("PresentMon did not create capture data.");
-            return PresentMonCsvParser.ParseCapture(csv);
+            using var process = new Process { StartInfo = info };
+            if (!process.Start()) throw new InvalidOperationException("PresentMon could not start.");
+            _ownProcess?.Invoke(process);
+            var processClock = Stopwatch.StartNew();
+            diagnostic?.Stage(CaptureDiagnosticStage.presentmon_started);
+            var exitRecorded = false;
+            using var observedOutput = diagnostic is null ? null : new PresentMonDiagnosticOutput(process.StandardOutput,
+                diagnostic, CaptureProcessRole.capture, CaptureOutputStream.stdout);
+            using var observedError = diagnostic is null ? null : new PresentMonDiagnosticOutput(process.StandardError,
+                diagnostic, CaptureProcessRole.capture, CaptureOutputStream.stderr);
+            try
+            {
+                started();
+                using var registration = cancellationToken.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
+                var stdout = observedOutput?.Completion ?? process.StandardOutput.ReadToEndAsync(cancellationToken);
+                var stderr = observedError?.Completion ?? process.StandardError.ReadToEndAsync(cancellationToken);
+                await process.WaitForExitAsync(cancellationToken); var error = await stderr; var output = await stdout;
+                processClock.Stop();
+                if (diagnostic is not null)
+                    diagnostic.ProcessExited(CaptureProcessRole.capture, process.ExitCode, processClock.Elapsed.TotalSeconds,
+                        cancellationToken.IsCancellationRequested, false, observedOutput!.Snapshot(), observedError!.Snapshot());
+                exitRecorded = true;
+                if (process.ExitCode != 0) throw CreateExitException(process.ExitCode, error);
+                if (!File.Exists(csv)) throw new InvalidOperationException("PresentMon did not create capture data.");
+                return PresentMonCsvParser.ParseCapture(csv, diagnostic);
+            }
+            finally
+            {
+                if (!exitRecorded)
+                {
+                    if (diagnostic is not null)
+                    {
+                        // Capture cancellation must not cancel pipe reading before buffered warnings are drained.
+                        try { if (!process.HasExited) process.Kill(true); } catch { }
+                        await PresentMonDiagnosticOutput.DrainAsync(observedOutput!, observedError!);
+                    }
+                    int? exitCode = null;
+                    try { if (process.HasExited) exitCode = process.ExitCode; } catch { }
+                    if (diagnostic is not null)
+                        diagnostic.ProcessExited(CaptureProcessRole.capture, exitCode, processClock.Elapsed.TotalSeconds,
+                            cancellationToken.IsCancellationRequested, false, observedOutput!.Snapshot(), observedError!.Snapshot());
+                }
+            }
         }
         finally
         {
-            await StopSessionAsync(OwnedSessionName);
+            diagnostic?.Stage(CaptureDiagnosticStage.presentmon_cleanup_started);
+            await StopSessionAsync(OwnedSessionName, diagnostic, CaptureProcessRole.final_cleanup);
+            diagnostic?.Stage(CaptureDiagnosticStage.presentmon_cleanup_completed);
             try { Directory.Delete(tempDirectory, true); } catch { }
         }
     }
@@ -224,6 +267,10 @@ public sealed class PresentMonRunner
         "--terminate_after_timed",
         "--terminate_on_proc_exit",
         "--no_console_stats",
+        // FPS uses present intervals. GPU/display tracking can prevent completed
+        // frames on some systems; adapter telemetry is collected independently.
+        "--no_track_gpu",
+        "--no_track_display",
         "--qpc_time",
         "--output_file", outputFile
     ];
@@ -237,14 +284,14 @@ public sealed class PresentMonRunner
         return new InvalidOperationException($"PresentMon could not complete the measurement (exit code {exitCode}).");
     }
 
-    internal static async Task CleanupLegacyOrphanedSessionAsync()
+    internal async Task CleanupLegacyOrphanedSessionAsync(CaptureDiagnosticLog? diagnostic = null)
     {
         if (HasRunningPresentMonProcess())
             throw new PresentMonSessionException("Another PresentMon capture is running. Stop it, then try again. The other process was not changed.");
         if (!await SessionExistsAsync("PresentMon")) return;
         if (HasRunningPresentMonProcess())
             throw new PresentMonSessionException("Another PresentMon capture started during preparation. Stop it, then try again. The other process was not changed.");
-        await StopSessionAsync("PresentMon");
+        await StopSessionAsync("PresentMon", diagnostic, CaptureProcessRole.legacy_cleanup);
     }
 
     private static bool HasRunningPresentMonProcess()
@@ -254,32 +301,54 @@ public sealed class PresentMonRunner
         finally { foreach (var process in processes) process.Dispose(); }
     }
 
-    private static async Task<bool> SessionExistsAsync(string sessionName)
+    private async Task<bool> SessionExistsAsync(string sessionName)
     {
         var info = new ProcessStartInfo("logman.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
         foreach (var argument in new[] { "query", sessionName, "-ets" }) info.ArgumentList.Add(argument);
         using var process = new Process { StartInfo = info };
         if (!process.Start()) return false;
-        await process.WaitForExitAsync();
+        _ownProcess?.Invoke(process);
+        var output = process.StandardOutput.ReadToEndAsync();
+        var error = process.StandardError.ReadToEndAsync();
+        try { await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5)); }
+        catch (TimeoutException)
+        {
+            try { process.Kill(true); } catch { }
+            await process.WaitForExitAsync();
+            await Task.WhenAll(output, error);
+            return false;
+        }
+        await Task.WhenAll(output, error);
         return process.ExitCode == 0;
     }
 
-    private static async Task StopSessionAsync(string sessionName)
+    private async Task StopSessionAsync(string sessionName, CaptureDiagnosticLog? diagnostic = null,
+        CaptureProcessRole role = CaptureProcessRole.prepare_cleanup)
     {
         var info = new ProcessStartInfo(AppPaths.PresentMonFile) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
-        foreach (var argument in new[] { "--session_name", sessionName, "--stop_existing_session" }) info.ArgumentList.Add(argument);
+        foreach (var argument in BuildStopSessionArguments(sessionName)) info.ArgumentList.Add(argument);
         using var process = new Process { StartInfo = info };
         if (!process.Start()) return;
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
+        _ownProcess?.Invoke(process);
+        var processClock = Stopwatch.StartNew();
+        using var observedOutput = diagnostic is null ? null : new PresentMonDiagnosticOutput(process.StandardOutput,
+            diagnostic, role, CaptureOutputStream.stdout);
+        using var observedError = diagnostic is null ? null : new PresentMonDiagnosticOutput(process.StandardError,
+            diagnostic, role, CaptureOutputStream.stderr);
+        var output = observedOutput?.Completion ?? process.StandardOutput.ReadToEndAsync();
+        var error = observedError?.Completion ?? process.StandardError.ReadToEndAsync();
         var wait = process.WaitForExitAsync();
+        var timedOut = false;
         if (await Task.WhenAny(wait, Task.Delay(TimeSpan.FromSeconds(5))) != wait)
         {
+            timedOut = true;
             try { process.Kill(true); } catch { }
         }
         await wait;
         _ = await output;
         _ = await error;
+        diagnostic?.ProcessExited(role, process.ExitCode, processClock.Elapsed.TotalSeconds, false, timedOut,
+            observedOutput!.Snapshot(), observedError!.Snapshot());
 
         if (!await SessionExistsAsync(sessionName)) return;
 
@@ -287,15 +356,27 @@ public sealed class PresentMonRunner
         foreach (var argument in BuildLogmanStopArguments(sessionName)) fallback.ArgumentList.Add(argument);
         using var fallbackProcess = new Process { StartInfo = fallback };
         if (!fallbackProcess.Start()) return;
-        var fallbackOutput = fallbackProcess.StandardOutput.ReadToEndAsync();
-        var fallbackError = fallbackProcess.StandardError.ReadToEndAsync();
+        _ownProcess?.Invoke(fallbackProcess);
+        var fallbackClock = Stopwatch.StartNew();
+        using var observedFallbackOutput = diagnostic is null ? null : new PresentMonDiagnosticOutput(fallbackProcess.StandardOutput,
+            diagnostic, CaptureProcessRole.cleanup_fallback, CaptureOutputStream.stdout);
+        using var observedFallbackError = diagnostic is null ? null : new PresentMonDiagnosticOutput(fallbackProcess.StandardError,
+            diagnostic, CaptureProcessRole.cleanup_fallback, CaptureOutputStream.stderr);
+        var fallbackOutput = observedFallbackOutput?.Completion ?? fallbackProcess.StandardOutput.ReadToEndAsync();
+        var fallbackError = observedFallbackError?.Completion ?? fallbackProcess.StandardError.ReadToEndAsync();
         await fallbackProcess.WaitForExitAsync();
         _ = await fallbackOutput;
         _ = await fallbackError;
+        diagnostic?.ProcessExited(CaptureProcessRole.cleanup_fallback, fallbackProcess.ExitCode,
+            fallbackClock.Elapsed.TotalSeconds, false, false, observedFallbackOutput!.Snapshot(), observedFallbackError!.Snapshot());
 
         for (var attempt = 0; attempt < 10 && await SessionExistsAsync(sessionName); attempt++)
             await Task.Delay(100);
     }
+
+    internal static IReadOnlyList<string> BuildStopSessionArguments(string sessionName) =>
+        // --stop_existing_session starts another capture after stopping the old session.
+        ["--session_name", sessionName, "--terminate_existing_session"];
 
     internal static IReadOnlyList<string> BuildLogmanStopArguments(string sessionName) => ["stop", sessionName, "-ets"];
 

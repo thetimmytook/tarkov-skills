@@ -1,0 +1,22 @@
+<UserControl x:Class="TarkovBenchmark.Feature.GoalSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{StaticResource TextBrush}">
+  <Border Padding="20" CornerRadius="8" Background="{StaticResource SurfaceBrush}"
+          BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+    <StackPanel>
+      <TextBlock Text="GOAL" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+      <TextBlock Text="Your performance target" FontSize="17" FontWeight="SemiBold" Margin="0,12,0,0" TextWrapping="Wrap"/>
+      <TextBlock Text="Used by AI skills to guide settings tests. Saved locally." Foreground="{StaticResource MutedBrush}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+      <TextBlock Text="Goal" Foreground="{StaticResource MutedBrush}" Margin="0,16,0,4"/>
+      <TextBox x:Name="GoalText" TextWrapping="Wrap"/>
+      <TextBlock Text="Target FPS" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,4"/>
+      <TextBox x:Name="TargetText" MaxWidth="160" HorizontalAlignment="Left" MinWidth="100"/>
+      <TextBlock Text="Quality preference" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,4"/>
+      <TextBox x:Name="QualityText" TextWrapping="Wrap" MinHeight="70" AcceptsReturn="True"/>
+      <Button x:Name="SaveGoalButton" Content="Save goal" Margin="0,16,0,0" HorizontalAlignment="Left" MinWidth="130"
+              Style="{StaticResource PrimaryButton}" Click="SaveGoal_Click"/>
+      <TextBlock x:Name="GoalStatusText" Margin="0,10,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+    </StackPanel>
+  </Border>
+</UserControl>

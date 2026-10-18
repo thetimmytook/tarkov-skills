@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using TarkovSkills.Core;
+using TarkovSkills.Core.Permissions;
 
 namespace TarkovBenchmark.Feature;
 
@@ -20,6 +21,11 @@ public partial class BenchmarkView : UserControl
     private Stopwatch? _captureClock;
     private bool _completedCommand;
     private Window? _owner;
+    private bool _ownerAttached;
+
+    public CaptureAccessSession CaptureAccess { get; } = new();
+    public bool IsCollecting { get; private set; }
+    public event EventHandler? CaptureStateChanged;
 
     public event EventHandler? RequestClose;
     public bool IsComparisonLoading => ComparisonChart.IsLoading;
@@ -48,6 +54,11 @@ public partial class BenchmarkView : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _owner = Window.GetWindow(this);
+        if (!_ownerAttached && _owner is not null)
+        {
+            _owner.Closed += OnOwnerClosed;
+            _ownerAttached = true;
+        }
         RefreshDependency();
         LoadLatestResult();
         if (_options.CollectRequested) SetStatus("Ready for a skill-requested benchmark. Start the raid, then press Start collection.", false);
@@ -58,7 +69,13 @@ public partial class BenchmarkView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _captureCancellation?.Cancel();
-        if (_options.SourceSkill && !_completedCommand)
+    }
+
+    private void OnOwnerClosed(object? sender, EventArgs e)
+    {
+        _captureCancellation?.Cancel();
+        CaptureAccess.Dispose();
+        if (_options.SourceSkill)
             WriteTerminalResult("cancelled", "The benchmark window was closed.");
     }
 
@@ -104,19 +121,21 @@ public partial class BenchmarkView : UserControl
         if (!initialContext.Active) { ShowInfo("Now start the raid, then try again."); return; }
 
         _completedCommand = false;
+        FailureSupport.Clear();
         SetCollecting(true);
         SetStatus("Preparing benchmark...", false);
         _captureCancellation = new CancellationTokenSource();
+        var operation = SupportOperation.Capture;
         try
         {
             var saved = await BenchmarkCollectionWorkflow.RunAsync(CaptureDurationSeconds, _options.ApplicationVersion, new(
                 () => _raidLogs.Read(tarkov.StartTime), () => HasExited(tarkov),
-                token => new FrametimeCaptureService().CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
+                token => CaptureAccess.CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
                 {
                     _captureClock = Stopwatch.StartNew();
                     _timer.Start();
                     SetStatus("Collecting frametime data: 00:00 / 02:00", false);
-                }), token),
+                }), ApproveCaptureAccessAsync, token),
                 async context =>
                 {
                     _timer.Stop();
@@ -126,7 +145,7 @@ public partial class BenchmarkView : UserControl
                     _captureCancellation.Token.ThrowIfCancellationRequested();
                     var dialog = new ContextWindow(context) { Owner = _owner };
                     return dialog.ShowDialog() == true ? dialog.Answers : null;
-                }, _store.Append), _captureCancellation.Token);
+                }, run => { operation = SupportOperation.Save; _store.Append(run); }), _captureCancellation.Token);
             if (saved is null)
             {
                 SetStatus("Measurement completed but was not saved.", true);
@@ -139,15 +158,15 @@ public partial class BenchmarkView : UserControl
             LoadLatestResult();
             SetStatus("Benchmark saved locally. No data was uploaded.", false);
             StatusDetailText.Text = $"{map} · {metrics.SampleCount:N0} frames · {run.Warnings.Count} warning(s)";
-            WriteResult(new CommandResult("completed", run.RunId, map, metrics.AverageFps, metrics.OnePercentLowFps, metrics.ZeroPointOnePercentLowFps, metrics.P95FrametimeMs, true, false)
+            var summaryWritten = WriteResult(new CommandResult("completed", run.RunId, map, metrics.AverageFps, metrics.OnePercentLowFps, metrics.ZeroPointOnePercentLowFps, metrics.P95FrametimeMs, true, false)
             { ResourceTelemetry = run.ResourceTelemetry });
-            if (_options.SourceSkill) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
+            if (_options.SourceSkill && summaryWritten) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
         }
-        catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("discarded", ex.Message); }
+        catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; OfferFailure(operation, ex); WriteTerminalResult("discarded", ex.Message); }
         catch (OperationCanceledException) { SetStatus("Collection canceled. Partial data was discarded.", true); WriteTerminalResult("cancelled", "Collection canceled by the user."); }
-        catch (PresentMonPermissionException ex) { SetStatus("PresentMon needs permission to access Windows performance tracing.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("permission_required", ex.Message); }
+        catch (PresentMonPermissionException ex) { SetStatus("PresentMon needs permission to access Windows performance tracing.", true); StatusDetailText.Text = ex.Message + " Windows capture access can be managed in Settings."; OfferFailure(operation, ex); WriteTerminalResult("permission_required", ex.Message); }
         catch (PresentMonSessionException ex) { ShowCollectionUnavailable(ex.Message); WriteTerminalResult("capture_conflict", ex.Message); }
-        catch (Exception ex) { SetStatus("Measurement failed. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("failed", ex.Message); }
+        catch (Exception ex) { SetStatus(operation == SupportOperation.Save ? "The completed measurement could not be saved." : "Measurement failed. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; OfferFailure(operation, ex); WriteTerminalResult("failed", "The measurement could not be completed or saved. See the local support report."); }
         finally
         {
             _timer.Stop();
@@ -204,15 +223,46 @@ public partial class BenchmarkView : UserControl
 
     private void SetCollecting(bool collecting)
     {
+        IsCollecting = collecting;
         StartButton.IsEnabled = !collecting && _presentMon.IsDependencyReady(out _);
         CancelButton.IsEnabled = collecting;
+        CaptureStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+    private async Task<bool> ApproveCaptureAccessAsync(CancellationToken cancellation) => await Dispatcher.InvokeAsync(() =>
+    {
+        if (cancellation.IsCancellationRequested) return false;
+        _timer.Stop(); _captureClock = null;
+        SetStatus("Windows needs permission before measurement can begin.", false);
+        StatusDetailText.Text = "After approval, return to the game. The measurement starts after preparation finishes.";
+        return CaptureAccessConsent.Show(_owner);
+    });
+    private void OfferFailure(SupportOperation operation, Exception error)
+    {
+        if (SupportArchive.NeedsCaptureReport(error))
+            FailureSupport.ShowFailure(_options.AuthProduct, _options.ApplicationVersion, operation, error);
     }
     private void SetStatus(string text, bool warning) { StatusText.Text = text; StatusText.Foreground = (Brush)FindResource(warning ? "WarningBrush" : "TextBrush"); }
     private void ShowInfo(string message) { SetStatus(message, true); MessageBox.Show(_owner, message, "Ready when you are", MessageBoxButton.OK, MessageBoxImage.Information); }
     private void ShowCollectionUnavailable(string message) { SetStatus("Collection could not start.", true); StatusDetailText.Text = message; MessageBox.Show(_owner, message, "Collection unavailable", MessageBoxButton.OK, MessageBoxImage.Warning); }
     private void DisplayMetrics(PerformanceMetrics metrics) { AverageFpsText.Text = metrics.AverageFps.ToString("0.0"); OneLowText.Text = metrics.OnePercentLowFps.ToString("0.0"); PointOneLowText.Text = metrics.ZeroPointOnePercentLowFps.ToString("0.0"); P95Text.Text = $"{metrics.P95FrametimeMs:0.0} ms"; }
     private void UpdateRunCount(int count) { LatestResultTitle.Text = count switch { 0 => "LATEST RESULT · NO RUNS", 1 => "LATEST RESULT · 1 RUN", _ => $"LATEST RESULT · {count} RUNS" }; }
-    private void WriteResult(CommandResult result) { _options.ResultWriter?.Invoke(result); _completedCommand = true; }
+    private bool WriteResult(CommandResult result)
+    {
+        if (_completedCommand) return false;
+        // The writer may emit stdout before its local checkpoint fails. Never emit
+        // a replacement terminal record or treat that as a failed benchmark save.
+        _completedCommand = true;
+        try { _options.ResultWriter?.Invoke(result); return true; }
+        catch (Exception error)
+        {
+            SetStatus(result.SavedLocally
+                ? "Benchmark saved locally. The command summary could not be written."
+                : "The command summary could not be written.", true);
+            StatusDetailText.Text = "See the local support report. No data was uploaded.";
+            OfferFailure(SupportOperation.Save, error);
+            return false;
+        }
+    }
     private void WriteTerminalResult(string status, string message) { if (_completedCommand) return; WriteResult(new CommandResult(status, Message: message)); }
     private static bool HasExited(Process process) { try { return process.HasExited; } catch { return true; } }
 }

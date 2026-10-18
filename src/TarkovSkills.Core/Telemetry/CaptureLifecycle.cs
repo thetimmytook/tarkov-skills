@@ -13,7 +13,8 @@ internal static class CaptureLifecycle
 {
     internal static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(4);
 
-    public static async Task<CapturedPerformance> RunAsync(int duration, CaptureOperations operations, CancellationToken cancellation)
+    public static async Task<CapturedPerformance> RunAsync(int duration, CaptureOperations operations, CancellationToken cancellation,
+        CaptureDiagnosticLog? diagnostic = null)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         var raidEnded = 0;
@@ -25,12 +26,15 @@ internal static class CaptureLifecycle
             var initialContext = operations.Context();
             if (!initialContext.Active) throw new CaptureDiscardedException("The raid ended before capture started. No data was saved.");
             var capture = await operations.Frames(linked.Token).ConfigureAwait(false);
+            diagnostic?.Frames(capture);
             linked.Token.ThrowIfCancellationRequested();
             Validate(capture);
+            diagnostic?.Stage(CaptureDiagnosticStage.frames_validated);
             ResourceTelemetry telemetry;
             try { telemetry = await operations.Resources(capture.Window).ConfigureAwait(false); }
             catch (OperationCanceledException) when (linked.IsCancellationRequested) { throw; }
             catch { telemetry = ResourceTelemetry.Unavailable(duration, "collector_unavailable"); }
+            diagnostic?.Resources(telemetry);
             linked.Token.ThrowIfCancellationRequested();
             var completedContext = Validate(capture);
             if (operations.RaidEnded() || completedContext.StartedAt != initialContext.StartedAt)

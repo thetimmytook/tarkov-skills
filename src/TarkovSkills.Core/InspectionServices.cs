@@ -77,7 +77,20 @@ public sealed class CaptureDiscardedException(string message) : Exception(messag
 
 public sealed class FrametimeCaptureService
 {
-    public async Task<CaptureReport> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken)
+    public Task<CaptureReport> CaptureAsync(int durationSeconds, Action started, CancellationToken cancellationToken) =>
+        CaptureUsingAsync(durationSeconds, started, cancellationToken, null);
+
+    internal async Task<CaptureReport> CaptureUsingAsync(int durationSeconds, Action started, CancellationToken cancellationToken,
+        Func<int, Action, CaptureDiagnosticLog?, CancellationToken, Task<FrameCapture>>? frames)
+    {
+        using var diagnostic = CaptureDiagnostics.Start(durationSeconds);
+        return await CaptureDiagnostics.ObserveAsync(diagnostic,
+            () => CaptureCoreAsync(durationSeconds, started, cancellationToken, diagnostic, frames)).ConfigureAwait(false);
+    }
+
+    private static async Task<CaptureReport> CaptureCoreAsync(int durationSeconds, Action started,
+        CancellationToken cancellationToken, CaptureDiagnosticLog? diagnostic,
+        Func<int, Action, CaptureDiagnosticLog?, CancellationToken, Task<FrameCapture>>? frames)
     {
         if (durationSeconds is not (120 or 240)) throw new ArgumentOutOfRangeException(nameof(durationSeconds), "Capture duration must be 120 or 240 seconds.");
         using var process = TarkovState.FindProcess() ?? throw new InvalidOperationException("Run Tarkov and enter a raid before starting capture.");
@@ -86,13 +99,18 @@ public sealed class FrametimeCaptureService
         var raid = logs.Read(processStartedAt);
         if (!raid.Active || !raid.StartedAt.HasValue) throw new InvalidOperationException("Enter a raid before starting capture.");
 
+        diagnostic?.Stage(CaptureDiagnosticStage.inspection_started);
         var inspection = await Task.Run(() => new InspectionService().Inspect(), cancellationToken).ConfigureAwait(false);
+        diagnostic?.Stage(CaptureDiagnosticStage.inspection_completed);
         await using var resources = new ResourceSampler(process.Id, durationSeconds);
+        diagnostic?.Stage(CaptureDiagnosticStage.resources_starting);
         await resources.StartAsync(cancellationToken).ConfigureAwait(false);
+        diagnostic?.Stage(CaptureDiagnosticStage.resources_ready);
         var capture = await CaptureLifecycle.RunAsync(durationSeconds, new(
-            token => new PresentMonRunner().CaptureWindowAsync(durationSeconds, started, token),
+            token => frames is null ? new PresentMonRunner().CaptureWindowAsync(durationSeconds, started, token, diagnostic)
+                : frames(durationSeconds, started, diagnostic, token),
             resources.CompleteAsync, () => logs.Read(processStartedAt), () => HasExited(process),
-            () => logs.HasRaidEndedSince(raid.StartedAt.Value)), cancellationToken).ConfigureAwait(false);
+            () => logs.HasRaidEndedSince(raid.StartedAt.Value)), cancellationToken, diagnostic).ConfigureAwait(false);
         return new CaptureReport(1, DateTimeOffset.Now, inspection with { Raid = capture.Context }, capture.Performance, capture.ResourceTelemetry);
     }
 
