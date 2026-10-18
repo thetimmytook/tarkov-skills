@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="TarkovSkills.Core.Tests" />
+    <InternalsVisibleTo Include="TarkovSkills.Regression.Tests" />
     <ProjectReference Include="..\TarkovSkills.Core\TarkovSkills.Core.csproj" />
   </ItemGroup>
 </Project>

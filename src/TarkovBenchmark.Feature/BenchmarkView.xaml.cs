@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using TarkovSkills.Core;
+using TarkovSkills.Core.Permissions;
 
 namespace TarkovBenchmark.Feature;
 
@@ -20,6 +21,11 @@ public partial class BenchmarkView : UserControl
     private Stopwatch? _captureClock;
     private bool _completedCommand;
     private Window? _owner;
+    private bool _ownerAttached;
+
+    public CaptureAccessSession CaptureAccess { get; } = new();
+    public bool IsCollecting { get; private set; }
+    public event EventHandler? CaptureStateChanged;
 
     public event EventHandler? RequestClose;
     public bool IsComparisonLoading => ComparisonChart.IsLoading;
@@ -48,6 +54,11 @@ public partial class BenchmarkView : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _owner = Window.GetWindow(this);
+        if (!_ownerAttached && _owner is not null)
+        {
+            _owner.Closed += (_, _) => { _captureCancellation?.Cancel(); CaptureAccess.Dispose(); };
+            _ownerAttached = true;
+        }
         RefreshDependency();
         LoadLatestResult();
         if (_options.CollectRequested) SetStatus("Ready for a skill-requested benchmark. Start the raid, then press Start collection.", false);
@@ -104,19 +115,21 @@ public partial class BenchmarkView : UserControl
         if (!initialContext.Active) { ShowInfo("Now start the raid, then try again."); return; }
 
         _completedCommand = false;
+        FailureSupport.Clear();
         SetCollecting(true);
         SetStatus("Preparing benchmark...", false);
         _captureCancellation = new CancellationTokenSource();
+        var operation = SupportOperation.Capture;
         try
         {
             var saved = await BenchmarkCollectionWorkflow.RunAsync(CaptureDurationSeconds, _options.ApplicationVersion, new(
                 () => _raidLogs.Read(tarkov.StartTime), () => HasExited(tarkov),
-                token => new FrametimeCaptureService().CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
+                token => CaptureAccess.CaptureAsync(CaptureDurationSeconds, () => Dispatcher.Invoke(() =>
                 {
                     _captureClock = Stopwatch.StartNew();
                     _timer.Start();
                     SetStatus("Collecting frametime data: 00:00 / 02:00", false);
-                }), token),
+                }), ApproveCaptureAccessAsync, token),
                 async context =>
                 {
                     _timer.Stop();
@@ -126,7 +139,7 @@ public partial class BenchmarkView : UserControl
                     _captureCancellation.Token.ThrowIfCancellationRequested();
                     var dialog = new ContextWindow(context) { Owner = _owner };
                     return dialog.ShowDialog() == true ? dialog.Answers : null;
-                }, _store.Append), _captureCancellation.Token);
+                }, run => { operation = SupportOperation.Save; _store.Append(run); }), _captureCancellation.Token);
             if (saved is null)
             {
                 SetStatus("Measurement completed but was not saved.", true);
@@ -143,11 +156,11 @@ public partial class BenchmarkView : UserControl
             { ResourceTelemetry = run.ResourceTelemetry });
             if (_options.SourceSkill) { await Task.Delay(2000); RequestClose?.Invoke(this, EventArgs.Empty); }
         }
-        catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("discarded", ex.Message); }
+        catch (CaptureDiscardedException ex) { SetStatus("Measurement discarded. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; OfferFailure(operation, ex); WriteTerminalResult("discarded", ex.Message); }
         catch (OperationCanceledException) { SetStatus("Collection canceled. Partial data was discarded.", true); WriteTerminalResult("cancelled", "Collection canceled by the user."); }
-        catch (PresentMonPermissionException ex) { SetStatus("PresentMon needs permission to access Windows performance tracing.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("permission_required", ex.Message); }
+        catch (PresentMonPermissionException ex) { SetStatus("PresentMon needs permission to access Windows performance tracing.", true); StatusDetailText.Text = ex.Message + " Windows capture access can be managed in Settings."; OfferFailure(operation, ex); WriteTerminalResult("permission_required", ex.Message); }
         catch (PresentMonSessionException ex) { ShowCollectionUnavailable(ex.Message); WriteTerminalResult("capture_conflict", ex.Message); }
-        catch (Exception ex) { SetStatus("Measurement failed. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; WriteTerminalResult("failed", ex.Message); }
+        catch (Exception ex) { SetStatus(operation == SupportOperation.Save ? "The completed measurement could not be saved." : "Measurement failed. No benchmark data was saved.", true); StatusDetailText.Text = ex.Message; OfferFailure(operation, ex); WriteTerminalResult("failed", "The measurement could not be completed or saved. See the local support report."); }
         finally
         {
             _timer.Stop();
@@ -204,8 +217,23 @@ public partial class BenchmarkView : UserControl
 
     private void SetCollecting(bool collecting)
     {
+        IsCollecting = collecting;
         StartButton.IsEnabled = !collecting && _presentMon.IsDependencyReady(out _);
         CancelButton.IsEnabled = collecting;
+        CaptureStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+    private async Task<bool> ApproveCaptureAccessAsync(CancellationToken cancellation) => await Dispatcher.InvokeAsync(() =>
+    {
+        if (cancellation.IsCancellationRequested) return false;
+        _timer.Stop(); _captureClock = null;
+        SetStatus("Windows needs permission before measurement can begin.", false);
+        StatusDetailText.Text = "After approval, return to the game. The measurement starts after preparation finishes.";
+        return CaptureAccessConsent.Show(_owner);
+    });
+    private void OfferFailure(SupportOperation operation, Exception error)
+    {
+        if (SupportArchive.NeedsCaptureReport(error))
+            FailureSupport.ShowFailure(_options.AuthProduct, _options.ApplicationVersion, operation, error);
     }
     private void SetStatus(string text, bool warning) { StatusText.Text = text; StatusText.Foreground = (Brush)FindResource(warning ? "WarningBrush" : "TextBrush"); }
     private void ShowInfo(string message) { SetStatus(message, true); MessageBox.Show(_owner, message, "Ready when you are", MessageBoxButton.OK, MessageBoxImage.Information); }
