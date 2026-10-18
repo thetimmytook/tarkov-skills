@@ -35,6 +35,32 @@ public sealed class ResourceCaptureContractTests
     }
 
     [Theory]
+    [InlineData(120)]
+    [InlineData(240)]
+    public void FpsOnlyCsvKeepsCompletePresentWindowWithoutGpuOrDisplayColumns(int duration)
+    {
+        const string header = "Application,ProcessID,SwapChainAddress,PresentRuntime,SyncInterval,PresentFlags," +
+            "TimeInQPC,MsBetweenSimulationStart,MsBetweenPresents,MsInPresentAPI,MsRenderPresentLatency," +
+            "CPUStartQPC,MsBetweenAppStart,MsCPUBusy,MsCPUWait,MsAllInputToPhotonLatency,MsClickToPhotonLatency";
+        var rows = Enumerable.Range(1, duration * 100).Select(i =>
+            FormattableString.Invariant($"EscapeFromTarkov.exe,1,0,DXGI,0,512,{(long)Math.Round((100 + i / 100d) * Stopwatch.Frequency)},NA,10,0.5,NA,{Stopwatch.Frequency},10,8,2,NA,NA"));
+        WithCsv(header, rows, path =>
+        {
+            var capture = PresentMonCsvParser.ParseCapture(path);
+            Assert.Equal(duration * 100, capture.Metrics.SampleCount);
+            Assert.Equal(duration, capture.Metrics.DurationSec);
+            Assert.Equal(100, capture.Metrics.AverageFps);
+            Assert.Equal(10, capture.Metrics.P95FrametimeMs);
+            var window = Assert.Single(capture.Window.Intervals);
+            Assert.Equal(100, window.Start, 6);
+            Assert.Equal(100 + duration, window.End, 6);
+            Assert.Equal(duration, capture.Window.Duration, 6);
+            var raid = new RaidContext(true, true, "Woods", "woods", null, DateTime.Now, null);
+            CaptureValidation.EnsureComplete(capture.Metrics, raid, false, duration);
+        });
+    }
+
+    [Theory]
     [InlineData("MsBetweenPresents", "100")]
     [InlineData("TimeInQPC,MsBetweenPresents", "NA,100")]
     [InlineData("CPUStartQPC,MsBetweenPresents", "100,100")]
