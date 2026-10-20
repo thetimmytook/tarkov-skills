@@ -69,6 +69,7 @@ The automatically created `skills-v<version>` GitHub release also publishes a cl
 
 ## After Publication
 
+- Deferred follow-up after the current publication: implement the [local AI behavior evaluations](local-ai-evaluations-plan.md). Run them locally by explicit invocation; do not add them to CI or release/publication gates.
 - [ ] Install the public listing from a non-developer Claude account.
 - [ ] Run the three listed use cases and the safety cases in a clean web chat.
 - [ ] Verify the listing, logo, support links, privacy policy, and terms.

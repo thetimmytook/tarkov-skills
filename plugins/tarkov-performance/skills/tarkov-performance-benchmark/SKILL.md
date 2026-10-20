@@ -22,6 +22,7 @@ Do not open the GUI when the local alias is callable. For a web client, ask the 
 
 - Start only when Tarkov is running and logs show an active raid.
 - Default to 120 seconds; allow 240 seconds on request.
+- Require no dedicated warmup or preparation raids in normal collection. Use an available gameplay segment and apply preparation/weather qualifications from `references/measurement-rules.md` without adding a route questionnaire.
 - Prefer map and game version from logs. Ask for the map only if log recovery fails.
 - Do not ask for route, activity, PvP/PvE, or a separate server-model field.
 - Discard interrupted, cancelled, game-crash, or raid-exit captures.

@@ -98,6 +98,7 @@ OpenAI requires at least five positive and three negative test cases. Each porta
 
 ## After Approval
 
+- Deferred follow-up after the current publication: implement the [local AI behavior evaluations](local-ai-evaluations-plan.md). Run them locally by explicit invocation; do not add them to CI or release/publication gates.
 - [ ] Publish the approved version from the portal; approval alone does not make it public.
 - [ ] Install it from ChatGPT web's **Plugins** directory using a non-developer account.
 - [ ] Start a clean chat, invoke each skill with `@`, and rerun the positive and negative web cases.
