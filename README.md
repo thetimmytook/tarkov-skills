@@ -21,7 +21,7 @@ Current public Store versions:
 
 ### GitHub Release
 
-Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes the artifacts relevant to that tagged product. Skills releases include the agent-skills archive, the OpenAI submission ZIP, the clean Claude plugin ZIP, a complete source archive, and SHA-256 checksums. Application releases include the corresponding self-contained Windows x64 portable archive, Store package, source archive, and checksums. Extract a portable application archive and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.
+Each [GitHub Release](https://github.com/thetimmytook/tarkov-skills/releases) includes the artifacts relevant to that tagged product. Skills releases include the agent-skills archive, the OpenAI-format candidate ZIP, the clean Claude plugin ZIP, a complete source archive, and SHA-256 checksums. An OpenAI-format ZIP does not establish current directory submission eligibility. Application releases include the corresponding self-contained Windows x64 portable archive, Store package, source archive, and checksums. Extract a portable application archive and run `TarkovPerformanceToolkit.exe` or `TarkovPerformanceBenchmark.exe`.
 
 Application releases also include the original build provenance manifest. Main-push builds create each application's MSIX and portable ZIP once; manual Store flight, production promotion, and application GitHub Release workflows consume explicit run/attempt artifacts. See [the release pipeline](references/store-submission.md#one-build-explicit-promotion) for checks and operator inputs. Skills publication remains independent.
 
@@ -60,6 +60,11 @@ codex
 After installation, start a new Codex session so the bundled skills are loaded.
 
 ### ChatGPT web
+
+New OpenAI directory submission is deferred after the publisher reported a pause
+in skills-only intake. Reconfirm availability before submitting; see the
+[submission availability record](references/chatgpt-plugin-publication.md#submission-availability--2026-10-20).
+No public ChatGPT listing has been verified for this project.
 
 Once the plugin is published in OpenAI's shared plugin directory, install `tarkov-performance` from ChatGPT's **Plugins** tab and start a new chat. Type `@` and select the required skill, or describe the task and let ChatGPT select it automatically. The Codex GitHub marketplace command does not install plugins into ChatGPT web.
 
