@@ -1,4 +1,32 @@
 {
+  "references/model-feedback.md": [
+    "skills/tarkov-config/references/model-feedback.md",
+    "skills/tarkov-tuning/references/model-feedback.md"
+  ],
+  "references/session-stability.md": [
+    "skills/tarkov-config/references/session-stability.md",
+    "skills/tarkov-tuning/references/session-stability.md"
+  ],
+  "references/settings-evidence-guide.md": [
+    "skills/tarkov-config/references/settings-evidence-guide.md",
+    "skills/tarkov-tuning/references/settings-evidence-guide.md"
+  ],
+  "references/settings-help.md": [
+    "skills/tarkov-config/references/settings-help.md",
+    "skills/tarkov-tuning/references/settings-help.md"
+  ],
+  "references/automatic-ram-cleaner.md": [
+    "skills/tarkov-config/references/automatic-ram-cleaner.md",
+    "skills/tarkov-tuning/references/automatic-ram-cleaner.md"
+  ],
+  "references/graphics-response-model.md": [
+    "skills/tarkov-config/references/graphics-response-model.md",
+    "skills/tarkov-tuning/references/graphics-response-model.md"
+  ],
+  "references/graphics-response-priors.json": [
+    "skills/tarkov-config/references/graphics-response-priors.json",
+    "skills/tarkov-tuning/references/graphics-response-priors.json"
+  ],
   "references/game-starting-profile.md": [
     "skills/tarkov-config/references/game-starting-profile.md",
     "skills/tarkov-tuning/references/game-starting-profile.md"

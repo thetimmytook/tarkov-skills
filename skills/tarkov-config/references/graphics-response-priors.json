@@ -1,0 +1,1764 @@
+{
+  "model_version": "0.1.2",
+  "status": "provisional_unvalidated_prediction_policy",
+  "game_build": "1.2.0.0.47965",
+  "source_scope": {
+    "systems": 1,
+    "cpu": "i9-9900KF",
+    "gpu": "RTX 2080 8 GiB",
+    "ram_gib": 32,
+    "pagefile_gib": 32,
+    "os": "Windows 10 19045",
+    "resolution": "2560x1440",
+    "render_scale": 1,
+    "upscaling": "Off",
+    "mode": "Practice without AI",
+    "capture_source": "signed Toolkit 1.0.3 / PresentMon 2.5.1",
+    "raw_unique_reports": 85,
+    "raw_data_bundled": false
+  },
+  "units": {
+    "fps_effect_percent": "100 * (after_FPS / before_FPS - 1); direction is from -> to",
+    "gpu": "whole-adapter utilization percentage points",
+    "cpu": "whole-system utilization percentage points",
+    "vram": "whole-adapter dedicated memory GiB",
+    "ram": "whole-system occupied physical RAM GiB",
+    "commit": "whole-system used commit GiB"
+  },
+  "priority_scale": {
+    "0": "No useful numeric effect established or not an FPS/memory tuning lever; not zero cost.",
+    "1": "Small/context-dependent candidate.",
+    "2": "Moderate candidate when this workload is relevant.",
+    "3": "Leading candidate when this goal and workload are relevant."
+  },
+  "forecast_policy": {
+    "interval_kind": "heuristic planning envelope, not a statistical confidence interval",
+    "matched_fps_margin_percentage_points": 3,
+    "single_pair_fps_margin_percentage_points": 5,
+    "transfer_central_log_effect_fraction": 0.5,
+    "transfer_log_effect_fraction_bounds": [
+      0,
+      1
+    ],
+    "unmeasured_numeric_level_policy": "No equal spacing from menu rank; optional explicit log interpolation only between measured numeric neighbors, bounded by their full endpoint effects.",
+    "resource_margin_floor": {
+      "vram_gib": 0.25,
+      "ram_gib": 2,
+      "commit_gib": 3,
+      "gpu_pp": 5
+    },
+    "resource_margin_rule": "Expand eligible paired-delta min/max by at least this margin, or the largest same-profile repeat difference if greater; first-raid memory transfer must additionally include zero until locally calibrated. These uncertainty margins are not a reserve for later raids; assess session stability separately.",
+    "unknown_effect_policy": "null/unknown; never silently substitute zero. Zero-effect FPS hypotheses for noise rows still need uncertainty.",
+    "multi_change_policy": "One row per setting/context; texture quality and Streets mode form one joint group. Use log-ratio combination, widen for shared bottlenecks; preserve unsupported components as unknown.",
+    "first_raid_memory_calibrated": false,
+    "noise_transfer_policy": "A zero-effect FPS hypothesis is only for a comparable non-saturated workload. SSR/Volumetric noise results do not bound their FPS cost after GPU saturation or a new lighting/reflection workload; transferred cost remains unknown. Normal captures require no dedicated warmup; qualify preparation/weather differences without inventing cold-to-warm or rain/fog correction factors."
+  },
+  "transitions": [
+    {
+      "id": "hbao",
+      "setting": "HBAO",
+      "from": "Colored Ultra",
+      "to": "Off",
+      "workload": "Streets/static",
+      "observed_load": "gpu_near_saturation",
+      "priority": {
+        "fps": 3,
+        "memory": 0
+      },
+      "evidence": "single_dry_pair_plus_high_repeat",
+      "observed_fps_change_percent": 34.580278,
+      "observed_fps_pair_changes_percent": [
+        34.580278
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 0.36925,
+        "cpu": 3.884704,
+        "vram": -0.041674,
+        "ram": -0.341745,
+        "commit": -0.769145
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 0.36925,
+          "cpu": 3.884704,
+          "vram": -0.041674,
+          "ram": -0.341745,
+          "commit": -0.769145
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Only Off and Colored Ultra measured; rainy Off return excluded from dry seed.",
+        "Max Performance, High Performance, High and neutral Ultra have no coefficient."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "OverallVisibility": 400,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 99.58017024010316,
+        "after": 99.94942063746953
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 66.83,
+          "fps_max": 66.83,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 89.94,
+          "fps_max": 89.94,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "lod_static",
+      "setting": "LOD",
+      "from": "4",
+      "to": "2",
+      "workload": "Streets/static",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 3,
+        "memory": 0
+      },
+      "evidence": "repeated_contextual",
+      "observed_fps_change_percent": 18.0006,
+      "observed_fps_pair_changes_percent": [
+        18.480982,
+        17.513304
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 8.113129,
+        "cpu": 1.562348,
+        "vram": -0.169304,
+        "ram": -0.007562,
+        "commit": -0.405855
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 9.630189,
+          "cpu": 1.793868,
+          "vram": -0.09471,
+          "ram": -0.533822,
+          "commit": -1.457368
+        },
+        {
+          "gpu": 6.596069,
+          "cpu": 1.330828,
+          "vram": -0.243898,
+          "ram": 0.518697,
+          "commit": 0.645658
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Rain-transition return and BTR interruptions excluded.",
+        "Do not pool with movement or add to lod3_static."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 62.77335010372438,
+        "after": 70.88647878778707
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 82.68,
+          "fps_max": 83.87,
+          "fps_change_last_vs_first_percent": -1.418862525336828,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 97.16,
+          "fps_max": 99.37,
+          "fps_change_last_vs_first_percent": -2.2240112710073534,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "lod3_static",
+      "setting": "LOD",
+      "from": "3",
+      "to": "2",
+      "workload": "Streets/static",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 3,
+        "memory": 0
+      },
+      "evidence": "repeated_contextual",
+      "observed_fps_change_percent": 14.601434,
+      "observed_fps_pair_changes_percent": [
+        14.692982,
+        14.507955
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 6.512665,
+        "cpu": 0.84913,
+        "vram": -0.143763,
+        "ram": 0.095207,
+        "commit": -0.100176
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 7.437066,
+          "cpu": 0.821401,
+          "vram": -0.028139,
+          "ram": -0.451264,
+          "commit": -0.653904
+        },
+        {
+          "gpu": 5.588264,
+          "cpu": 0.876859,
+          "vram": -0.259387,
+          "ram": 0.641678,
+          "commit": 0.453551
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "LOD 3 to 4 alone was near noise; 2.5/3.5 unmeasured."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 64.3738136865072,
+        "after": 70.88647878778707
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 84.85,
+          "fps_max": 86.64,
+          "fps_change_last_vs_first_percent": -2.0660203139427624,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 97.16,
+          "fps_max": 99.37,
+          "fps_change_last_vs_first_percent": -2.2240112710073534,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "lod_moving",
+      "setting": "LOD",
+      "from": "4",
+      "to": "2",
+      "workload": "Streets/moving",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 3,
+        "memory": 0
+      },
+      "evidence": "repeated_contextual",
+      "observed_fps_change_percent": 8.537918,
+      "observed_fps_pair_changes_percent": [
+        9.174312,
+        7.913915
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 4.539436,
+        "cpu": 1.012123,
+        "vram": -0.01938,
+        "ram": -0.905166,
+        "commit": -0.006403
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 5.045306,
+          "cpu": 0.513646,
+          "vram": -0.043714,
+          "ram": -0.251451,
+          "commit": -0.253076
+        },
+        {
+          "gpu": 4.033566,
+          "cpu": 1.5106,
+          "vram": 0.004953,
+          "ram": -1.558882,
+          "commit": 0.24027
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Same route ABBA; physical memory drift prevents an independent RAM coefficient."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 67.30984121078961,
+        "after": 71.84927708358109
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 86.11,
+          "fps_max": 87.82,
+          "fps_change_last_vs_first_percent": 1.9858320752525804,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 94.01,
+          "fps_max": 94.77,
+          "fps_change_last_vs_first_percent": 0.8084246356770519,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "visibility_static",
+      "setting": "Overall Visibility",
+      "from": "3000",
+      "to": "400",
+      "workload": "Streets/static/fog",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 2,
+        "memory": 0
+      },
+      "evidence": "repeated_with_raid_boundary",
+      "observed_fps_change_percent": 7.029262,
+      "observed_fps_pair_changes_percent": [
+        7.039337,
+        7.019215
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 3.298217,
+        "cpu": 0.558921,
+        "vram": -0.077167,
+        "ram": 0.061649,
+        "commit": -0.039558
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 2.319227,
+          "cpu": 0.767958,
+          "vram": -0.023702,
+          "ram": -0.135477,
+          "commit": -0.23579
+        },
+        {
+          "gpu": 4.277207,
+          "cpu": 0.349885,
+          "vram": -0.130632,
+          "ram": 0.258775,
+          "commit": 0.156673
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "400 return was a new raid; only LOD 2 background measured.",
+        "1000 measured separately; not a linear distance response."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 53.857341490537614,
+        "after": 57.15555856411903
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 62.79,
+          "fps_max": 62.97,
+          "fps_change_last_vs_first_percent": 0.2866698518872335,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 67.21,
+          "fps_max": 67.39,
+          "fps_change_last_vs_first_percent": 0.2678172890938857,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "visibility_moving",
+      "setting": "Overall Visibility",
+      "from": "3000",
+      "to": "400",
+      "workload": "Streets/moving/fog",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 1,
+        "memory": 0
+      },
+      "evidence": "noise_and_raid_boundary",
+      "observed_fps_change_percent": 2.944184,
+      "observed_fps_pair_changes_percent": [
+        0.459598,
+        5.464599
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": 0.585496,
+        "cpu": -1.061998,
+        "vram": 0.03019,
+        "ram": -0.64274,
+        "commit": -5.507138
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 0.337112,
+          "cpu": 0.570262,
+          "vram": 0.004614,
+          "ram": -0.219657,
+          "commit": -0.130443
+        },
+        {
+          "gpu": 0.833879,
+          "cpu": -2.694258,
+          "vram": 0.055765,
+          "ram": -1.065824,
+          "commit": -10.883833
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Average difference inside 3%; 400 return across raid/date boundary.",
+        "Large low-percentile variability; no numeric low prediction."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 73.50666890746047,
+        "after": 74.09216472391981
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 92.23,
+          "fps_max": 93.56,
+          "fps_change_last_vs_first_percent": -1.421547669944423,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 93.99,
+          "fps_max": 97.27,
+          "fps_change_last_vs_first_percent": 3.489732950313873,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "shadows",
+      "setting": "Shadows Quality + associated ShadowDistance",
+      "from": "Ultra / 80",
+      "to": "Low / 30",
+      "workload": "Factory/static",
+      "observed_load": "gpu_near_saturation",
+      "priority": {
+        "fps": 2,
+        "memory": 1
+      },
+      "evidence": "repeated_contextual",
+      "observed_fps_change_percent": 5.638004,
+      "observed_fps_pair_changes_percent": [
+        6.168018,
+        5.108576
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 0.323842,
+        "cpu": -0.361,
+        "vram": -0.109509,
+        "ram": -2.256468,
+        "commit": -2.347174
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 0.167863,
+          "cpu": 0.625166,
+          "vram": -0.075383,
+          "ram": -3.999295,
+          "commit": -4.290643
+        },
+        {
+          "gpu": 0.479821,
+          "cpu": -1.347165,
+          "vram": -0.143635,
+          "ram": -0.513641,
+          "commit": -0.403705
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "vram"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Quality automatically changed ShadowDistance; do not count distance again.",
+        "First Ultra launch contained Woods; RAM/commit not attributable.",
+        "User later confirmed environmental shadow differences in side-by-side images; images not inspected by agent."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "Off",
+        "DisableGameFramerateLimit": true,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 99.2185344391911,
+        "after": 99.54237654328912
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 135.7,
+          "fps_max": 135.85,
+          "fps_change_last_vs_first_percent": 0.1105379513633098,
+          "resource_max_minus_min": {
+            "vram": 0.02970040280347863
+          }
+        },
+        "after": {
+          "fps_min": 142.79,
+          "fps_max": 144.07,
+          "fps_change_last_vs_first_percent": -0.8884570000694092,
+          "resource_max_minus_min": {
+            "vram": 0.09795223964464661
+          }
+        }
+      }
+    },
+    {
+      "id": "aa",
+      "setting": "Antialiasing",
+      "from": "TAA Low",
+      "to": "Off",
+      "workload": "Factory/static",
+      "observed_load": "gpu_near_saturation",
+      "priority": {
+        "fps": 2,
+        "memory": 0
+      },
+      "evidence": "repeated_contextual",
+      "observed_fps_change_percent": 5.568475,
+      "observed_fps_pair_changes_percent": [
+        5.665978,
+        5.470771
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": -1.172269,
+        "cpu": 1.302819,
+        "vram": -0.071382,
+        "ram": -0.055785,
+        "commit": -0.046779
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -1.033907,
+          "cpu": 0.903995,
+          "vram": -0.04269,
+          "ram": -0.054357,
+          "commit": 0.032449
+        },
+        {
+          "gpu": -1.310631,
+          "cpu": 1.701643,
+          "vram": -0.100075,
+          "ram": -0.057213,
+          "commit": -0.126008
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Baseline reused AF-noAI A2; no missing raw or extra independent capture.",
+        "Other AA/upscaling modes unmeasured; lows inconsistent."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 99.68040446281174,
+        "after": 98.50813508170359
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 154.64,
+          "fps_max": 154.96,
+          "fps_change_last_vs_first_percent": -0.20650490449150016,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 163.1,
+          "fps_max": 163.74,
+          "fps_change_last_vs_first_percent": -0.3908635641871383,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "af",
+      "setting": "Anisotropic Filtering",
+      "from": "On",
+      "to": "Off",
+      "workload": "Factory/static",
+      "observed_load": "gpu_near_saturation",
+      "priority": {
+        "fps": 1,
+        "memory": 0
+      },
+      "evidence": "small_repeated_direction",
+      "observed_fps_change_percent": 2.798242,
+      "observed_fps_pair_changes_percent": [
+        2.983433,
+        2.613578
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": -0.458126,
+        "cpu": 0.44663,
+        "vram": -0.000371,
+        "ram": 0.030658,
+        "commit": -0.012384
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -0.327361,
+          "cpu": 1.047052,
+          "vram": -0.001317,
+          "ram": 0.063119,
+          "commit": -0.020079
+        },
+        {
+          "gpu": -0.588892,
+          "cpu": -0.153792,
+          "vram": 0.000575,
+          "ram": -0.001802,
+          "commit": -0.004688
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Below 3% but same direction in both pairs; preserve image-quality preference.",
+        "Earlier AI-enabled exploratory run excluded."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 99.6215698691949,
+        "after": 99.16344358184867
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 154.52,
+          "fps_max": 154.96,
+          "fps_change_last_vs_first_percent": 0.2847527828112817,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 159.01,
+          "fps_max": 159.13,
+          "fps_change_last_vs_first_percent": -0.07541004210394053,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "ssr",
+      "setting": "SSR",
+      "from": "Ultra",
+      "to": "Off",
+      "workload": "Streets/static/car",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 1,
+        "memory": 0
+      },
+      "evidence": "fps_noise_gpu_pattern",
+      "observed_fps_change_percent": 0.180297,
+      "observed_fps_pair_changes_percent": [
+        1.70513,
+        -1.288404
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -7.012327,
+        "cpu": -0.692182,
+        "vram": 0.00334,
+        "ram": 0.417969,
+        "commit": -0.013273
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -6.067189,
+          "cpu": -1.35697,
+          "vram": -0.031696,
+          "ram": 0.957741,
+          "commit": -0.232348
+        },
+        {
+          "gpu": -7.957465,
+          "cpu": -0.027394,
+          "vram": 0.038376,
+          "ram": -0.121802,
+          "commit": 0.205801
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "gpu"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "FPS pair directions disagree; numeric FPS seed is zero-effect hypothesis.",
+        "GPU pp observation transfers only to comparable load and FPS, not saturated scenes."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "OverallVisibility": 400,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 66.99982337107102,
+        "after": 59.9874962696511
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 68.03,
+          "fps_max": 70.63,
+          "fps_change_last_vs_first_percent": 3.8218433044244993,
+          "resource_max_minus_min": {
+            "gpu": 3.379002134879471
+          }
+        },
+        "after": {
+          "fps_min": 69.19,
+          "fps_max": 69.72,
+          "fps_change_last_vs_first_percent": 0.7660066483595962,
+          "resource_max_minus_min": {
+            "gpu": 5.2692784296046895
+          }
+        }
+      }
+    },
+    {
+      "id": "volumetric",
+      "setting": "Volumetric Lighting",
+      "from": "Ultra",
+      "to": "Off",
+      "workload": "Streets/static/night/flashlight",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 1,
+        "memory": 0
+      },
+      "evidence": "fps_noise_gpu_pattern_visual_unconfirmed",
+      "observed_fps_change_percent": 0.907406,
+      "observed_fps_pair_changes_percent": [
+        0.711925,
+        1.104972
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -12.289813,
+        "cpu": -0.532951,
+        "vram": -0.056875,
+        "ram": 0.00151,
+        "commit": 0.219393
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -11.580186,
+          "cpu": -0.918923,
+          "vram": -0.062781,
+          "ram": -1.047542,
+          "commit": -0.889564
+        },
+        {
+          "gpu": -12.99944,
+          "cpu": -0.146979,
+          "vram": -0.050969,
+          "ram": 1.050561,
+          "commit": 1.328349
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "gpu"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Off/Low/Ultra measured; Medium/High unmeasured.",
+        "Visible source response unconfirmed; raid reconstruction and Low session drift retained."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "OverallVisibility": 400,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 78.10465909148573,
+        "after": 65.81484596707665
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 77.83,
+          "fps_max": 78.66,
+          "fps_change_last_vs_first_percent": -1.0551741673023085,
+          "resource_max_minus_min": {
+            "gpu": 0.7481762523518114
+          }
+        },
+        "after": {
+          "fps_min": 78.69,
+          "fps_max": 79.22,
+          "fps_change_last_vs_first_percent": -0.6690229739964693,
+          "resource_max_minus_min": {
+            "gpu": 2.167430158973545
+          }
+        }
+      }
+    },
+    {
+      "id": "texture_high_medium",
+      "setting": "Texture Quality, Streets mode Off",
+      "from": "High",
+      "to": "Medium",
+      "workload": "Streets/moving",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 0,
+        "memory": 3
+      },
+      "evidence": "weather_qualified_memory_pattern",
+      "observed_fps_change_percent": 1.229398,
+      "observed_fps_pair_changes_percent": [
+        0.960293,
+        1.495886
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -2.175158,
+        "cpu": 0.019772,
+        "vram": -0.891938,
+        "ram": -2.357779,
+        "commit": -3.383742
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -1.002195,
+          "cpu": -0.280315,
+          "vram": -0.920787,
+          "ram": -2.640857,
+          "commit": -3.767651
+        },
+        {
+          "gpu": -3.348121,
+          "cpu": 0.319859,
+          "vram": -0.86309,
+          "ram": -2.0747,
+          "commit": -2.999833
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "vram",
+        "ram",
+        "commit"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Some weather unknown; High return included rain.",
+        "Restarts requested, first-raid/process-launch history not independently verified."
+      ],
+      "held_saved_graphics": {
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 72.61032335130989,
+        "after": 70.43516539860771
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 92.68,
+          "fps_max": 93.59,
+          "fps_change_last_vs_first_percent": 0.981873111782483,
+          "resource_max_minus_min": {
+            "vram": 0.11346821664256179,
+            "ram": 1.1281270610039797,
+            "commit": 1.2938131747355328
+          }
+        },
+        "after": {
+          "fps_min": 93.57,
+          "fps_max": 94.99,
+          "fps_change_last_vs_first_percent": 1.5175804210751265,
+          "resource_max_minus_min": {
+            "vram": 0.1711652232585843,
+            "ram": 0.5619694232362278,
+            "commit": 0.5259948737886759
+          }
+        }
+      }
+    },
+    {
+      "id": "texture_ultra_low",
+      "setting": "Texture Quality, Streets mode Off",
+      "from": "Ultra",
+      "to": "Low",
+      "workload": "Streets/moving",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 0,
+        "memory": 3
+      },
+      "evidence": "repeated_memory_and_symptoms",
+      "observed_fps_change_percent": 2.023372,
+      "observed_fps_pair_changes_percent": [
+        0.839341,
+        3.220542
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -4.232959,
+        "cpu": 0.067735,
+        "vram": -2.187205,
+        "ram": -8.302036,
+        "commit": -13.514461
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -3.706886,
+          "cpu": 1.207766,
+          "vram": -2.211664,
+          "ram": -8.740802,
+          "commit": -13.317526
+        },
+        {
+          "gpu": -4.759032,
+          "cpu": -1.072297,
+          "vram": -2.162746,
+          "ram": -7.863269,
+          "commit": -13.711396
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "vram",
+        "ram",
+        "commit"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Average FPS inside noise; Low 1% low +20.39%, 0.1% low +78.71% are observations, not forecast coefficients.",
+        "Both Ultra runs had user-reported freezes; no proven paging/budget cause."
+      ],
+      "held_saved_graphics": {
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 74.57166867581127,
+        "after": 70.33870989331535
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 91.91,
+          "fps_max": 92.93,
+          "fps_change_last_vs_first_percent": -1.0976003443452176,
+          "resource_max_minus_min": {
+            "vram": 0.012902642345580695,
+            "ram": 0.8390401723787271,
+            "commit": 0.6316820960508309
+          }
+        },
+        "after": {
+          "fps_min": 93.71,
+          "fps_max": 94.87,
+          "fps_change_last_vs_first_percent": 1.2378614875680372,
+          "resource_max_minus_min": {
+            "vram": 0.03601530043694634,
+            "ram": 0.03849282890923433,
+            "commit": 0.23781256480513946
+          }
+        }
+      }
+    },
+    {
+      "id": "streets_mode_high",
+      "setting": "Streets lower texture resolution, Texture High",
+      "from": "Off",
+      "to": "On",
+      "workload": "Streets/moving",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 0,
+        "memory": 3
+      },
+      "evidence": "weather_qualified_memory_pattern",
+      "observed_fps_change_percent": 1.449898,
+      "observed_fps_pair_changes_percent": [
+        0.598355,
+        2.310267
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -0.023355,
+        "cpu": 0.704159,
+        "vram": -0.95313,
+        "ram": -2.245936,
+        "commit": -3.325719
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -1.195901,
+          "cpu": 0.355322,
+          "vram": -0.881136,
+          "ram": -1.862509,
+          "commit": -2.704006
+        },
+        {
+          "gpu": 1.149192,
+          "cpu": 1.052995,
+          "vram": -1.025123,
+          "ram": -2.629362,
+          "commit": -3.947432
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "vram",
+        "ram",
+        "commit"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Off/On baseline reused Texture High A2; two profiles include rain.",
+        "Both On lows were worse; no promised stutter gain.",
+        "Do not add to texture-quality changes independently."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 72.87268345031703,
+        "after": 72.84932887829159
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 92.63,
+          "fps_max": 93.59,
+          "fps_change_last_vs_first_percent": -1.0257506143818818,
+          "resource_max_minus_min": {
+            "vram": 0.1434086277836375,
+            "ram": 0.9490233130876078,
+            "commit": 0.12812988459524632
+          }
+        },
+        "after": {
+          "fps_min": 94.15,
+          "fps_max": 94.77,
+          "fps_change_last_vs_first_percent": 0.6585236325013177,
+          "resource_max_minus_min": {
+            "vram": 0.0005786543823456114,
+            "ram": 0.18217065189499948,
+            "commit": 1.1152959080055211
+          }
+        }
+      }
+    },
+    {
+      "id": "streets_on_medium_high",
+      "setting": "Texture Quality, Streets mode On",
+      "from": "High",
+      "to": "Medium",
+      "workload": "Streets/moving",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 0,
+        "memory": 3
+      },
+      "evidence": "cross_series_memory_pattern",
+      "observed_fps_change_percent": 0.873386,
+      "observed_fps_pair_changes_percent": [
+        1.455125,
+        0.295452
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -2.705069,
+        "cpu": -0.631098,
+        "vram": -0.739802,
+        "ram": 0.718428,
+        "commit": -0.203087
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -2.913503,
+          "cpu": -1.265891,
+          "vram": -0.766346,
+          "ram": 0.685611,
+          "commit": -0.913755
+        },
+        {
+          "gpu": -2.496635,
+          "cpu": 0.003694,
+          "vram": -0.713258,
+          "ram": 0.751244,
+          "commit": 0.50758
+        }
+      ],
+      "numeric_resource_seed_fields": [
+        "vram"
+      ],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "High/On controls reused from earlier series; no new contiguous ABBA.",
+        "RAM increased despite lower VRAM; complete override equivalence unsupported."
+      ],
+      "held_saved_graphics": {
+        "SdTarkovStreets": true,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 72.84932887829159,
+        "after": 70.14425967708242
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 94.15,
+          "fps_max": 94.77,
+          "fps_change_last_vs_first_percent": 0.6585236325013177,
+          "resource_max_minus_min": {
+            "vram": 0.0005786543823456114
+          }
+        },
+        "after": {
+          "fps_min": 95.05,
+          "fps_max": 95.52,
+          "fps_change_last_vs_first_percent": -0.4920435510887722,
+          "resource_max_minus_min": {
+            "vram": 0.05250974287740107
+          }
+        }
+      }
+    },
+    {
+      "id": "sharpness_factory",
+      "setting": "Sharpness",
+      "from": "3",
+      "to": "0",
+      "workload": "Factory/static",
+      "observed_load": "gpu_near_saturation",
+      "priority": {
+        "fps": 0,
+        "memory": 0
+      },
+      "evidence": "single_forward_noise",
+      "observed_fps_change_percent": -0.360943,
+      "observed_fps_pair_changes_percent": [
+        -0.360943
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -0.529877,
+        "cpu": 0.161907,
+        "vram": 0.078995,
+        "ram": 1.147345,
+        "commit": 0.104542
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -0.529877,
+          "cpu": 0.161907,
+          "vram": 0.078995,
+          "ram": 1.147345,
+          "commit": 0.104542
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "User stopped before reverse; UI confirmed 0 when saved snapshot still said 3.",
+        "No zero-computation claim; distinct from Reflex latency function."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "OverallVisibility": 400,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "Off",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "Off",
+        "DisableGameFramerateLimit": true,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 98.63052517633308,
+        "after": 98.10064848959578
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 160.69,
+          "fps_max": 160.69,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 160.11,
+          "fps_max": 160.11,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "sharpness_streets",
+      "setting": "Sharpness",
+      "from": "1.5",
+      "to": "0",
+      "workload": "Streets/static",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 0,
+        "memory": 0
+      },
+      "evidence": "single_forward_noise",
+      "observed_fps_change_percent": -0.039002,
+      "observed_fps_pair_changes_percent": [
+        -0.039002
+      ],
+      "numeric_fps_seed_eligible": false,
+      "observed_resource_changes": {
+        "gpu": -0.084585,
+        "cpu": 0.075706,
+        "vram": -0.00833,
+        "ram": -0.346613,
+        "commit": -0.500913
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": -0.084585,
+          "cpu": 0.075706,
+          "vram": -0.00833,
+          "ram": -0.346613,
+          "commit": -0.500913
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "3 run retained as rainy context only."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2,
+        "OverallVisibility": 400,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "Off",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "Off",
+        "DisableGameFramerateLimit": true,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 69.563435991426,
+        "after": 69.47885120225075
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 102.56,
+          "fps_max": 102.56,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 102.52,
+          "fps_max": 102.52,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        }
+      }
+    },
+    {
+      "id": "area_light_instancing",
+      "setting": "Area Light Instancing",
+      "from": "Off",
+      "to": "On",
+      "workload": "Streets/static/day/first_raid",
+      "observed_load": "non_gpu_saturated",
+      "priority": {
+        "fps": 1,
+        "memory": 0
+      },
+      "evidence": "two_On_runs_share_one_dry_Off_control",
+      "observed_fps_change_percent": 3.74627,
+      "observed_fps_pair_changes_percent": [
+        3.447895,
+        4.044646
+      ],
+      "numeric_fps_seed_eligible": true,
+      "observed_resource_changes": {
+        "gpu": 0.768032,
+        "cpu": 1.537115,
+        "vram": -0.036045,
+        "ram": 0.424237,
+        "commit": -0.12616
+      },
+      "observed_resource_pair_changes": [
+        {
+          "gpu": 0.770842,
+          "cpu": 3.103419,
+          "vram": -0.086725,
+          "ram": 1.006022,
+          "commit": -0.56041
+        },
+        {
+          "gpu": 0.765222,
+          "cpu": -0.029189,
+          "vram": 0.014635,
+          "ram": -0.157549,
+          "commit": 0.308089
+        }
+      ],
+      "numeric_resource_seed_fields": [],
+      "first_raid_memory_transfer_verified": false,
+      "limitations": [
+        "Three dry first-raid static captures: On 93.61/94.15 FPS around one Off 90.49 FPS. Mean gain +3.39 FPS / +3.75%; not two independent pairs.",
+        "Use single-primary-pair 5 percentage-point uncertainty margin including zero; both contrasts share the same Off baseline. No dry Off repeat.",
+        "Initial Off 73.10 FPS had light rain in the final approximately 20 seconds and is excluded. Do not assign the mixed-condition +28.06% contrast to the setting.",
+        "On 1% lows 53.94/59.39 vs Off 60.16; On 0.1% lows 37.05/43.48 vs Off 50.74. No demonstrated stability benefit or numeric tail coefficient.",
+        "RAM/commit/VRAM pair directions disagree; CPU reduction does not repeat. No numeric resource seed.",
+        "BSG's user-supplied in-game description states that part of the lighting calculations moves from CPU to GPU, with a moderate performance increase. Build-specific implementation details and hardware-family enable rule remain unverified; moving, GPU-saturated, other-map/hardware effects are unknown.",
+        "New observation in model 0.1.1; keep the frozen 0.1.0 snapshot and original five-setting validation draw unchanged."
+      ],
+      "held_saved_graphics": {
+        "TextureQuality": 2,
+        "SdTarkovStreets": false,
+        "LodBias": 2.5,
+        "OverallVisibility": 1000,
+        "ShadowsQuality": 0,
+        "ShadowDistance": 30,
+        "Ssao": "FastestPerformance",
+        "SSR": "Off",
+        "VolumetricLight": "Low",
+        "AntiAliasing": "TAA_Low",
+        "AnisotropicFiltering": "ForceEnable",
+        "NVidiaReflex": "On",
+        "DisableGameFramerateLimit": false,
+        "GameFramerate": 120,
+        "VSync": false
+      },
+      "observed_mean_gpu_percent": {
+        "before": 73.59618439478743,
+        "after": 74.36421660433902
+      },
+      "observed_same_profile_repeat_spread": {
+        "before": {
+          "fps_min": 90.49,
+          "fps_max": 90.49,
+          "fps_change_last_vs_first_percent": null,
+          "resource_max_minus_min": {}
+        },
+        "after": {
+          "fps_min": 93.61,
+          "fps_max": 94.15,
+          "fps_change_last_vs_first_percent": 0.5768614464266797,
+          "resource_max_minus_min": {
+            "gpu": 0.005620336554187588,
+            "cpu": 3.132607942913456,
+            "vram": 0.10136067982825736,
+            "ram": 1.1635709969825925,
+            "commit": 0.8684996700289815
+          }
+        }
+      }
+    }
+  ],
+  "other_evidence": [
+    {
+      "id": "visibility_1000",
+      "status": "measured_static",
+      "finding": "400/1000/3000 measured; much of observed endpoint cost occurred below 1000. Use private profile values for a matched local forecast, not linear distance interpolation."
+    },
+    {
+      "id": "volumetric_low_and_restart",
+      "status": "diagnostic_context",
+      "finding": "Low repeats drifted +3.51 GiB physical RAM and +3.62 GiB commit. One dry restart control and one rainy control cannot establish a leak or isolated restart benefit."
+    },
+    {
+      "id": "reflex",
+      "status": "inconclusive",
+      "fps_seed": null,
+      "resource_seed": null,
+      "finding": "Off repeats differed -17.23%; On/Off pairs -2.97% and +17.74%, coupled limiter flag. Input latency unmeasured; keep out of FPS/memory coefficients."
+    },
+    {
+      "id": "session_memory",
+      "status": "long_session_context_only",
+      "fps_seed": null,
+      "first_raid_seed": null,
+      "finding": "Raids 1 to 5: occupied physical RAM +2.03 GiB; commit +3.50 GiB; VRAM -0.30 GiB. Later R6 Off RAM rose again. No fixed slope, plateau, leak or failure-raid forecast."
+    },
+    {
+      "id": "automatic_ram_cleaner",
+      "status": "long_session_context_only",
+      "fps_seed": null,
+      "first_raid_seed": null,
+      "finding": "Same raid On-Off RAM +0.09 GiB; next On raid versus prior On RAM -6.02 GiB and commit +0.47 GiB. Retail 47965 native EmptyWorkingSet path is statically evidenced; checkbox/event linkage, runtime success/volume, cause of measured RAM change and repeatable FPS/symptom benefit remain unverified.",
+      "implementation_reference": "automatic-ram-cleaner.md",
+      "implementation_status_by_build": {
+        "retail_1.2.0.0.47965": "Unity 2022.3.43f2 IL2CPP; native EmptyWorkingSet resolution/call and three direct conditional callers evidenced; checkbox/event mapping, complete cleanup chain and runtime success/volume unverified",
+        "local_0.16.9.40087_SPT_4.0.13": "static paths to EmptyWorkingSet evidenced; API success/volume not observed; separate SPT inventory GC patch"
+      }
+    },
+    {
+      "id": "shadows_woods",
+      "status": "unpaired_baseline",
+      "fps_seed": null,
+      "finding": "Sunny Low only; Ultra preparation cloudy and not captured. Never compare Woods Low to Factory Ultra as a setting effect."
+    }
+  ],
+  "unmeasured": [
+    "Cloud Quality",
+    "Grass Shadows",
+    "PostFX",
+    "resolution/render scale",
+    "DLSS/FSR modes",
+    "Only Physical Cores",
+    "Screen Mode",
+    "other effects and performance-related Game options",
+    "intermediate HBAO/SSR levels",
+    "Volumetric Medium/High",
+    "other AA modes",
+    "Texture Ultra/Low with Streets mode On",
+    "independent ShadowDistance effect"
+  ],
+  "additional_measured_profile_nodes": {
+    "visibility_static": {
+      "scope": "Streets/static/fog/LOD2; 400 return in new raid",
+      "nodes": [
+        {
+          "level": 400,
+          "observed": {
+            "fps": 67.3,
+            "gpu": 57.15555856411903,
+            "cpu": 28.205658449108363,
+            "vram": 7.056094999156564,
+            "ram": 24.91487463874146,
+            "commit": 41.05477478781869
+          }
+        },
+        {
+          "level": 1000,
+          "observed": {
+            "fps": 62.885000000000005,
+            "gpu": 53.8822751344523,
+            "cpu": 27.633030678664475,
+            "vram": 7.139905799232517,
+            "ram": 23.78317922069177,
+            "commit": 41.04479999265925
+          }
+        },
+        {
+          "level": 3000,
+          "observed": {
+            "fps": 62.879999999999995,
+            "gpu": 53.857341490537614,
+            "cpu": 27.646737000086716,
+            "vram": 7.133262312260241,
+            "ram": 24.853225391323985,
+            "commit": 41.09433323751345
+          }
+        }
+      ],
+      "resource_coefficient_eligible": false
+    },
+    "volumetric_static": {
+      "scope": "Streets/static/night/flashlight; source response unconfirmed; session drift",
+      "nodes": [
+        {
+          "level": "Off",
+          "observed": {
+            "fps": 78.955,
+            "gpu": 65.81484596707665,
+            "cpu": 29.297574582977333,
+            "vram": 7.051975005082643,
+            "ram": 26.26670998625641,
+            "commit": 39.11876875158573
+          }
+        },
+        {
+          "level": "Low",
+          "observed": {
+            "fps": 79.46000000000001,
+            "gpu": 68.96243524276898,
+            "cpu": 29.461925327733255,
+            "vram": 7.273283330821618,
+            "ram": 25.40658192062204,
+            "commit": 38.87665972890977
+          }
+        },
+        {
+          "level": "Ultra",
+          "observed": {
+            "fps": 78.245,
+            "gpu": 78.10465909148573,
+            "cpu": 29.83052558086929,
+            "vram": 7.108850335498165,
+            "ram": 26.26520023895981,
+            "commit": 38.89937605068313
+          }
+        }
+      ],
+      "fps_coefficient_eligible": false,
+      "resource_coefficient_eligible": false
+    },
+    "texture_four_level_context": {
+      "scope": "Separate High/Medium and Ultra/Low series; weather/session qualifications; not a controlled full curve",
+      "nodes": [
+        {
+          "level": "Ultra",
+          "observed": {
+            "fps": 92.42,
+            "vram": 7.704682,
+            "ram": 29.908014,
+            "commit": 48.060536
+          }
+        },
+        {
+          "level": "High",
+          "observed": {
+            "fps": 93.135,
+            "vram": 7.095812,
+            "ram": 25.096332,
+            "commit": 37.779486
+          }
+        },
+        {
+          "level": "Medium",
+          "observed": {
+            "fps": 94.28,
+            "vram": 6.203874,
+            "ram": 22.738554,
+            "commit": 34.395744
+          }
+        },
+        {
+          "level": "Low",
+          "observed": {
+            "fps": 94.29,
+            "vram": 5.517477,
+            "ram": 21.605978,
+            "commit": 34.546076
+          }
+        }
+      ],
+      "resource_coefficient_eligible": false
+    }
+  }
+}

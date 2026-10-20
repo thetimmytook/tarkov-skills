@@ -2,8 +2,28 @@
 
 This is the release checklist for publishing the repository's four skills in the universal OpenAI Plugins Directory. The intended submission type is **Skills only**. The ChatGPT plugin has no MCP server and does not execute the Windows Toolkit locally.
 
+## Submission Availability — 2026-10-20
+
+New OpenAI directory submission is deferred for this project. The publisher
+reported the notice: "We are not accepting more skills-only submissions at this
+time." Reconfirm acceptance in the publisher's portal before attempting submission.
+
+The public [plugin guidelines](https://developers.openai.com/plugins/plugin-guidelines)
+and submission pages fetched on 2026-10-20 still describe skills-only plugins;
+the guidelines mention additional eligibility requirements, but the fetched text
+did not reproduce the reported notice. Keep the publisher's observation separate
+from a verified universal policy or any rule for updating existing listings.
+Do not infer eligibility from the existence of the documented package format.
+
+Keep building and validating the OpenAI-format ZIP as a candidate artifact, not
+as proof that a new listing can be submitted or approved. GitHub skills releases
+and the separate Claude publication process do not depend on OpenAI acceptance.
+Do not add an MCP server merely to work around a skills-only intake restriction.
+The conditional checklist below is retained for when submission is available.
+
 Official references:
 
+- [Plugin guidelines](https://developers.openai.com/plugins/plugin-guidelines)
 - [Submit a Claude Code plugin to OpenAI](https://developers.openai.com/plugins/guides/submit-claude-plugin)
 - [Submit plugins](https://developers.openai.com/plugins/deploy/submission)
 
@@ -16,6 +36,7 @@ Official references:
 
 ## Before Submission
 
+- [ ] Confirm that the portal currently accepts a new skills-only submission for the publisher. If intake is paused or eligibility is unclear, keep submission deferred; ZIP validation is not an eligibility check.
 - [ ] Raise `.claude-plugin/plugin.json` to the intended stable version in the release PR and merge it to `main`. The product-release workflow creates the matching `skills-v<version>` tag and GitHub Release after validation.
 - [ ] Run `build/sync-skills.ps1` and confirm all vendored references are current.
 - [ ] Review every `SKILL.md` and bundled reference for provider-neutral language and a complete web/manual path.
@@ -88,6 +109,9 @@ OpenAI requires at least five positive and three negative test cases. Each porta
 
 ## Portal Submission
 
+Deferred pending the availability check above. Do not treat these retained steps
+as confirmation that new skills-only submissions are currently accepted.
+
 - [ ] Open the [plugin submission portal](https://platform.openai.com/plugins) and select the ZIP upload action.
 - [ ] Upload the final submission ZIP. The unified upload flow detects the skills-only package from `.codex-plugin/plugin.json`; do not add an MCP server.
 - [ ] Review the generated `.codex-plugin/plugin.json` and all normalized metadata.
@@ -98,6 +122,7 @@ OpenAI requires at least five positive and three negative test cases. Each porta
 
 ## After Approval
 
+- Deferred follow-up after the current publication: implement the [local AI behavior evaluations](local-ai-evaluations-plan.md). Run them locally by explicit invocation; do not add them to CI or release/publication gates.
 - [ ] Publish the approved version from the portal; approval alone does not make it public.
 - [ ] Install it from ChatGPT web's **Plugins** directory using a non-developer account.
 - [ ] Start a clean chat, invoke each skill with `@`, and rerun the positive and negative web cases.

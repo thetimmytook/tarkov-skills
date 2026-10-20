@@ -1,11 +1,20 @@
 ---
 name: tarkov-config
-description: Analyze Escape from Tarkov graphics configuration and Windows performance context, or guide optional first-time Game-tab setup, without changing game files. Use for FPS expectations, stutter risks, visibility tradeoffs, or a saved performance goal; prefer the signed Toolkit for collection and support transparent manual review when it is unavailable.
+description: Analyze Escape from Tarkov graphics configuration and Windows performance context, explain settings with visual comparisons, or guide optional first-time Game-tab setup, without changing game files. Use for FPS expectations, memory-related crash or stutter risks, visibility tradeoffs, or a saved performance goal; prefer the signed Toolkit for collection and support transparent manual review when it is unavailable.
 ---
 
 # Tarkov Config
 
 Analyze settings and system readiness in read-only mode. Never edit EFT files or promise a specific FPS.
+
+## Settings Help
+
+For explanations, visual tradeoffs or a requested manual graphics starting route,
+use `references/settings-help.md`. A help-only request needs no Toolkit, running
+game or capture. Show relevant published comparisons and distinguish stills from
+moving examples; honor a still-images-only request. Preserve preferences and use
+`references/settings-evidence-guide.md` for evidence limits. Continue to collection
+below when the user wants analysis of their system or a measured change.
 
 ## Optional First-Time Setup
 
@@ -38,8 +47,13 @@ In web/manual mode, keep the goal in the conversation when the local command can
 
 - For performance analysis, use only `Graphics.ini`, `PostFx.ini`, and graphically relevant `Game.ini` data. The optional Game-tab profile is separate manual guidance; ignore Controls/Sound settings in both paths.
 - Consider CPU, GPU/VRAM, RAM, game-drive media, pagefile size/media, resolution, and driver version.
+- For crashes, deterioration after several raids or little first-raid memory headroom, use `references/session-stability.md`. Consider later-session risk and offer lower-memory settings or a provisional symptom-based restart schedule; do not certify stability from a clean run alone.
 - Suggest only changes that are not already applied.
-- If measured performance is at least 15% below a relevant expectation, switch from ordinary graphics tuning to diagnostics such as throttling, power, RAM configuration, storage, drivers, overlays, and local PvE load.
+- For a full settings review, use `references/settings-help.md` for plain descriptions/comparisons and `references/settings-evidence-guide.md` for evidence limits; distinguish measured effects from mechanisms and preferences. Unknown costs are not zero, and a review does not require testing every option.
+- For a ranked recommendation or FPS/resource forecast, use `references/graphics-response-model.md` and its aggregate priors. Priority points choose the next useful test; they do not convert into FPS. Give conditional ranges from a comparable measured baseline, preserve unknowns, and keep user captures/calibration outside the skill bundle.
+- When supplied before/after evidence reveals an interesting model deviation or coverage gap, use `references/model-feedback.md` to proactively draft an optional issue and offer a reviewed evidence package for the user to submit manually. A first forecast miss on another system alone is not atypical.
+- For Automatic RAM Cleaner behavior, use `references/automatic-ram-cleaner.md`; retail has a confirmed native trim path but unknown checkbox/event linkage. Keep older local/SPT named events and system-memory observations separate.
+- Verify build/map/AI/server context, resolution, caps, settings and session comparability before using a baseline. A shortfall of at least 15% against a relevant expectation triggers diagnostics; a transferred provisional prior alone does not establish that expectation or a hardware fault.
 - Treat driver currency as a manual check against the GPU vendor's official page.
 
 Use the readiness display and response conventions in `references/configuration-rules.md`. Apply thresholds from `references/measurement-rules.md`.
