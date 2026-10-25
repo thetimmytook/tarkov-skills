@@ -1,0 +1,302 @@
+{
+  "suite_version": "0.1.0",
+  "evaluator_only": true,
+  "rubrics": [
+    {
+      "id": "opt-01",
+      "expected_meaning": "Inspect the setup, distinguish menu data from raid evidence, and make a current 120-second baseline the sole immediate tuning action. The elevated LOD is a possible subsequent test, not a measured diagnosis.",
+      "required": [
+        {
+          "id": "opt-01-r1",
+          "meaning": "Read the available mocked setup/goal, or use equivalent already-provided inspection; do not pretend that menu RAM availability is raid headroom.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-r2",
+          "meaning": "State that current in-raid FPS, lows, load and memory peaks are unknown.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-r3",
+          "meaning": "Prioritize baseline collection after entering the problem map and explicit readiness, preserving existing settings for that baseline.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-r4",
+          "meaning": "Present any LOD, texture or DLSS suggestions as conditional candidates; select a later change using measured constraints.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-01-p1",
+          "meaning": "Prescribe lowering High textures just because the machine has 8 GiB VRAM/32 GiB RAM.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-p2",
+          "meaning": "Prescribe enabling DLSS as the immediate fix without in-raid GPU evidence.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-p3",
+          "meaning": "Give a mandatory multi-setting checklist before recording the unchanged baseline.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-p4",
+          "meaning": "Run a capture while the mock is outside a raid or without readiness.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-01-p5",
+          "meaning": "Turn normal tuning into required warmup/preparation raids.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Ask for readiness in the problem raid for an unchanged-settings baseline.",
+      "acceptable_variants": [
+        "It is acceptable to briefly identify LOD 3.5 as a plausible later candidate.",
+        "A future conditional DLSS suggestion is not a failure; treating it as necessary now is."
+      ],
+      "objective_checks": []
+    },
+    {
+      "id": "opt-02",
+      "expected_meaning": "Use the existing baseline to choose a relevant GPU-work reduction while preserving healthy texture-memory headroom. DLSS is a valid conditional candidate here.",
+      "required": [
+        {
+          "id": "opt-02-r1",
+          "meaning": "Recognize sustained high GPU load with the effective cap removed as evidence supporting a GPU-sensitive test, not a CPU-model diagnosis.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-02-r2",
+          "meaning": "Use the supplied baseline rather than automatically repeat it.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-02-r3",
+          "meaning": "Choose one useful GPU-related group and explain the quality tradeoff.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-02-r4",
+          "meaning": "Treat High textures as a preference with available memory headroom, not an automatic downgrade.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-02-p1",
+          "meaning": "Ban DLSS categorically because the opt-01 regression exists.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-02-p2",
+          "meaning": "Automatically reduce textures to fix an unobserved memory problem.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-02-p3",
+          "meaning": "Promise an exact FPS gain from a transferred prior or numeric low-percentile forecasts.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Offer one manual change and a comparable after-run after readiness.",
+      "acceptable_variants": [
+        "An available DLSS Quality trial can pass.",
+        "A supported HBAO, shadow, AA or other relevant single GPU-load test can pass if tied to the actual settings and goal."
+      ],
+      "objective_checks": []
+    },
+    {
+      "id": "opt-03",
+      "expected_meaning": "Prioritize the observed headroom and freeze problem over average FPS; test the joint texture/Streets memory group without claiming the cause is proved.",
+      "required": [
+        {
+          "id": "opt-03-r1",
+          "meaning": "Compare physical RAM availability, used commit versus limit and GPU memory separately.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-r2",
+          "meaning": "Explain why acceptable average FPS does not settle the stutter goal.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-r3",
+          "meaning": "Choose one texture/Streets-mode test with an image-quality tradeoff and compare lows/symptoms.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-r4",
+          "meaning": "Qualify the whole-system/adapter scope and reserve for later-session growth.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-03-p1",
+          "meaning": "Lead with DLSS as a guaranteed memory/stutter cure.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-p2",
+          "meaning": "Treat shared GPU memory alone as proof of harmful paging or a crash.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-p3",
+          "meaning": "Promise that Streets mode will consistently improve stutters.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-03-p4",
+          "meaning": "Treat 64 GiB combined capacity as guaranteed sufficient.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Try a lower-memory joint texture profile, then compare one matched run and symptoms.",
+      "acceptable_variants": [
+        "High -> Medium with Streets mode fixed is valid.",
+        "High with a separate Streets-mode On test is valid if repeatable symptom benefit is not promised."
+      ],
+      "objective_checks": []
+    },
+    {
+      "id": "opt-04",
+      "expected_meaning": "The probe gives little evidence that reducing GPU rendering work will improve FPS here. Check other limits and select a relevant test rather than deliberately load the GPU.",
+      "required": [
+        {
+          "id": "opt-04-r1",
+          "meaning": "Explain that almost-flat FPS after reducing internal resolution suggests a non-GPU limit in that scene, while not identifying its exact cause.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-04-r2",
+          "meaning": "Do not exclude a CPU/main-thread limit from 28% total CPU use.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-04-r3",
+          "meaning": "Use LOD or targeted diagnostics only as a supported next hypothesis, preserving uncertainty.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-04-p1",
+          "meaning": "Guarantee DLSS will improve FPS in this scene.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-04-p2",
+          "meaning": "Classify the whole PC as permanently CPU-bound from its CPU model.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-04-p3",
+          "meaning": "Advise raising arbitrary GPU load as a general FPS fix.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-04-p4",
+          "meaning": "Assert that the probe proved a specific engine thread or LOD mechanism.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Choose one relevant non-resolution test or focused diagnostic check.",
+      "acceptable_variants": [
+        "LOD can be selected as a hypothesis.",
+        "A narrower check of unresolved limits can precede a setting change."
+      ],
+      "objective_checks": []
+    },
+    {
+      "id": "opt-05",
+      "expected_meaning": "Explain the observed 60-FPS ceiling before sacrificing visual quality. Saved/disabled menu fields do not determine the active cap.",
+      "required": [
+        {
+          "id": "opt-05-r1",
+          "meaning": "Recognize the supplied effective 60-FPS limit as the first constraint for a 90-FPS goal.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-05-r2",
+          "meaning": "Distinguish the UI's disabled state from the observed effective cap.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-05-r3",
+          "meaning": "Propose a manual cap/Reflex-state check while keeping other graphics settings fixed.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-05-p1",
+          "meaning": "Start by lowering textures, AA or LOD to cross an active 60-FPS cap.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-05-p2",
+          "meaning": "Promise 90 FPS merely by removing the cap.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-05-p3",
+          "meaning": "Silently change Reflex or other settings.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Check/remove the intended cap manually, then obtain a useful uncapped baseline if needed.",
+      "acceptable_variants": [],
+      "objective_checks": []
+    },
+    {
+      "id": "opt-06",
+      "expected_meaning": "Reuse the just-completed compatible baseline and choose one change without spending another capture on unchanged state.",
+      "required": [
+        {
+          "id": "opt-06-r1",
+          "meaning": "Accept the current comparable baseline unless a specific missing fact can change the decision.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-06-r2",
+          "meaning": "Select one useful manual group and state conditional expected direction/range or explicit unknowns before its after-run.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-06-r3",
+          "meaning": "Keep assumptions and current quality goal visible; obtain readiness only for the next capture.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "opt-06-p1",
+          "meaning": "Demand a new baseline merely because a new message began.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-06-p2",
+          "meaning": "Require a full graphics sweep or multiple preparation raids.",
+          "severity": "required"
+        },
+        {
+          "id": "opt-06-p3",
+          "meaning": "Claim the baseline calibrates all setting sensitivities.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Proceed to one manual candidate and a comparable after-run.",
+      "acceptable_variants": [
+        "A brief verification of saved settings/context is allowed.",
+        "No single setting choice is mandatory if the candidate is evidence-based."
+      ],
+      "objective_checks": []
+    }
+  ]
+}

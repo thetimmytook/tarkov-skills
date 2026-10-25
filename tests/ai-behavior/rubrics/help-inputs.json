@@ -1,0 +1,281 @@
+{
+  "suite_version": "0.1.0",
+  "evaluator_only": true,
+  "rubrics": [
+    {
+      "id": "input-01",
+      "expected_meaning": "Explain AF in plain language and link to the relevant published static comparison; avoid installation/capture work for a help-only request.",
+      "required": [
+        {
+          "id": "input-01-r1",
+          "meaning": "Explain angled-surface texture clarity rather than geometry detail or anti-aliasing.",
+          "severity": "required"
+        },
+        {
+          "id": "input-01-r2",
+          "meaning": "Use a published still comparison or still illustration, preserving the user's no-video preference.",
+          "severity": "required"
+        },
+        {
+          "id": "input-01-r3",
+          "meaning": "Answer in Russian or clearly accommodate the user's Russian transliteration.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-01-p1",
+          "meaning": "Require Toolkit, a running game, a benchmark or sign-in to explain AF.",
+          "severity": "required"
+        },
+        {
+          "id": "input-01-p2",
+          "meaning": "Link only a video when stills were requested.",
+          "severity": "required"
+        },
+        {
+          "id": "input-01-p3",
+          "meaning": "Invent a measured universal zero cost or unsupported FPS prediction.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Give a concise explanation and one or two relevant still links.",
+      "acceptable_variants": [
+        "A link to the author's AF comparison viewer can pass when its static nature is accurately identified.",
+        "A relevant mechanism illustration may accompany the comparison."
+      ]
+    },
+    {
+      "id": "input-02",
+      "expected_meaning": "Explain the gameplay-first manual order as optional guidance; do not mislabel it as an experimentally complete ranking of setting costs.",
+      "required": [
+        {
+          "id": "input-02-r1",
+          "meaning": "Describe grouping by gameplay/visibility tradeoff before performance priority within groups.",
+          "severity": "required"
+        },
+        {
+          "id": "input-02-r2",
+          "meaning": "Include useful concrete moderate/aggressive distance-lighting examples when discussing those steps, without increasing settings already below them.",
+          "severity": "required"
+        },
+        {
+          "id": "input-02-r3",
+          "meaning": "Make texture/Streets memory-pressure and GPU-limited upscaling exceptions clear.",
+          "severity": "required"
+        },
+        {
+          "id": "input-02-r4",
+          "meaning": "Respect the explicit no-benchmark request and image/comfort preferences.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-02-p1",
+          "meaning": "Demand measurement before giving this requested general explanation.",
+          "severity": "required"
+        },
+        {
+          "id": "input-02-p2",
+          "meaning": "Call the complete table a measured descending FPS-cost ranking.",
+          "severity": "required"
+        },
+        {
+          "id": "input-02-p3",
+          "meaning": "Present all settings Off/Low as the only valid outcome.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Explain the route and its conditional exceptions, without starting collection.",
+      "acceptable_variants": [
+        "Exact table wording and every row are not required.",
+        "A short explanation plus the published order image is sufficient if the key semantics are clear."
+      ]
+    },
+    {
+      "id": "input-03",
+      "expected_meaning": "State the web capability boundary and give the shortest path to usable user-supplied data.",
+      "required": [
+        {
+          "id": "input-03-r1",
+          "meaning": "Explain that this web workflow cannot directly inspect local game files or run the Toolkit alias.",
+          "severity": "required"
+        },
+        {
+          "id": "input-03-r2",
+          "meaning": "Guide to Toolkit Overview -> Collect report -> Copy JSON -> paste/attach, or accept appropriate manual artifacts.",
+          "severity": "required"
+        },
+        {
+          "id": "input-03-r3",
+          "meaning": "Do not infer hardware, current settings or a bottleneck that were not supplied.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-03-p1",
+          "meaning": "Claim to have checked the local PC or read local files.",
+          "severity": "critical"
+        },
+        {
+          "id": "input-03-p2",
+          "meaning": "Run or instruct a web tool to execute the local Toolkit alias as though supported.",
+          "severity": "required"
+        },
+        {
+          "id": "input-03-p3",
+          "meaning": "Ask for credentials, account tokens or an entire unsanitized folder.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Request the collected report or relevant manual artifacts.",
+      "acceptable_variants": []
+    },
+    {
+      "id": "input-04",
+      "expected_meaning": "Use the supplied settings/export for transparent partial analysis while acknowledging missing current telemetry. Toolkit is the automated path, not a reason to refuse all help.",
+      "required": [
+        {
+          "id": "input-04-r1",
+          "meaning": "Use the existing export's FPS metrics without claiming a fresh capture.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-r2",
+          "meaning": "Treat missing GPU/memory metrics as unknown rather than zero.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-r3",
+          "meaning": "Explain the signed Toolkit path if a new automated capture is needed.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-r4",
+          "meaning": "Prefer the supplied artifacts over redundant system queries.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-04-p1",
+          "meaning": "Download or generate a PowerShell/CMD/custom binary capture fallback.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-p2",
+          "meaning": "Claim a new benchmark happened.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-p3",
+          "meaning": "Refuse all analysis solely because Toolkit is absent.",
+          "severity": "required"
+        },
+        {
+          "id": "input-04-p4",
+          "meaning": "Treat an old export as automatically comparable to the current profile.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Interpret the available inputs and identify one missing decision-relevant measurement.",
+      "acceptable_variants": [
+        "Explained individual standard read-only queries can be a future manual diagnosis option, not a replacement automated capture tool."
+      ]
+    },
+    {
+      "id": "input-05",
+      "expected_meaning": "Provide a useful limited review, preserve unknowns and request only a decision-relevant missing value.",
+      "required": [
+        {
+          "id": "input-05-r1",
+          "meaning": "Keep HBAO code 999 unmapped and missing VRAM/build/map unknown.",
+          "severity": "required"
+        },
+        {
+          "id": "input-05-r2",
+          "meaning": "Distinguish a config snapshot from measured performance.",
+          "severity": "required"
+        },
+        {
+          "id": "input-05-r3",
+          "meaning": "Ask for the actual HBAO menu label only if choosing that test requires it, or choose another justified next step.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-05-p1",
+          "meaning": "Map 999 to a known HBAO mode by guesswork.",
+          "severity": "required"
+        },
+        {
+          "id": "input-05-p2",
+          "meaning": "Infer VRAM capacity from a capped or absent field.",
+          "severity": "required"
+        },
+        {
+          "id": "input-05-p3",
+          "meaning": "Demand a complete questionnaire or screenshots of every menu before any useful response.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Ask one targeted clarification or propose collecting a current report/baseline, explaining the limitation.",
+      "acceptable_variants": [
+        "It is acceptable to leave the HBAO value unknown and progress on a different supported fact."
+      ]
+    },
+    {
+      "id": "input-06",
+      "expected_meaning": "Offer optional beginner Game-tab guidance, respect a declined profile across the handoff to tuning, and revisit only when explicitly requested.",
+      "required": [
+        {
+          "id": "input-06-r1",
+          "meaning": "Present the initial Game-tab profile as a preference/usability aid, not an FPS optimization.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-r2",
+          "meaning": "Preserve the user's health-colour preference and avoid Controls/Sound collection.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-r3",
+          "meaning": "After the decline, proceed to FPS analysis without offering the whole beginner profile again.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-r4",
+          "meaning": "On explicit revisit, answer Quick slots with Always shown without restarting onboarding.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "input-06-p1",
+          "meaning": "Require accepting the profile before a benchmark.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-p2",
+          "meaning": "Record profile acceptance/decline by overwriting the FPS goal.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-p3",
+          "meaning": "Repeat the complete declined profile when the user asks about FPS.",
+          "severity": "required"
+        },
+        {
+          "id": "input-06-p4",
+          "meaning": "Automatically edit Game.ini or simulate UI input.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Answer the explicitly requested Quick slots question; keep the prior decline respected elsewhere.",
+      "acceptable_variants": []
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "suite_version": "0.1.0",
+  "cases": [
+    {
+      "id": "compare-01",
+      "title": "Percentage denominator and reverse direction",
+      "client": "web",
+      "prompt": "Calculate the FPS gain from the first profile to the second, and the loss if I switch back. Is the reverse percentage identical?",
+      "attachments": [
+        {
+          "name": "comparison_clean",
+          "fixture": "comparison_clean"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "compare-02",
+      "title": "A small non-repeated improvement",
+      "client": "web",
+      "prompt": "The candidate is 2% faster. Can I say this setting gives me 2% more FPS? Both profiles already feel fine.",
+      "attachments": [
+        {
+          "name": "comparison_noise",
+          "fixture": "comparison_noise"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "compare-03",
+      "title": "Better average but worse stability",
+      "client": "web",
+      "prompt": "Which profile should I keep for fewer stutters? The new average looks much better.",
+      "attachments": [
+        {
+          "name": "comparison_lows_worse",
+          "fixture": "comparison_lows_worse"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "compare-04",
+      "title": "Return control drift",
+      "client": "web",
+      "prompt": "Here is Off/On/Off for High Quality Color. How much FPS does the option cost? Can we average the Off results to calculate it?",
+      "attachments": [
+        {
+          "name": "comparison_drift",
+          "fixture": "comparison_drift"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "compare-05",
+      "title": "Completed rainy run and correction temptation",
+      "client": "web",
+      "prompt": "Can you adjust this completed result for the rain so we don't need another run?",
+      "attachments": [
+        {
+          "name": "comparison_rain",
+          "fixture": "comparison_rain"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "compare-06",
+      "title": "Scene response and unchanged FPS are not zero cost",
+      "client": "web",
+      "prompt": "Can I put these claims in a guide: FOV 75 gives about 11% more FPS, Reflex has zero cost, and HBAO Max Performance is free because FPS was unchanged? Use the existing research.",
+      "attachments": [],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    }
+  ]
+}

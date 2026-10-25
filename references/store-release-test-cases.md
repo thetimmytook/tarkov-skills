@@ -143,3 +143,35 @@ and Toolkit `1.0.2.0`:
 - These are user-confirmed installed-package observations, not isolated WPF test results
   or certification of every supported Windows version. Raw captures, account details and
   generated test reports are not versioned.
+
+Recorded on October 19, 2026, against installed closed-flight Benchmark `1.1.0.0`
+and Toolkit `1.1.0.0` on Windows 10:
+
+- Installed-package metadata confirmed both versions. The signed Toolkit alias passed
+  all 11 executed read-only smoke cases, including signature/architecture, JSON/privacy,
+  Goal consistency and unchanged GUI process counts. No live CLI capture or Goal write
+  was performed by that smoke run.
+- The user confirmed existing history remained available in both products after update.
+- In each GUI host, the user completed a two-minute capture, closed Tarkov before saving,
+  then saved successfully with exactly one additional run.
+- The supplied Toolkit Copy results contained one completed run from version `1.1.0`.
+  Its FPS window was 119.989 seconds and telemetry window 119.98912 seconds; all 30
+  sampled metrics passed range/coverage/metadata consistency checks. CPU included all
+  16 logical processors, GPU utilization used NVAPI with whole-adapter scope, and
+  resource coverage was 98.85-99.17%. RAM, dedicated/shared GPU memory, pagefile and
+  commit remained separate; submission was false. No private paths or device/process
+  identifiers were found in this supplied export. Raw data is not versioned.
+- In both standalone Benchmark and Toolkit's Benchmark tab, the user separately
+  cancelled an active capture and closed Tarkov during another incomplete capture.
+  All four scenarios were confirmed successful against the expected discarded result,
+  unchanged run count and absence of a Save dialog.
+- The user reported a successful capture on the AMD tester's computer without group
+  setup or a UAC prompt, and accepted this outcome as successful for now. Record the
+  ordinary capture path as a user-confirmed pass; no new AMD export or diagnostic log
+  was supplied with this confirmation.
+- The native UAC/helper path in both signed hosts was not exercised by these ordinary
+  captures and remains a separate unverified case. The local developer account already
+  has ETW access, including previously observed inheritance through INTERACTIVE;
+  removing only a direct user membership does not establish an access-denied test.
+  No group membership was changed in these checks. These observations do not claim
+  ETW-session inspection or completion of the full permission matrix.

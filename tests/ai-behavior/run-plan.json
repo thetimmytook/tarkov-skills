@@ -1,0 +1,108 @@
+{
+  "suite_version": "0.1.0",
+  "execution_status": "initial_evaluation_completed_2026-10-25",
+  "launch_authorized": true,
+  "authorization_scope": "Developer explicitly requested this local run; future launches still require explicit invocation and --run.",
+  "actual_initial_scope": {
+    "full_repetitions_per_profile": 1,
+    "additional_simple_repetitions": 2,
+    "additional_simple_case_ids": ["opt-01", "quality-05", "input-01", "capture-01", "capture-02", "memory-06"],
+    "native_skill_selection": "not_run",
+    "production_skill_changes": false
+  },
+  "profiles": [
+    {
+      "id": "simple",
+      "tier": "least-capable",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed"
+    },
+    {
+      "id": "medium",
+      "tier": "midrange",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed_control"
+    },
+    {
+      "id": "high",
+      "tier": "strong-control",
+      "provider": null,
+      "model": null,
+      "reasoning_effort": null,
+      "client_version": null,
+      "status": "not_selected"
+    }
+  ],
+  "phases": [
+    {
+      "id": "smoke",
+      "case_ids": [
+        "opt-01",
+        "opt-02",
+        "opt-03",
+        "quality-01",
+        "quality-02",
+        "input-01",
+        "capture-01",
+        "capture-02",
+        "memory-03",
+        "memory-06"
+      ],
+      "planned_repetitions": 1,
+      "enabled": true
+    },
+    {
+      "id": "full",
+      "case_ids": "all 36",
+      "planned_repetitions": 3,
+      "enabled": true
+    }
+  ],
+  "adapter": {
+    "implementation": "run.mjs and rpc-client.mjs; local Codex app-server dynamic mock tools",
+    "tools": "mock_only",
+    "network_tools_for_tested_model": false,
+    "inference_requires_online_service": true,
+    "native_resource_discovery": "Built-in empty read-only discovery may appear; configured MCP server inventory must be empty.",
+    "native_selection_tested": false,
+    "fresh_process_per_case": true
+  },
+  "record": [
+    "exact_model_identifier",
+    "provider",
+    "client_and_adapter_version",
+    "skill_file_hashes",
+    "suite_hash",
+    "reasoning_and_generation_settings",
+    "evaluation_mode",
+    "repetition",
+    "user_visible_transcript",
+    "public_tool_events",
+    "loaded_references",
+    "criterion_scores",
+    "unnecessary_questions",
+    "proposed_captures",
+    "performed_mock_captures",
+    "preparation_raids",
+    "input_output_tokens",
+    "known_cost",
+    "wall_time"
+  ],
+  "report_dimensions": [
+    "optimization",
+    "quality",
+    "help-inputs",
+    "comparisons",
+    "capture",
+    "memory-boundaries",
+    "critical_failures",
+    "not_observable_checks"
+  ],
+  "no_support_claim_before_measurement": true
+}

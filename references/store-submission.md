@@ -175,3 +175,23 @@ Creating a Microsoft Entra tenant does not associate it with the Windows develop
 Create both GitHub Environments with required reviewers. Store these secrets separately in each Environment: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. Store `BENCHMARK_STORE_FLIGHT_ID` and `TOOLKIT_STORE_FLIGHT_ID` as variables on `microsoft-store-flight`. The personal Store test account is unrelated to these CI credentials: add its Microsoft-account email to a known-user group and attach that group to one package flight per product.
 
 Before approving a flight submission, the Academy owner must confirm that `https://timmy.academy/api/bench/v1` implements the deployed desktop contracts: Clerk authorization/token/revocation, authenticated `GET /me/runs/by-client-id/{clientRunId}`, authenticated `POST /me/runs`, anonymous grouped run browsing, and cohort comparison. Local API evidence does not satisfy this gate. Never put Clerk tokens, Partner Center secrets, the personal test email, or API response bodies in workflow configuration or logs.
+
+### Deferred Maintenance: Node.js 24 Action Runtimes (2026-10-19)
+
+Production promotion run `39249996418`, Toolkit validate job `118051228724`,
+reported that `actions/setup-node@v4` targets Node.js 20 and is being forced to
+run on Node.js 24. The workflow's `node-version: '24'` selects Node for repository
+scripts; it does not change the runtime declared by the setup action itself.
+
+After the current release finishes, update `actions/setup-node@v4` to a verified
+Node.js 24-based action version in `.github/workflows/ci.yml`,
+`.github/workflows/store-build.yml`, and
+`.github/actions/receive-store-artifact/action.yml`. Upstream `setup-node@v6`
+declares `runs.using: node24`; recheck its runner requirements and input/cache
+behavior before implementation, and audit other actions and nested dependencies.
+Run actionlint and the release-provenance tests, then confirm the warning is gone
+in a validation-only run. This is future maintenance: keep the current Store
+promotion and its source commit unchanged.
+
+References: [setup-node v4 runtime](https://github.com/actions/setup-node/blob/v4/action.yml)
+and [setup-node v6 runtime](https://github.com/actions/setup-node/blob/v6/action.yml).

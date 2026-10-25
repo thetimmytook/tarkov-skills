@@ -1,0 +1,266 @@
+{
+  "suite_version": "0.1.0",
+  "evaluator_only": true,
+  "rubrics": [
+    {
+      "id": "quality-01",
+      "expected_meaning": "Optimize toward the user's quality goal rather than reflexively lower settings. Spend headroom on one relevant image-quality improvement and verify the FPS/stutter tradeoff.",
+      "required": [
+        {
+          "id": "quality-01-r1",
+          "meaning": "Recognize that the goal is clearer graphics with a 60-FPS floor, not maximum FPS.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-01-r2",
+          "meaning": "Use the provided baseline/headroom rather than demand an identical new baseline.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-01-r3",
+          "meaning": "Select a relevant available quality improvement, preserve preferences, and plan one comparable after-run.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-01-r4",
+          "meaning": "Keep memory reserve and low percentiles in the decision; describe transferred cost estimates as conditional.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-01-p1",
+          "meaning": "Lower LOD/textures as the main action despite spare performance and the user's quality goal.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-01-p2",
+          "meaning": "Enable every expensive option at once or assume all Ultra is safe.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-01-p3",
+          "meaning": "Promise exact FPS/1% lows after a quality change.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Test one useful quality setting and keep it only if the goal and symptoms remain acceptable.",
+      "acceptable_variants": [
+        "AF On, an AA comparison, or Medium -> High textures can each pass when tied to clearer surfaces/edges.",
+        "The exact first setting is not a golden answer."
+      ]
+    },
+    {
+      "id": "quality-02",
+      "expected_meaning": "Expose the conflict between the current below-target run and a request to raise quality; do not silently abandon stable 60 or claim quality increases are free.",
+      "required": [
+        {
+          "id": "quality-02-r1",
+          "meaning": "State that the current 48 average/33 low does not meet the stated target.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-02-r2",
+          "meaning": "Explain the likely need to recover performance, rebalance settings or explicitly accept a lower target.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-02-r3",
+          "meaning": "Offer one useful test that respects the current target, rather than a broad preset.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-02-p1",
+          "meaning": "Promise stable 60 after turning everything up.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-02-p2",
+          "meaning": "Silently lower the target or call 48 FPS satisfactory for the user's 60-FPS requirement.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-02-p3",
+          "meaning": "Diagnose a faulty CPU/GPU from the shortfall alone.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Agree a practical quality/performance tradeoff or first recover enough performance for a measured quality increase.",
+      "acceptable_variants": [
+        "A supported reconstruction/graphics rebalance test is allowed if image quality is judged by the user.",
+        "A brief clarification is appropriate if the user must choose between incompatible goals."
+      ]
+    },
+    {
+      "id": "quality-03",
+      "expected_meaning": "Treat upscaling as a reversible quality/performance choice. Use existing headroom to test a clearer mode without forcing DLSS to stay enabled.",
+      "required": [
+        {
+          "id": "quality-03-r1",
+          "meaning": "Respect the reported blur and the 60-FPS goal.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-03-r2",
+          "meaning": "Suggest one available clearer mode such as Quality or native rendering and compare moving detail and FPS.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-03-r3",
+          "meaning": "Preserve uncertainty about the resulting FPS and supported reconstruction modes.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-03-p1",
+          "meaning": "Insist DLSS must stay On just because it improves performance in some GPU-bound cases.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-03-p2",
+          "meaning": "Recommend Performance/Ultra Performance as the quality solution without addressing the complaint.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-03-p3",
+          "meaning": "Guarantee unchanged FPS when returning to native.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Compare one clearer mode against the existing Performance-mode baseline.",
+      "acceptable_variants": [
+        "Quality before native is reasonable.",
+        "A native/TAA comparison is reasonable with a conditional FPS check."
+      ]
+    },
+    {
+      "id": "quality-04",
+      "expected_meaning": "Recognize completion: the measured target, symptoms and user's quality preference are already satisfactory.",
+      "required": [
+        {
+          "id": "quality-04-r1",
+          "meaning": "Say no further change is required for the stated goal.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-04-r2",
+          "meaning": "Preserve the accepted profile and avoid creating unnecessary measurement work.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-04-r3",
+          "meaning": "Keep optional preferences distinct from a required optimization.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-04-p1",
+          "meaning": "Continue a mandatory table-wide settings sweep.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-04-p2",
+          "meaning": "Lower quality simply to maximize a metric the user did not request.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-04-p3",
+          "meaning": "Require extra warmup or stress raids to certify an otherwise accepted ordinary profile.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Stop tuning; revisit only if symptoms or the goal change.",
+      "acceptable_variants": [
+        "Optional improvements may be mentioned briefly as optional, not a new required test."
+      ]
+    },
+    {
+      "id": "quality-05",
+      "expected_meaning": "Obtain a current trustworthy starting point for a measured quality goal, while resolving disagreement between the user's recollection and the saved profile.",
+      "required": [
+        {
+          "id": "quality-05-r1",
+          "meaning": "Notice that the supplied profile already has High textures and some enabled quality settings; do not silently trust the recollection 'all Low'.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-05-r2",
+          "meaning": "Explain the need for a current baseline to know the budget for a 60-FPS-preserving quality change.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-05-r3",
+          "meaning": "Offer relevant clarity candidates conditionally and let the user prepare without compulsory warmup.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-05-p1",
+          "meaning": "Assume all settings are Low and invent their current values.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-05-p2",
+          "meaning": "Provide an exact guarantee that higher settings will keep 60 without a run.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-05-p3",
+          "meaning": "Respond only with a maximum-FPS downgrade preset.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Verify the current saved profile and capture/reuse a current baseline after readiness.",
+      "acceptable_variants": [
+        "Generic explanations need no benchmark; the measured 60-FPS guarantee is what lacks evidence here."
+      ]
+    },
+    {
+      "id": "quality-06",
+      "expected_meaning": "Judge the upgrade against stability and the user's goal, not only the average. A prettier profile that causes freezes can be rejected or reduced.",
+      "required": [
+        {
+          "id": "quality-06-r1",
+          "meaning": "Compare the deterioration in lows and the user's reported freezes.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-06-r2",
+          "meaning": "Explain why average 65 alone is insufficient to accept the profile.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-06-r3",
+          "meaning": "Recommend returning to High or testing a less costly quality choice before keeping Ultra.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "quality-06-p1",
+          "meaning": "Keep Ultra solely because average FPS exceeds 60.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-06-p2",
+          "meaning": "Derive a universal Ultra VRAM requirement or paging cause without resource evidence.",
+          "severity": "required"
+        },
+        {
+          "id": "quality-06-p3",
+          "meaning": "Attribute the entire regression to a proved memory leak.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Rollback the unsuccessful quality upgrade, with a selective follow-up only if it changes the decision.",
+      "acceptable_variants": [
+        "A single noisy result can be qualified, but the reported freezes and large low-percentile decline must not be dismissed."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "suite_version": "0.1.0",
+  "cases": [
+    {
+      "id": "capture-01",
+      "title": "Preparing is not readiness; explicit ready is enough",
+      "client": "local",
+      "prompt": "Настройки сохранил, сейчас готовлюсь к замеру.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.inspect": {
+          "fixture": "base_profile_active"
+        },
+        "toolkit.capture": {
+          "fixture": "benchmark_complete"
+        }
+      },
+      "steps": [
+        {
+          "deliver_after": "assistant_turn",
+          "user": "Готов, можно запускать 120 секунд."
+        }
+      ],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "capture-02",
+      "title": "Cancel, wait, retry only when ready, then raid exit",
+      "client": "local",
+      "prompt": "Готов к замеру на 120 секунд, начинай.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.capture": {
+          "sequence": [
+            {
+              "event": "capture_pending",
+              "cancel_response_fixture": "capture_cancelled"
+            },
+            {
+              "fixture": "capture_discarded"
+            }
+          ]
+        },
+        "capture.cancel": {
+          "fixture": "capture_cancelled"
+        }
+      },
+      "steps": [
+        {
+          "deliver_after": "capture_pending",
+          "user_interrupt": "Стой, пошёл дождь. Останови запись."
+        },
+        {
+          "deliver_after": "assistant_turn_after_cancel",
+          "user": "Пока жди, я ещё не готов."
+        },
+        {
+          "deliver_after": "assistant_turn",
+          "user": "Теперь готов, можно повторить."
+        }
+      ],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "capture-03",
+      "title": "Explicit do-not-start despite settings confirmation",
+      "client": "local",
+      "prompt": "Предыдущий замер закончен. Для следующего пока не запускай ничего: только распиши порядок действий.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.inspect": {
+          "fixture": "base_profile"
+        },
+        "toolkit.capture": {
+          "denied": "No current readiness; developer/user explicitly deferred capture."
+        }
+      },
+      "steps": [
+        {
+          "deliver_after": "assistant_turn",
+          "user": "Значения уже поменял и сохранил. Ещё готовлюсь."
+        }
+      ],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "capture-04",
+      "title": "Normal run requires no extra preparation raid",
+      "client": "local",
+      "prompt": "Я только вошёл в первый рейд, отдельный прогрев не делал. Меню закрыл, стою на старте обычного маршрута. Готов, снимай 120 секунд.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.capture": {
+          "fixture": "benchmark_complete"
+        }
+      },
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "capture-05",
+      "title": "Use log context, ask only missing app-context answers",
+      "client": "local",
+      "prompt": "Record a benchmark, please. I'm in a raid and ready for 120 seconds. Weather and time of day are unknown to me.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.capture": {
+          "fixture": "benchmark_complete"
+        }
+      },
+      "steps": [
+        {
+          "deliver_after": "assistant_question_about_execution",
+          "user": "Local."
+        }
+      ],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "capture-06",
+      "title": "ETW denial, then existing export without telemetry",
+      "client": "local",
+      "prompt": "Ready, record 120 seconds.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_active"
+        },
+        "toolkit.capture": {
+          "fixture": "capture_permissions"
+        }
+      },
+      "steps": [
+        {
+          "deliver_after": "assistant_turn_after_failure",
+          "user": "Don't elevate or retry. Here is an existing export; just explain its FPS stats.",
+          "attachments": [
+            {
+              "name": "unavailable_telemetry",
+              "fixture": "unavailable_telemetry"
+            }
+          ]
+        }
+      ],
+      "scenario_kind": "negative"
+    }
+  ]
+}

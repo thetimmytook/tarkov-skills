@@ -236,6 +236,82 @@ Primary collector references: [Windows GPU telemetry](https://devblogs.microsoft
 [system commit and physical memory](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information),
 and [PresentMon 2.5.1 console metrics](https://github.com/GameTechDev/PresentMon/blob/v2.5.1/README-ConsoleApplication.md).
 
+### Local Application Diagnostic Logging: Accepted Future Work (2026-10-10)
+
+Retain useful local diagnostics in normal Store builds of both applications, rather
+than requiring a special test build after an unexplained failure. Implementation and
+release integration are deferred; the AMD diagnostic portable is a prototype, not
+the final production logging design. Do not promote its test-only data directory,
+staging configuration or verbose mode into a Store package unchanged.
+
+- Use a shared Core logger and the shared benchmark workflow. Record concise failure
+  events for startup, inspection, capture, save and explicit submission operations.
+  Distinguish failed, cancelled, discarded and completed outcomes; expected Cancel
+  and raid/game exit are not application crashes. A discard record should explain
+  its reason even when no run was saved.
+- Keep ordinary diagnostic records small. Useful allowlisted fields include UTC and
+  elapsed time, application/product version, operation stage, stable error category,
+  exception type, PresentMon exit code, requested/valid capture durations and aggregate
+  frame/coverage evidence. More detailed capture diagnostics can be enabled separately;
+  exact levels, controls and retention limits remain to be agreed before implementation.
+- Keep files under the application's writable data directory, with bounded file size,
+  rotation and retention. Provide access/export in both hosts even when history is empty
+  or the latest capture was discarded. Preserve the existing sanitized crash-report
+  workflow; a user should not have to find temporary PresentMon CSV files.
+- Apply an explicit field allowlist before writing. Never persist raw exception
+  messages/stacks containing private data, raw stdout/stderr or CSV rows, process IDs,
+  other application names, local paths, device/machine/account identifiers, OAuth
+  tokens, authorization headers or HTTP request/response bodies. Use safe categories
+  and numeric status/error codes where useful; unsupported details remain unknown.
+- Logs stay local. Export/sharing is a separate explicit user action. Do not append
+  logs to Academy benchmark submissions, change the strict API allowlist, or upload
+  diagnostics automatically. Logs do not become benchmark data or grouping keys.
+- Logging must be best effort and must not fail a successful capture/save, alter its
+  measurement window, or replace the original error. Flush important lifecycle events
+  promptly; abrupt process/OS termination can still leave the final event unwritten.
+  Test privacy, rotation/retention, unwritable storage, failure/discard paths and access
+  without a completed run, and measure overhead before enabling normal-release logging.
+
+### Run Count Visibility: Future UI Improvement (2026-10-19)
+
+The user found the saved-run count in `LATEST RESULT` difficult to locate during
+release checks. Make the number more prominent in the shared benchmark view in
+both hosts; consider yellow/amber emphasis with readable contrast. Check visibility
+at 150%/200% scaling. Record for a later version; do not change the current 1.1
+flight, run-count semantics, storage or contracts.
+
+### About Tab and Footer Removal: Future UI Improvement (2026-10-19)
+
+Move About into a dedicated tab immediately after Settings in both Store hosts.
+Replace the About button/dialog entry point and remove the footer; move its content
+into the About tab too. Preserve product/version information, author attribution,
+unofficial/non-affiliation notice, privacy and dependency notices, and existing
+support/GitHub/AI-skills links. Keep the content reachable by scrolling at small
+window sizes and 150%/200% scaling. Defer implementation to a later version; the
+current 1.1 flight and production promotion remain unchanged.
+
+### Capture Start Countdown: Accepted for a Future Version (2026-10-10)
+
+Defer implementation to the next application version. This improvement does not gate
+the current resource-telemetry release or change its tested Store flight.
+
+- After the user presses Start collection, show a 10-second countdown in the shared
+  benchmark workflow in both Store hosts, including command-initiated GUI collection.
+  Use a visible status such as `Starting in 10 s — return to Tarkov` and a short sound
+  when capture actually starts. Do not switch focus or automate game input.
+- Exclude the countdown from FPS and resource measurements. Start their aligned valid
+  window after the countdown and retain the full selected 120/240-second duration.
+- Allow Cancel throughout the countdown. Cancellation, raid exit or game exit before
+  capture starts must discard the pending measurement without offering Save. Preserve
+  the existing ability to save a completed measurement after leaving the raid/game.
+- The countdown gives the user time to return to Tarkov; it does not establish that
+  the scene is warmed up or stable. Continue advising a warmed, repeatable scene and
+  unchanged camera/focus for comparisons.
+- Cover countdown/start sequencing, window alignment and cancellation/exit races with
+  automated tests using a controllable clock; manually check status and sound in both
+  hosts. Keep headless Toolkit capture behavior outside this GUI change.
+- No Academy contract or telemetry schema change is required by this proposal.
+
 ### Local Temperature Diagnostics: Future Option (2026-10-07)
 
 Record this as an optional future troubleshooting feature; implementation is deferred.
@@ -279,6 +355,44 @@ as proof of thermal throttling or the cause of FPS drops.
 References: [NVAPI thermal readings](https://docs.nvidia.com/nvapi/group__gputhermal.html),
 [ADLX GPU metric sensors](https://gpuopen.com/manuals/adlx/adlx-sdk-references/adlx-interfaces/performance-monitoring/iadlxgpumetrics/),
 and [Windows temperature-probe limitations](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-temperatureprobe).
+
+### Driver Graphics Overrides: Future Option (2026-10-18)
+
+Record read-only driver-settings inspection as a future diagnostic feature after
+the 1.1 release. In-game configuration alone may omit driver overrides that affect
+performance or image quality. Implementation, UI and JSON contracts remain deferred.
+
+- Inspect the global driver settings and the profile associated with Tarkov. Preserve
+  each value's source and scope, including application override, inherited global
+  value, driver default or unknown. A configured override is not proof that the
+  driver actually applies it to the current game/API; do not claim runtime effect
+  without supporting evidence.
+- Prioritize FPS/background FPS limits, VSync, latency controls, Anti-Lag, Chill/FRTC,
+  power-management mode, anti-aliasing, anisotropic and texture filtering. Consider
+  scaling, sharpening, DLSS overrides and driver frame generation where supported
+  and verified. Unsupported or unreadable values remain null/unknown with a reason.
+- Investigate NVIDIA NVAPI DRS read APIs for global/application settings and AMD
+  ADLX 3D-settings read APIs. Verify AMD application-profile coverage separately;
+  GPU/global settings must not be presented as resolved per-game settings. Validate
+  bindings, inheritance, profile selection and driver/hardware support before shipping.
+- Capture a local snapshot before measurement, outside the valid FPS/resource window;
+  consider a second snapshot after capture to detect changes. Show driver-setting
+  differences alongside game-setting differences during A/B analysis so a driver
+  change is not silently attributed to an unrelated game setting. Measure overhead;
+  unavailable driver diagnostics must not invalidate a successful benchmark.
+- Implement shared collection in Core and shared presentation in Feature for both
+  hosts, with sanitized Toolkit output for local/web skills. Export only allowlisted
+  settings and provenance; exclude executable paths, identifiers, custom profile
+  names, raw profile dumps and profiles of other applications. Start with local
+  diagnostics only: no automatic uploads, Academy payload expansion or mandatory
+  benchmark grouping key. Any later submission support needs separate agreement.
+- Read only through supported installed-driver APIs. Do not change/reset profiles,
+  automate control-panel UI, read game memory, inject, or require another utility,
+  service, driver or overlay. Exact collection/storage behavior and scope require
+  agreement before implementation.
+
+References: [NVIDIA driver-settings APIs](https://docs.nvidia.com/nvapi/group__drsapi.html)
+and [AMD ADLX 3D-settings samples](https://gpuopen.com/manuals/adlx/adlx-domain_cpp_sample_3_d_graphics/).
 
 ## Standalone Benchmark Contract
 

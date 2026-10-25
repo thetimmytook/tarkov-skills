@@ -1,0 +1,101 @@
+{
+  "suite_version": "0.1.0",
+  "cases": [
+    {
+      "id": "input-01",
+      "title": "Explanation and still comparisons without capture",
+      "client": "web",
+      "prompt": "obyasni anisotropic filtering i daj sravnenie. tolko staticheskie kartinki, video ne nado.",
+      "attachments": [],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "input-02",
+      "title": "Manual gameplay-first route without benchmarking",
+      "client": "web",
+      "prompt": "Explain the manual graphics optimization order. I care about preserving gameplay visibility first, then getting useful FPS improvements. I don't want to run a benchmark now.",
+      "attachments": [],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "input-03",
+      "title": "Web client cannot inspect the user's PC",
+      "client": "web",
+      "prompt": "Check my Tarkov settings on my PC and tell me what to change. I haven't attached anything.",
+      "attachments": [],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "input-04",
+      "title": "Toolkit unavailable, existing manual inputs",
+      "client": "local",
+      "prompt": "Toolkit isn't installed here. I attached the settings summary and an old FPS export. Can you still help without making me run a script?",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "unavailable_telemetry",
+          "fixture": "unavailable_telemetry"
+        }
+      ],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_missing"
+        },
+        "system.manual_read": {
+          "denied": "No additional source was requested by the user; use the supplied artifacts first."
+        }
+      },
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "input-05",
+      "title": "Unknown enums and missing data",
+      "client": "web",
+      "prompt": "Here is the partial report. Can you review it and tell me the next useful thing to check?",
+      "attachments": [
+        {
+          "name": "unknown_report",
+          "fixture": "unknown_report"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "input-06",
+      "title": "Optional first-time setup, decline and later revisit",
+      "client": "web",
+      "prompt": "This is my first Tarkov setup. Can you explain useful beginner options on the Game tab? I prefer my existing health colour scheme.",
+      "attachments": [],
+      "mock_tools": {},
+      "steps": [
+        {
+          "deliver_after": "assistant_turn",
+          "user": "Спасибо, профиль Game пока пропущу. Теперь помоги с FPS — вот текущий отчёт.",
+          "attachments": [
+            {
+              "name": "base_profile",
+              "fixture": "base_profile"
+            }
+          ]
+        },
+        {
+          "deliver_after": "assistant_turn",
+          "user": "Теперь сам хочу вернуться только к Quick slots. Какое значение ты предлагал?"
+        }
+      ],
+      "scenario_kind": "edge"
+    }
+  ]
+}
