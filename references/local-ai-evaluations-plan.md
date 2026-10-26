@@ -35,6 +35,16 @@ prompts/rubrics/fixtures were unchanged. Goal persistence improved in these
 observations, while unsupported numeric bundle forecasts and some explanation
 omissions remain. Detailed scores, comparisons and traces stay outside Git.
 
+Suite 0.3 adds six frozen numerical-forecast cases, for 44 cases in total.
+The bounded eligibility experiment retained a metric-specific forecast check;
+its screening and original-suite regressions remain separate in the local
+report. A subsequent unchanged-snapshot `gpt-6.1-sol:high` run completed all 44
+cases. It did not establish a numerical-accuracy advantage over the same-snapshot
+medium control or a universal minimum reasoning requirement. These are local
+supplied-skill evaluations with mocked tools, not client-discovery tests or
+model-support certification. See the case-set README for the completed scopes;
+raw outputs, scores and criterion evidence remain outside Git.
+
 ## Execution boundary
 
 - Run locally on explicit developer invocation only. Do not add these evaluations

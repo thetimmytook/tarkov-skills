@@ -236,82 +236,6 @@ Primary collector references: [Windows GPU telemetry](https://devblogs.microsoft
 [system commit and physical memory](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information),
 and [PresentMon 2.5.1 console metrics](https://github.com/GameTechDev/PresentMon/blob/v2.5.1/README-ConsoleApplication.md).
 
-### Local Application Diagnostic Logging: Accepted Future Work (2026-10-10)
-
-Retain useful local diagnostics in normal Store builds of both applications, rather
-than requiring a special test build after an unexplained failure. Implementation and
-release integration are deferred; the AMD diagnostic portable is a prototype, not
-the final production logging design. Do not promote its test-only data directory,
-staging configuration or verbose mode into a Store package unchanged.
-
-- Use a shared Core logger and the shared benchmark workflow. Record concise failure
-  events for startup, inspection, capture, save and explicit submission operations.
-  Distinguish failed, cancelled, discarded and completed outcomes; expected Cancel
-  and raid/game exit are not application crashes. A discard record should explain
-  its reason even when no run was saved.
-- Keep ordinary diagnostic records small. Useful allowlisted fields include UTC and
-  elapsed time, application/product version, operation stage, stable error category,
-  exception type, PresentMon exit code, requested/valid capture durations and aggregate
-  frame/coverage evidence. More detailed capture diagnostics can be enabled separately;
-  exact levels, controls and retention limits remain to be agreed before implementation.
-- Keep files under the application's writable data directory, with bounded file size,
-  rotation and retention. Provide access/export in both hosts even when history is empty
-  or the latest capture was discarded. Preserve the existing sanitized crash-report
-  workflow; a user should not have to find temporary PresentMon CSV files.
-- Apply an explicit field allowlist before writing. Never persist raw exception
-  messages/stacks containing private data, raw stdout/stderr or CSV rows, process IDs,
-  other application names, local paths, device/machine/account identifiers, OAuth
-  tokens, authorization headers or HTTP request/response bodies. Use safe categories
-  and numeric status/error codes where useful; unsupported details remain unknown.
-- Logs stay local. Export/sharing is a separate explicit user action. Do not append
-  logs to Academy benchmark submissions, change the strict API allowlist, or upload
-  diagnostics automatically. Logs do not become benchmark data or grouping keys.
-- Logging must be best effort and must not fail a successful capture/save, alter its
-  measurement window, or replace the original error. Flush important lifecycle events
-  promptly; abrupt process/OS termination can still leave the final event unwritten.
-  Test privacy, rotation/retention, unwritable storage, failure/discard paths and access
-  without a completed run, and measure overhead before enabling normal-release logging.
-
-### Run Count Visibility: Future UI Improvement (2026-10-19)
-
-The user found the saved-run count in `LATEST RESULT` difficult to locate during
-release checks. Make the number more prominent in the shared benchmark view in
-both hosts; consider yellow/amber emphasis with readable contrast. Check visibility
-at 150%/200% scaling. Record for a later version; do not change the current 1.1
-flight, run-count semantics, storage or contracts.
-
-### About Tab and Footer Removal: Future UI Improvement (2026-10-19)
-
-Move About into a dedicated tab immediately after Settings in both Store hosts.
-Replace the About button/dialog entry point and remove the footer; move its content
-into the About tab too. Preserve product/version information, author attribution,
-unofficial/non-affiliation notice, privacy and dependency notices, and existing
-support/GitHub/AI-skills links. Keep the content reachable by scrolling at small
-window sizes and 150%/200% scaling. Defer implementation to a later version; the
-current 1.1 flight and production promotion remain unchanged.
-
-### Capture Start Countdown: Accepted for a Future Version (2026-10-10)
-
-Defer implementation to the next application version. This improvement does not gate
-the current resource-telemetry release or change its tested Store flight.
-
-- After the user presses Start collection, show a 10-second countdown in the shared
-  benchmark workflow in both Store hosts, including command-initiated GUI collection.
-  Use a visible status such as `Starting in 10 s — return to Tarkov` and a short sound
-  when capture actually starts. Do not switch focus or automate game input.
-- Exclude the countdown from FPS and resource measurements. Start their aligned valid
-  window after the countdown and retain the full selected 120/240-second duration.
-- Allow Cancel throughout the countdown. Cancellation, raid exit or game exit before
-  capture starts must discard the pending measurement without offering Save. Preserve
-  the existing ability to save a completed measurement after leaving the raid/game.
-- The countdown gives the user time to return to Tarkov; it does not establish that
-  the scene is warmed up or stable. Continue advising a warmed, repeatable scene and
-  unchanged camera/focus for comparisons.
-- Cover countdown/start sequencing, window alignment and cancellation/exit races with
-  automated tests using a controllable clock; manually check status and sound in both
-  hosts. Keep headless Toolkit capture behavior outside this GUI change.
-- No Academy contract or telemetry schema change is required by this proposal.
-
 ### Local Temperature Diagnostics: Future Option (2026-10-07)
 
 Record this as an optional future troubleshooting feature; implementation is deferred.
@@ -356,44 +280,6 @@ References: [NVAPI thermal readings](https://docs.nvidia.com/nvapi/group__gputhe
 [ADLX GPU metric sensors](https://gpuopen.com/manuals/adlx/adlx-sdk-references/adlx-interfaces/performance-monitoring/iadlxgpumetrics/),
 and [Windows temperature-probe limitations](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-temperatureprobe).
 
-### Driver Graphics Overrides: Future Option (2026-10-18)
-
-Record read-only driver-settings inspection as a future diagnostic feature after
-the 1.1 release. In-game configuration alone may omit driver overrides that affect
-performance or image quality. Implementation, UI and JSON contracts remain deferred.
-
-- Inspect the global driver settings and the profile associated with Tarkov. Preserve
-  each value's source and scope, including application override, inherited global
-  value, driver default or unknown. A configured override is not proof that the
-  driver actually applies it to the current game/API; do not claim runtime effect
-  without supporting evidence.
-- Prioritize FPS/background FPS limits, VSync, latency controls, Anti-Lag, Chill/FRTC,
-  power-management mode, anti-aliasing, anisotropic and texture filtering. Consider
-  scaling, sharpening, DLSS overrides and driver frame generation where supported
-  and verified. Unsupported or unreadable values remain null/unknown with a reason.
-- Investigate NVIDIA NVAPI DRS read APIs for global/application settings and AMD
-  ADLX 3D-settings read APIs. Verify AMD application-profile coverage separately;
-  GPU/global settings must not be presented as resolved per-game settings. Validate
-  bindings, inheritance, profile selection and driver/hardware support before shipping.
-- Capture a local snapshot before measurement, outside the valid FPS/resource window;
-  consider a second snapshot after capture to detect changes. Show driver-setting
-  differences alongside game-setting differences during A/B analysis so a driver
-  change is not silently attributed to an unrelated game setting. Measure overhead;
-  unavailable driver diagnostics must not invalidate a successful benchmark.
-- Implement shared collection in Core and shared presentation in Feature for both
-  hosts, with sanitized Toolkit output for local/web skills. Export only allowlisted
-  settings and provenance; exclude executable paths, identifiers, custom profile
-  names, raw profile dumps and profiles of other applications. Start with local
-  diagnostics only: no automatic uploads, Academy payload expansion or mandatory
-  benchmark grouping key. Any later submission support needs separate agreement.
-- Read only through supported installed-driver APIs. Do not change/reset profiles,
-  automate control-panel UI, read game memory, inject, or require another utility,
-  service, driver or overlay. Exact collection/storage behavior and scope require
-  agreement before implementation.
-
-References: [NVIDIA driver-settings APIs](https://docs.nvidia.com/nvapi/group__drsapi.html)
-and [AMD ADLX 3D-settings samples](https://gpuopen.com/manuals/adlx/adlx-domain_cpp_sample_3_d_graphics/).
-
 ## Standalone Benchmark Contract
 
 Expose a stable application execution alias and command:
@@ -409,6 +295,116 @@ The command opens the normal GUI and still requires the user to press Start. Aft
 PresentMon is an external MIT-licensed dependency bundled inside the MSIX. Pin its version and SHA-256, retain its license, and update it only through a manual change followed by real capture tests. The application must never discover or execute arbitrary external PresentMon copies.
 
 Attempt ETW capture without elevation first. If Windows denies access, the future Store package may offer a one-time elevated setup that adds the user to `Performance Log Users`. Do not install a custom Windows service in the MVP.
+
+### ETW Permission Recovery: Accepted Implementation Plan (2026-10-17)
+
+A clean Windows 11 manual check with the pinned PresentMon and Terraria returned
+`failed to start trace session: access denied` without elevation. An elevated retry
+reported recording start and stop. A subsequent ordinary-user capture after manual
+account-specific setup succeeded: 1,787 positive frame intervals total 29.92 seconds
+in the supplied Terraria CSV, without access denied in its console log. This predates
+diagnostic build `.4` and does not validate its setup UI/helper or Store launch.
+A subsequent Windows 11 portable `.4` test confirmed revocation followed by access
+denied after a new sign-in, then setup through Toolkit followed by a successful
+ordinary-user capture after another sign-in. The supplied success CSV contains
+1,794 positive frame intervals totaling 29.95 seconds; both console logs match the
+reported deny/success sequence. Store activation and different-administrator UAC
+credentials still require their own checks. The developer's existing Windows
+account already has effective access through INTERACTIVE membership in Performance
+Log Users, so that machine cannot establish clean-account readiness.
+
+- Keep the normal application and capture at medium integrity. Both hosts expose
+  one permission recovery dialog from the shared Feature project, using Core APIs.
+- Explain that this changes a persistent Windows account permission, used by other
+  applications too, and that uninstall does not remove membership. Require an
+  explicit action before the Windows UAC prompt. Provide an explicit removal action.
+- Add only the original requesting account to the built-in Performance Log Users
+  group, resolving the group by SID for localized Windows. Preserve existing members;
+  never add INTERACTIVE, Everyone or another broad group. A different administrator
+  supplying UAC credentials must not become the target account.
+- Use a short C# helper mode before normal host startup, mutex/history/authentication
+  initialization. Authenticate the requesting process through a local restricted
+  named pipe. The normal host sets the pipe's kernel-controlled owner from its token
+  user; the helper accepts only a user owner and verifies the server executable.
+  The host authenticates the elevated helper using identification-level pipe
+  impersonation, without opening another account's process token. Do not accept a
+  target account or group from command-line text. The helper performs only the
+  chosen fixed group operation.
+- Require sign-out/sign-in after a membership change. Distinguish current-token
+  access, direct membership awaiting a new sign-in, UAC cancellation and setup errors.
+  Only a real subsequent capture establishes that ETW access works.
+- Keep CLI failures as sanitized `permission_required`; never open a UAC prompt or
+  an interactive setup window from headless capture. No new benchmark/API fields,
+  uploads, executable scripts, services or drivers are introduced.
+- Investigate explicit Windows Shell activation (`shell:AppsFolder` and `runas`),
+  as used in Microsoft's Windows Terminal elevation shim, for packaged hosts.
+  Unpackaged hosts use their own executable. This is not evidence of Store acceptance
+  or of successful execution in our signed packages. Do not add `allowElevation`,
+  submit packages or contact Microsoft without the separately agreed Store path.
+- Cover account selection, localized group resolution, idempotent operations,
+  cancellation, rejected helper requests, sanitized outcomes and both host entry
+  points with automated tests. Native UAC and changed-token behavior require manual
+  clean-account checks on Windows 10/11 and the signed closed flight.
+
+The separate intermittent AMD/Tarkov incomplete-frametime issue was subsequently
+reproduced directly in pinned PresentMon on 2026-10-18. The accepted FPS-only
+invocation disables GPU/display tracking while keeping adapter telemetry separate;
+the integrated portable RX 9070 capture then completed with its ADLX summary.
+See [the diagnostic evidence and signed-flight gates](etw-permission-setup.md).
+
+### Immediate First Capture and Settings: Accepted Revision (2026-10-17)
+
+The user approved removing mandatory Windows sign-out/sign-in from first capture.
+Move permission inspection and explicit revocation into Settings in both hosts.
+Ordinary capture remains the first attempt. On ETW denial the GUI explains the
+persistent account change and temporary collector, requests explicit UAC consent,
+then restarts capture preparation with an authenticated elevated helper. This
+helper runs only pinned PresentMon and capture cleanup; settings, raid context,
+resource sampling, local history, authentication and uploads remain in the normal
+host. UAC waiting must precede the new FPS/resource window.
+
+Keep the helper available until application closure so later captures in the same
+application session reuse it. Closing/crashing the host must stop the helper and
+its capture; Cancel, game exit and raid exit must still discard incomplete data.
+No service, scheduled task or automatic startup is introduced. After the next
+ordinary Windows sign-in, the account permission is effective without the helper.
+Repeated elevation after reopening before that sign-in is explicitly acceptable.
+Revocation stops this application's temporary collector before removing direct
+membership; other existing group access is preserved. CLI never opens UAC.
+Store activation and integrated AMD captures remain separate release gates.
+
+### Settings Composition: Accepted UI Revision (2026-10-17)
+
+Use one shared Settings view with explicitly selected sections. Toolkit shows
+Access and Goal; standalone Benchmark shows Access only and does not instantiate
+Goal. Move Toolkit's existing goal editor into this view and remove its separate
+Goal tab. Render access controls directly in Settings, without a Manage modal or
+intermediate button. Keep revocation permanently visible, with confirmation and
+clear direct-membership scope. Use consistent spacing/wrapping between all access
+actions. The short ETW test remains diagnostic-only and is hidden in Store builds.
+
+Keep the Settings overview concise: show a short access status and management
+actions, with explanations under a collapsed-by-default "How capture access works"
+section using the same disclosure style as resource telemetry. Revocation controls
+stay outside that section and remain visible. Explicit setup/removal confirmations
+continue to explain account-wide effects before administrator approval.
+
+### Local Failure Diagnostics And GitHub Support: Accepted (2026-10-18)
+
+Keep sanitized capture logging in ordinary builds independently of the optional
+three-second permission experiment. On capture/save errors and insufficient valid
+frame duration, save a short report and a local ZIP, copy the report, and offer an
+explicit GitHub issue action plus access to the archive. Revalidate recent log
+contents before export; exclude benchmark history, settings, raw CSV, account data,
+arbitrary files, paths and identifiers. Opening an issue never uploads the archive;
+the user reviews and attaches it manually. Explain that GitHub issues are public.
+Expected cancellation and game/raid exit keep their existing discard behavior.
+
+Bound retention to 20 capture logs and 10 support ZIPs/text reports, with temporary
+local storage as a best-effort fallback. Share support UI and unhandled GUI failure
+handling between hosts. Terminate after an unknown UI error instead of continuing
+in an uncertain state; record fatal managed failures for an offer on the next launch
+when possible. Elevated collectors remain outside the application-report writer.
 
 ## Future Result Comparison
 
@@ -430,6 +426,6 @@ The monorepo keeps the application under `apps/tarkov-performance-benchmark/` wi
 
 The repository builds an unsigned x64 MSIX with the reserved Store identity, bundled PresentMon, neutral package artwork, and the `tarkov-benchmark.exe` execution alias. The package declares the WPF executable as a full-trust packaged desktop app without requesting the highly restricted `unvirtualizedResources` capability. Benchmark history belongs to package `LocalState`; skills use the execution alias and machine-readable output rather than direct file access.
 
-Privacy-policy hosting and Partner Center submission remain separate release concerns. Both products have passed initial certification and are public. Manual GitHub workflows build and validate unsigned packages, submit them to private Store flights after protected approval, and promote only the exact flight-tested artifacts through a separate protected public-release workflow.
+Privacy-policy hosting and Partner Center submission remain separate release concerns. Both products have passed initial certification and are public. Main-push workflows build and validate one unsigned MSIX and portable ZIP per product. Separate manual workflows consume explicit build run/attempt artifacts for protected private Store flights, then promote the identical submitted MSIX through a protected public-release workflow. Application GitHub Releases also consume those ready build artifacts; skills publication remains independent. See [store-submission.md](store-submission.md) for provenance, retention, and transition rules.
 
 Do not use local self-signed package installation as a release gate. Build and inspect the unsigned package locally, then validate installation, alias registration, capture, and package-local persistence with the Microsoft-signed Store update. Use a closed Store flight when an update needs limited distribution before production.

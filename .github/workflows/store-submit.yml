@@ -1,0 +1,142 @@
+name: Submit existing Store artifact
+
+on:
+  workflow_call:
+    inputs:
+      product:
+        required: true
+        type: string
+      stage:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+      attempt:
+        required: true
+        type: string
+    secrets:
+      AZURE_AD_TENANT_ID:
+        required: true
+      AZURE_AD_APPLICATION_CLIENT_ID:
+        required: true
+      AZURE_AD_APPLICATION_SECRET:
+        required: true
+      SELLER_ID:
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    outputs:
+      artifact_id: ${{ steps.package.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate stage
+        shell: pwsh
+        env:
+          STAGE: ${{ inputs.stage }}
+        run: |
+          if ($env:STAGE -notin 'flight', 'production') { throw 'Unknown Store stage.' }
+      - uses: ./.github/actions/receive-store-artifact
+        id: package
+        with:
+          product: ${{ inputs.product }}
+          kind: ${{ inputs.stage == 'flight' && 'build' || 'flight' }}
+          run-id: ${{ inputs.run_id }}
+          attempt: ${{ inputs.attempt }}
+
+  submit:
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.stage == 'flight' && 'microsoft-store-flight' || 'microsoft-store-production' }}
+    concurrency:
+      group: microsoft-store-${{ inputs.product }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      # Download by the same immutable ID and recheck after Environment approval.
+      - uses: ./.github/actions/receive-store-artifact
+        id: package
+        with:
+          product: ${{ inputs.product }}
+          kind: ${{ inputs.stage == 'flight' && 'build' || 'flight' }}
+          run-id: ${{ inputs.run_id }}
+          attempt: ${{ inputs.attempt }}
+          expected-artifact-id: ${{ needs.validate.outputs.artifact_id }}
+      - uses: microsoft/microsoft-store-apppublisher@v1.4
+      - name: Submit verified package
+        shell: pwsh
+        env:
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          BENCHMARK_FLIGHT_ID: ${{ vars.BENCHMARK_STORE_FLIGHT_ID }}
+          TOOLKIT_FLIGHT_ID: ${{ vars.TOOLKIT_STORE_FLIGHT_ID }}
+          PRODUCT: ${{ inputs.product }}
+          STAGE: ${{ inputs.stage }}
+          PACKAGE_PATH: ${{ steps.package.outputs.package-path }}
+          EXPECTED_SHA256: ${{ steps.package.outputs.msix-sha256 }}
+        run: |
+          $requiredCredentials = @('AZURE_AD_TENANT_ID', 'AZURE_AD_APPLICATION_CLIENT_ID', 'AZURE_AD_APPLICATION_SECRET', 'SELLER_ID')
+          $missingCredentials = @($requiredCredentials | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) })
+          if ($missingCredentials.Count) { throw "Missing Microsoft Store secrets in the protected Environment: $($missingCredentials -join ', '). Check the caller's secret mappings and Environment configuration." }
+          $appId = if ($env:PRODUCT -eq 'benchmark') { '9PJMPQ06JL21' } else { '9N3L7DZH0K64' }
+          $flightId = if ($env:PRODUCT -eq 'benchmark') { $env:BENCHMARK_FLIGHT_ID } else { $env:TOOLKIT_FLIGHT_ID }
+          if ((Get-FileHash -LiteralPath $env:PACKAGE_PATH -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:EXPECTED_SHA256) { throw 'MSIX changed after validation.' }
+          $arguments = @('publish', $env:PACKAGE_PATH, '--appId', $appId)
+          if ($env:STAGE -eq 'flight') {
+            if ([string]::IsNullOrWhiteSpace($flightId)) { throw "Private flight ID for $env:PRODUCT is not configured." }
+            $arguments += @('--flightId', $flightId)
+          }
+          msstore reconfigure --tenantId $env:AZURE_AD_TENANT_ID --sellerId $env:SELLER_ID --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure Microsoft Store credentials.' }
+          msstore settings --enableTelemetry false
+          if ($LASTEXITCODE -ne 0) { throw 'Could not disable publisher telemetry.' }
+          msstore @arguments
+          if ($LASTEXITCODE -ne 0) { throw "Store $env:STAGE submission failed." }
+      - name: Record successful flight submission
+        if: inputs.stage == 'flight'
+        id: receipt
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCT: ${{ inputs.product }}
+        run: node build/release-artifacts.mjs receipt $env:PRODUCT store-package
+      - name: Preserve submitted bundle and provenance
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-${{ inputs.stage }}-${{ inputs.product }}-${{ github.run_id }}-a${{ github.run_attempt }}
+          path: store-package
+          if-no-files-found: error
+          retention-days: 90
+      - name: Read current submission status once
+        continue-on-error: true
+        shell: pwsh
+        env:
+          PRODUCT: ${{ inputs.product }}
+          STAGE: ${{ inputs.stage }}
+          BENCHMARK_FLIGHT_ID: ${{ vars.BENCHMARK_STORE_FLIGHT_ID }}
+          TOOLKIT_FLIGHT_ID: ${{ vars.TOOLKIT_STORE_FLIGHT_ID }}
+        run: |
+          $appId = if ($env:PRODUCT -eq 'benchmark') { '9PJMPQ06JL21' } else { '9N3L7DZH0K64' }
+          $flightId = if ($env:PRODUCT -eq 'benchmark') { $env:BENCHMARK_FLIGHT_ID } else { $env:TOOLKIT_FLIGHT_ID }
+          if ($env:STAGE -eq 'flight') { msstore flights submission status $appId $flightId }
+          else { msstore submission status $appId }
+      - name: Write submission summary
+        shell: pwsh
+        env:
+          PRODUCT: ${{ inputs.product }}
+          STAGE: ${{ inputs.stage }}
+          PACKAGE_SHA256: ${{ steps.package.outputs.msix-sha256 }}
+        run: |
+          "$env:PRODUCT $env:STAGE submitted unchanged MSIX SHA-256: $env:PACKAGE_SHA256. Source commit: $env:GITHUB_SHA. Run: $env:GITHUB_RUN_ID, attempt: $env:GITHUB_RUN_ATTEMPT. Certification is not polled." | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          Get-Content store-package/release-manifest.json | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          if (Test-Path store-package/flight-receipt.json) { Get-Content store-package/flight-receipt.json | Out-File $env:GITHUB_STEP_SUMMARY -Append }

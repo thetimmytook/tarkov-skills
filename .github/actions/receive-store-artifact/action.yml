@@ -1,0 +1,67 @@
+name: Receive and verify immutable Store artifacts
+description: Resolve an explicit successful main build or flight attempt and verify its bytes
+inputs:
+  product:
+    required: true
+    description: benchmark or toolkit
+  kind:
+    required: true
+    description: build or flight
+  run-id:
+    required: true
+    description: Explicit source run ID
+  attempt:
+    required: true
+    description: Explicit source attempt
+  expected-artifact-id:
+    required: false
+    default: ''
+    description: Artifact ID fixed by preflight before Environment approval
+outputs:
+  artifact-id:
+    value: ${{ steps.resolve.outputs.artifact_id }}
+    description: Immutable source artifact ID
+  package-path:
+    value: ${{ steps.validate.outputs.package_path }}
+    description: Verified MSIX path
+  msix-sha256:
+    value: ${{ steps.validate.outputs.msix_sha256 }}
+    description: Original MSIX SHA-256
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+    - name: Resolve trusted source attempt and artifact ID
+      id: resolve
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PRODUCT: ${{ inputs.product }}
+        SOURCE_KIND: ${{ inputs.kind }}
+        SOURCE_RUN_ID: ${{ inputs.run-id }}
+        SOURCE_ATTEMPT: ${{ inputs.attempt }}
+        EXPECTED_ARTIFACT_ID: ${{ inputs.expected-artifact-id }}
+      run: node build/release-artifacts.mjs resolve $env:PRODUCT
+    - uses: actions/download-artifact@v8
+      with:
+        artifact-ids: ${{ steps.resolve.outputs.artifact_id }}
+        merge-multiple: true
+        path: store-package
+        github-token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        run-id: ${{ inputs.run-id }}
+    - name: Verify provenance, checksums and package contents
+      id: validate
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PRODUCT: ${{ inputs.product }}
+      run: |
+        ./build/test-store-release.ps1 -Product $env:PRODUCT
+        ./build/check-presentmon-dependency.ps1 -SkipUpstreamCheck
+        node build/release-artifacts.mjs validate $env:PRODUCT store-package
+        if ($LASTEXITCODE -ne 0) { throw 'Artifact provenance or checksum validation failed.' }
+        $manifest = Get-Content store-package/release-manifest.json -Raw | ConvertFrom-Json
+        ./build/test-msix-package.ps1 -Product $env:PRODUCT -PackagePath (Join-Path store-package $manifest.files.msix.name)

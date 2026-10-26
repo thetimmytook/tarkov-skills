@@ -2,7 +2,7 @@
 
 Microsoft Store companion for the Tarkov performance skills. It provides read-only configuration and system inspection, persistent tuning goals, and the same shared benchmark workflow as the standalone Benchmark product without distributing unsigned scripts.
 
-The GUI is organized into Overview, Benchmark, and Goal sections. Benchmark capture, context questions, history, and submission are implemented once in `src/TarkovBenchmark.Feature/` and hosted by both Store applications. Toolkit enables an additional **Copy results** action for web-client users; the standalone Benchmark shell leaves it hidden.
+The GUI is organized into Overview, Benchmark, and Settings tabs. Settings shows inline Windows capture access controls and the existing Goal editor; standalone Benchmark shows only Access. Benchmark capture, context questions, history, submission, and Settings are implemented in `src/TarkovBenchmark.Feature/` and hosted by both Store applications. Toolkit enables an additional **Copy results** action for web-client users; the standalone Benchmark shell leaves it hidden.
 
 Normal launch opens the WPF interface. Agents use the console alias:
 
@@ -21,10 +21,10 @@ Repository capture builds include mandatory `resource_telemetry` summaries in co
 Build the unsigned Store package from the repository root:
 
 ```powershell
-.\build\build-toolkit-msix.ps1 -PackageVersion 1.0.3.0
+.\build\build-toolkit-msix.ps1 -PackageVersion 1.1.0.0
 ```
 
-The recorded public Store baseline is `1.0.0.0`; the command above uses the next flight candidate. Version `1.0.2.0` is already uploaded in Partner Center, so the new telemetry binaries use `1.0.3.0`. An uploaded package does not by itself establish a new public baseline. Keep the fourth component at `0` because Microsoft Store reserves it.
+The recorded public Store baseline is `1.0.0.0`; the command above uses the next flight candidate. Version `1.0.3.0` was used in the previous telemetry flight; the capture/access/diagnostics update uses `1.1.0.0`. An uploaded package does not by itself establish a new public baseline. Keep the fourth component at `0` because Microsoft Store reserves it.
 
 The manifest uses the reserved identity `TimmyTook.TarkovPerformanceToolkit`, publisher `CN=55890398-71D9-4366-AF45-568B3BC3A786`, and Store ID `9N3L7DZH0K64`.
 

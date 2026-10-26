@@ -1,0 +1,53 @@
+<UserControl x:Class="TarkovBenchmark.Feature.CaptureAccessView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{StaticResource TextBrush}">
+  <Border Padding="20" CornerRadius="8" Background="{StaticResource SurfaceBrush}"
+          BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+    <StackPanel>
+      <TextBlock Text="ACCESS" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+      <TextBlock Margin="0,12,0,0" Text="Windows capture access" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
+      <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" LineHeight="21"
+                 Text="Start collection requests administrator setup only when Windows requires it."/>
+      <Border Margin="0,16,0,0" Padding="14" Background="{StaticResource SurfaceSubtleBrush}"
+              BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+        <TextBlock x:Name="AccessStatusText" TextWrapping="Wrap" LineHeight="21" AutomationProperties.LiveSetting="Polite"/>
+      </Border>
+      <WrapPanel Margin="0,16,-12,-12">
+        <Button x:Name="AddAccessButton" Content="Set up access…" Style="{StaticResource PrimaryButton}"
+                Padding="14,8" Margin="0,0,12,12" Click="AddAccess_Click"/>
+        <Button x:Name="RefreshAccessButton" Content="Check access" Padding="14,8" Margin="0,0,12,12" Click="RefreshAccess_Click"/>
+        <Button x:Name="OpenReportsButton" Content="Open diagnostic folder" Padding="14,8" Margin="0,0,12,12" Click="OpenReports_Click"/>
+      </WrapPanel>
+      <Expander x:Name="AccessHelp" Header="How capture access works" IsExpanded="False"
+                Margin="0,16,0,0" Style="{StaticResource DetailsExpander}">
+        <StackPanel Margin="20,8,0,0">
+          <TextBlock TextWrapping="Wrap" LineHeight="21" Foreground="{StaticResource MutedBrush}"
+                     Text="FPS capture uses Windows performance tracing. Setup adds only your account to Performance Log Users. Other apps running as your account can use this permission too, and it remains after uninstall. The main app keeps ordinary user rights."/>
+          <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" LineHeight="21" Foreground="{StaticResource MutedBrush}"
+                     Text="A temporary elevated collector lets you capture immediately, without signing out. Ordinary access takes effect at your next Windows sign-in. Reopening this app before then may ask for administrator approval again."/>
+          <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" LineHeight="21" Foreground="{StaticResource MutedBrush}"
+                     Text="Removal stops this app's temporary collector and removes only your account's direct membership. Access through other groups remains. Administrator approval is required; existing Windows permissions update at the next sign-in."/>
+        </StackPanel>
+      </Expander>
+      <Border x:Name="RemoveAccessSection" Margin="0,24,0,0" Padding="0,16,0,0"
+              BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+        <StackPanel>
+          <TextBlock Text="Remove this account's direct membership" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="21" Foreground="{StaticResource MutedBrush}"
+                     Text="Removes this account's direct access. Other performance tools may be affected."/>
+          <Button x:Name="RemoveAccessButton" Content="Remove direct membership…" HorizontalAlignment="Left"
+                  Padding="14,8" Margin="0,12,0,0" Click="RemoveAccess_Click"/>
+        </StackPanel>
+      </Border>
+      <StackPanel x:Name="DiagnosticProbePanel" Visibility="Collapsed" Margin="0,24,0,0">
+        <TextBlock Text="Diagnostic build: test Windows tracing without a game. This 3-second probe creates no benchmark run or CSV." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/>
+        <WrapPanel Margin="0,12,-12,-12">
+          <Button x:Name="ProbeButton" Content="Test capture access (3 sec)" Margin="0,0,12,12" Padding="14,8" Click="Probe_Click"/>
+          <Button x:Name="ProbeCancelButton" Content="Cancel test" IsEnabled="False" Margin="0,0,12,12" Padding="14,8" Click="ProbeCancel_Click"/>
+        </WrapPanel>
+        <TextBlock x:Name="ProbeStatusText" Margin="0,10,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

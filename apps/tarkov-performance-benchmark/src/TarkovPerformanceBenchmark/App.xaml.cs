@@ -1,6 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
+using TarkovSkills.Core.Permissions;
+using TarkovSkills.Core.Authentication;
+using TarkovBenchmark.Feature;
 
 namespace TarkovPerformanceBenchmark;
 
@@ -8,12 +11,19 @@ public partial class App : Application
 {
     private Mutex? _mutex;
     private bool _ownsMutex;
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (EtwPermissions.IsHelperInvocation(e.Args))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Shutdown(await EtwPermissions.RunHelperAsync(e.Args));
+            return;
+        }
         _mutex = new Mutex(true, "TimmyTook.TarkovPerformanceBenchmark.SingleInstance", out var first);
         _ownsMutex = first;
         if (!first) { MessageBox.Show("Tarkov Performance Benchmark is already running.", "Already running", MessageBoxButton.OK, MessageBoxImage.Information); Shutdown(20); return; }
+        ApplicationFailureHandler.Attach(this, DesktopAuthProduct.Benchmark, typeof(App).Assembly.GetName().Version?.ToString(3) ?? "unknown");
         var invocation = AppInvocation.Parse(e.Args);
         if (invocation.SourceSkill) NativeConsole.TryAttachToParent();
         MainWindow = new MainWindow(invocation); MainWindow.Show();

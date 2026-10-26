@@ -16,6 +16,9 @@ public partial class MainWindow : Window
         var view = new BenchmarkView(options);
         view.RequestClose += (_, _) => Close();
         ContentRoot.Content = view;
+        SettingsRoot.Content = new SettingsView(view.CaptureAccess, SettingsSections.Access);
+        view.CaptureStateChanged += (_, _) => SettingsTab.IsEnabled = !view.IsCollecting;
+        Closed += (_, _) => view.CaptureAccess.Dispose();
         ContentHeightLimit.Attach(this, BenchmarkScroll, view);
     }
 

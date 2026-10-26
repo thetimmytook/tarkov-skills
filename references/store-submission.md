@@ -1,5 +1,25 @@
 # Microsoft Store Submission
 
+ETW permission recovery implemented in the isolated development checkout on
+2026-10-17 is not yet a validated Store candidate. See
+[ETW permission setup](etw-permission-setup.md) for the account-change scope,
+consent, native helper boundary and remaining signed-flight checks. The existing
+`runFullTrust` declarations remain unchanged; no `allowElevation` declaration or
+new capability submission has been made.
+
+The 2026-10-18 support revision retains bounded local capture diagnostics and
+offers a user-opened GitHub issue with a manually attached sanitized support ZIP.
+Nothing is uploaded automatically. Keep Store privacy wording aligned with
+[PRIVACY.md](../PRIVACY.md); this source change is not a Store publication.
+
+The next candidates are Toolkit `1.1.0.0` and Benchmark `1.1.0.0`, above the
+previous `1.0.3.0` / `1.0.6.0` telemetry flights. They include FPS-only PresentMon
+tracking, shared inline Settings/access management and sanitized support archives.
+The integrated portable AMD capture passed. Before production, validate the new
+permission/helper path and support actions in both Microsoft-signed flight hosts;
+previous-flight cancellation checks do not validate this new permission flow.
+The recorded public baselines below remain unchanged pending actual publication.
+
 Status: both products publicly published
 
 ## Published Products
@@ -154,44 +174,149 @@ Store package versions and release tags are independent per product. The version
 
 | Product | Tag form | Next approved tag | Next package version |
 | --- | --- | --- | --- |
-| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.0.6` | `1.0.6.0` |
-| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.0.3` | `1.0.3.0` |
+| Tarkov Performance Benchmark | `benchmark-vX.Y.Z` | `benchmark-v1.1.0` | `1.1.0.0` |
+| Tarkov Performance Toolkit | `toolkit-vX.Y.Z` | `toolkit-v1.1.0` | `1.1.0.0` |
 
-Partner Center package screenshots supplied on 2026-10-09 confirm that Benchmark
-`1.0.5.0` and Toolkit `1.0.2.0` are already uploaded. The resource-telemetry update
-therefore uses the higher candidates above. Keep `publishedPackageVersion` at its
-recorded public baseline until public publication is confirmed separately.
+Partner Center package screenshots supplied on 2026-10-09 confirmed uploaded
+Benchmark `1.0.5.0` and Toolkit `1.0.2.0`; the user subsequently installed the
+`1.0.6.0` / `1.0.3.0` telemetry flights from Store. The capture/access/diagnostics
+update therefore uses the higher candidates above. Keep `publishedPackageVersion`
+at its recorded public baseline until public publication is confirmed separately.
 
 Do not reuse an x64 package version for changed binaries after that version has been accepted into a flight; raise the candidate version before another flight build. Public promotion is the intentional exception: it reuses the exact flight-tested package bytes and version rather than creating another build. After a public release, update `publishedPackageVersion` and choose the next higher candidate in the next release PR.
 
-The tag workflow refuses a tag that does not match its version file or does not point to the current `main` commit. It tests only the tagged product, verifies PresentMon, builds and inspects an unsigned MSIX, creates the matching portable ZIP and GitHub Release, and publishes SHA-256 checksums. A tag never submits a package to Microsoft Store.
+### One build, explicit promotion
 
-`Microsoft Store flight` is a manual workflow with a `benchmark`, `toolkit`, or `both` choice. It requires an explicit production-API readiness confirmation, runs the applicable Release tests, verifies PresentMon, builds with the versioned Production `desktop-auth.json` and `academy-api.json`, creates the unsigned MSIX with MakeAppx, and inspects the package before any Store credential is available. Its submission jobs use the protected `microsoft-store-flight` Environment and send each validated package only to its configured private package flight. Store mutations are serialized per product. The workflow reads status once after submission and does not poll certification.
+Every push to `main` runs `Benchmark app` and `Performance toolkit`, each calling
+`store-build.yml`. Each product's executable is published once with Production
+auth/API configuration (Toolkit has two executables). `build-store-artifacts.ps1`
+passes the same publish directory to the MSIX and portable packagers. MakeAppx
+semantic validation, release-version checks, application tests, PresentMon checksum
+verification, and unsigned package-content inspection run in this build. No later
+stage runs `dotnet publish`, MakeAppx packing, or portable compression.
 
-`Microsoft Store production promotion` is a separate manual workflow. It requires the successful flight workflow run ID and an explicit public-release confirmation. Both runs must be dispatched from `main`; the workflow refuses a source run from another workflow, a failed run, or a different commit. It downloads the immutable flight artifact, repeats package inspection, and stages the same bytes for an approval-protected `microsoft-store-production` job. Production promotion does not rebuild the MSIX and does not use a flight ID.
+The build uploads one `release-<product>-<run ID>-a<attempt>` bundle containing:
+
+- the unsigned x64 MSIX;
+- the self-contained Windows x64 portable ZIP;
+- `release-manifest.json` with schema version, product, package version, repository,
+  source SHA, workflow path, event, branch, build run ID/attempt, artifact name,
+  filenames, byte sizes and SHA-256 for both files.
+
+The artifact ID is returned by GitHub after upload and recorded in the job summary.
+The manifest uses the immutable artifact name because its own upload ID does not
+exist when the manifest is created. Downstream stages resolve that exact name to
+one ID through the API and download by ID. All pipeline bundles are retained for
+90 days; repository/organization retention settings must permit at least 90 days.
+PR and manually dispatched diagnostic builds use `check-...` names and set
+`eligible: false`; they cannot be Store or application-release sources.
+
+### Closed preflight
+
+Dispatch `Microsoft Store flight` on `main`, select `benchmark`, `toolkit`, or
+`both`, and supply each selected product's `*_build_run_id` and
+`*_build_attempt`. These are separate product workflows, so `both` requires two
+explicit build sources. Confirm production API readiness as before.
+
+The shared validator requires a completed successful **selected attempt**, the
+registered product workflow ID and path, a `push` event from this repository
+(forks are rejected), `main`, and a source SHA equal to both the dispatch SHA and
+current remote `main`. It validates the artifact's repository/run/commit metadata,
+manifest identity/version/origin and both file checksums. It also repeats PresentMon,
+Production configuration, release-version and MSIX-content checks. Missing, deleted,
+expired, ambiguous or mismatched artifacts fail with an error; no rebuild fallback
+or implicit search for latest is permitted.
+
+`store-submit.yml` validates before any Store credentials are available, then
+repeats download and validation after approval in `microsoft-store-flight`. Store
+mutations remain serialized per product. It sends only the existing MSIX to the
+configured private flight. **After a successful publisher command**, it creates
+`flight-receipt.json` and uploads `store-flight-<product>-<flight run ID>-a<attempt>`
+with the unchanged build bundle. The receipt records the original build artifact
+ID/name and run/attempt, source commit/version/product, manifest and MSIX checksums,
+and the submitting flight workflow/run/attempt/artifact name. A staged package
+without a successful submission receipt is not a production source. Status is read
+once; certification is not polled. A successful workflow means submission succeeded;
+Microsoft certification and signed-package manual testing must still complete.
+
+### Production and GitHub Releases
+
+After certification and the applicable signed-package checks, dispatch
+`Microsoft Store production promotion` on `main` with `flight_run_id`,
+`flight_attempt`, selected product(s), and the explicit public-release confirmation.
+The validator requires a successful manual flight attempt from the registered
+`store-flight.yml` workflow at the **same current main commit**. It downloads its
+submitted bundle, verifies the receipt and checks the original build attempt and
+artifact ID again. Both original build and flight artifacts must still be available.
+The protected `microsoft-store-production` job repeats validation after approval
+and sends the identical MSIX bytes without a flight ID. Only metadata sidecars and
+GitHub artifact transport containers are created; the MSIX is never repacked.
+
+For an application GitHub Release, first arrange the existing approved
+`benchmark-vX.Y.Z` or `toolkit-vX.Y.Z` tag at current `main` through the normal
+manual tagging process, then dispatch `Product release` from `main` with the product,
+`flight_run_id` and `flight_attempt`. The tag and version file must match. This workflow
+downloads and validates that submitted flight bundle and its original build, attaches
+the unchanged MSIX, ZIP, manifest and flight receipt, creates a source archive, and
+writes `SHA256SUMS.txt`. App tag pushes
+alone no longer build or publish. The workflow never creates or moves application
+tags and never submits to Store. The receipt binds the release to the tested build,
+including its attempt; no source is inferred from a tag or latest run.
+Portable builds remain unsigned by Microsoft Store, do not auto-update, and do not
+register Store execution aliases.
+
+Skills publication stays independent: a plugin version change on `main` still
+validates and publishes all four skills together with the immutable `skills-v<version>`
+tag. Existing skills-tag handling and the skills/source archives are unchanged and
+do not depend on any Store build or flight.
+
+### Attempts and transition
+
+Always record both run ID and attempt. Artifact names include the attempt, so a
+rerun cannot overwrite an earlier bundle. The API checks the specified historical
+attempt, not the latest attempt's status. An explicitly selected earlier successful
+attempt remains eligible if its artifacts and commit still pass every check. A
+failed-jobs-only rerun that reuses an earlier build/validation job does not create
+new build artifacts: selecting its newer attempt fails rather than silently using
+old output. To create a new complete build set, rerun all build jobs deliberately.
+A rerun of the protected submission job downloads the explicit original source
+again and writes a new receipt/artifact for the submitting attempt; it can repeat
+an external submission, so inspect Partner Center before rerunning a submission.
+When `both` is selected, each product must have its own submitted artifact in the
+chosen successful flight attempt. Never mix attempts implicitly.
+
+The next rollout uses Benchmark and Toolkit `1.1.0.0` from main containing PR #39.
+Merge this pipeline migration before starting that flight. Preserve those candidate
+versions and the recorded public baselines; the pipeline change does not require
+another version bump or publish an application.
+
+The legacy telemetry flight `37982351957` (Benchmark `1.0.6.0`, Toolkit `1.0.3.0`)
+lacks the new manifest/receipt contract and is not a source for this rollout. The
+premature legacy workflow run `39156304088` for `1.1.0.0` was cancelled while building,
+before either Store submission started. Do not rerun it or use its outputs. After
+merging this migration, select the new main-push build run/attempt for each product
+and submit those explicit bundles through the new flight workflow.
+
+Keep main unchanged from the selected build through flight testing, production
+promotion and application GitHub Release: every consumer rechecks current main,
+including after Environment approval. A later merge invalidates an older source
+even if it changes only documentation. If a candidate has already been accepted
+into a Store flight, changed binaries still require a deliberate higher version;
+never rebuild and reuse an accepted package version as a recovery shortcut.
+
+Local automated checks: `node --test build/tests/release-artifacts.test.mjs` exercises
+validators with injected GitHub responses and byte-preserving stage transfers;
+`build/test-store-artifact-formats.ps1` compares the actual MSIX/ZIP payloads. CI also
+parses all PowerShell and checks workflow syntax with pinned actionlint `v1.7.7`.
 
 Creating a Microsoft Entra tenant does not associate it with the Windows developer account. After creation, return to Partner Center **Account settings > Tenants > Developer**, select **Associate Microsoft Entra ID**, sign in with that tenant's Global Administrator, and confirm that the tenant appears under **Current tenant associations**. Only then does **User management > Microsoft Entra applications** become available. Add the CI app registration there and grant only the `Manager (Windows)` role required by Microsoft Store Developer CLI. Record the tenant ID, application client ID, one-time client-secret value, and the Seller ID from **Legal info > Developer > Publisher IDs**; do not confuse Seller ID with Windows publisher ID.
 
 Create both GitHub Environments with required reviewers. Store these secrets separately in each Environment: `AZURE_AD_TENANT_ID`, `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and `SELLER_ID`. Store `BENCHMARK_STORE_FLIGHT_ID` and `TOOLKIT_STORE_FLIGHT_ID` as variables on `microsoft-store-flight`. The personal Store test account is unrelated to these CI credentials: add its Microsoft-account email to a known-user group and attach that group to one package flight per product.
 
+Both promotion callers explicitly pass those four secret names to `store-submit.yml`,
+which declares them required. GitHub resolves their values from the protected
+Environment on the submit job after approval; keep them there rather than adding
+repository-level copies. Omitting a mapping fails workflow validation. A missing or
+blank value fails before invoking the Store CLI and reports only the missing names.
+
 Before approving a flight submission, the Academy owner must confirm that `https://timmy.academy/api/bench/v1` implements the deployed desktop contracts: Clerk authorization/token/revocation, authenticated `GET /me/runs/by-client-id/{clientRunId}`, authenticated `POST /me/runs`, anonymous grouped run browsing, and cohort comparison. Local API evidence does not satisfy this gate. Never put Clerk tokens, Partner Center secrets, the personal test email, or API response bodies in workflow configuration or logs.
-
-### Deferred Maintenance: Node.js 24 Action Runtimes (2026-10-19)
-
-Production promotion run `39249996418`, Toolkit validate job `118051228724`,
-reported that `actions/setup-node@v4` targets Node.js 20 and is being forced to
-run on Node.js 24. The workflow's `node-version: '24'` selects Node for repository
-scripts; it does not change the runtime declared by the setup action itself.
-
-After the current release finishes, update `actions/setup-node@v4` to a verified
-Node.js 24-based action version in `.github/workflows/ci.yml`,
-`.github/workflows/store-build.yml`, and
-`.github/actions/receive-store-artifact/action.yml`. Upstream `setup-node@v6`
-declares `runs.using: node24`; recheck its runner requirements and input/cache
-behavior before implementation, and audit other actions and nested dependencies.
-Run actionlint and the release-provenance tests, then confirm the warning is gone
-in a validation-only run. This is future maintenance: keep the current Store
-promotion and its source commit unchanged.
-
-References: [setup-node v4 runtime](https://github.com/actions/setup-node/blob/v4/action.yml)
-and [setup-node v6 runtime](https://github.com/actions/setup-node/blob/v6/action.yml).

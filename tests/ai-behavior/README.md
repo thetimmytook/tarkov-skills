@@ -54,7 +54,7 @@ This repository-only set covers all four performance skills. It is independent o
 - `suite.json`: six original case groups plus goal holdouts, model tiers, tool contracts and execution boundaries.
 - `cases/*.json`: user prompts, attachments, environment and scripted continuation turns.
 - `fixtures.json`: synthetic inputs and mock tool results.
-- `CATALOG.md`: operator-only overview of the 36 original scenarios and two goal holdouts, with expected meanings.
+- `CATALOG.md`: operator-only overview of the 36 original scenarios, two goal holdouts and six forecast cases, with expected meanings.
 - `rubrics/*.json`: evaluator-only expected meanings, permissible alternatives, prohibited behaviour and objective checks.
 - `run-plan.json`: selected profiles, smoke/full phases and the completed initial execution scope.
 - `scorecard-template.json`: an empty result format, not a measured result.

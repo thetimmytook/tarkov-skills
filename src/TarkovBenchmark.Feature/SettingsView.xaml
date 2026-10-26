@@ -1,0 +1,11 @@
+<UserControl x:Class="TarkovBenchmark.Feature.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{StaticResource TextBrush}">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="0,16,0,16">
+      <ContentControl x:Name="AccessSection" HorizontalContentAlignment="Stretch" Visibility="Collapsed"/>
+      <ContentControl x:Name="GoalSection" HorizontalContentAlignment="Stretch" Visibility="Collapsed"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

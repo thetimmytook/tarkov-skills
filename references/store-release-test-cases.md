@@ -10,6 +10,7 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 - Escape from Tarkov is available for the real-raid capture cases.
 - Record the initial run count shown by the application and, when available, the number of entries in the package-local `benchmark.json` opened through `Open folder`.
 - The Academy production owner has confirmed the deployed desktop-auth, owner lookup, submission, public browsing, and cohort-comparison contracts before the flight submission is approved.
+- Record the original build run ID/attempt and artifact ID, flight run ID/attempt and submitted MSIX SHA-256 from `release-manifest.json` / `flight-receipt.json`. Before production approval, confirm the validator reports the same source commit, version and MSIX checksum. This compares the original unsigned submission bytes; Microsoft signing changes the delivered Store package.
 
 ## Store Installation And Launch
 
@@ -83,8 +84,8 @@ Use this checklist to validate Microsoft-signed Store releases and updates. Reco
 | ID | Test | Expected result |
 | --- | --- | --- |
 | ERR-01 | Cause or reproduce a normal precondition failure, such as starting outside a raid. | A concise actionable message is shown; no crash report is created for expected user-state failures. |
-| ERR-02 | Reproduce an ETW access-denied failure on a standard-user setup when possible. | The app explains the permissions problem and does not save a broken measurement. |
-| ERR-03 | Reproduce a genuine capture or save exception in a development build. | A sanitized report is written under the application's current `TarkovSkills\reports` data directory, copied to the clipboard, and the Crash form is offered. The report contains useful error details but no user-specific paths. |
+| ERR-02 | Reproduce an ETW access-denied failure on a standard-user setup when possible. | After the ordinary attempt fails, the app offers explicit access-setup consent and the verified temporary helper. Declining consent/UAC saves no run or permission change. Validate immediate capture and requesting-account identity with the [permission matrix](etw-permission-setup.md#manual-validation-matrix) in both signed hosts. |
+| ERR-03 | Reproduce a genuine capture/save failure in an isolated test setup and inspect the signed host's support actions. | A short sanitized report is copied and a local support ZIP is offered under the current reports directory or a local fallback. Open GitHub issue prefills the report only after a click; Show log archive selects the ZIP for manual review/attachment. No automatic browser opening/upload or raw CSV/settings/history/credentials/identifiers/paths. Cancel and expected raid/game exit do not offer a bug report. |
 | ERR-04 | Start a capture while the app-owned `TimmyTook.TarkovPerformanceBenchmark` ETW session remains from any earlier app version. | The stale app-owned session is stopped automatically before capture. Capture succeeds and the session is removed after completion. |
 | ERR-05 | Cancel a capture, then query active ETW sessions and start another capture. | Cancellation removes the app-owned ETW session, no run is saved, and the next capture starts normally. |
 | ERR-06 | Leave an orphaned legacy `PresentMon` ETW session with no running `PresentMon.exe`, then start capture. | The orphaned legacy session is removed automatically and capture starts normally. |
@@ -143,35 +144,3 @@ and Toolkit `1.0.2.0`:
 - These are user-confirmed installed-package observations, not isolated WPF test results
   or certification of every supported Windows version. Raw captures, account details and
   generated test reports are not versioned.
-
-Recorded on October 19, 2026, against installed closed-flight Benchmark `1.1.0.0`
-and Toolkit `1.1.0.0` on Windows 10:
-
-- Installed-package metadata confirmed both versions. The signed Toolkit alias passed
-  all 11 executed read-only smoke cases, including signature/architecture, JSON/privacy,
-  Goal consistency and unchanged GUI process counts. No live CLI capture or Goal write
-  was performed by that smoke run.
-- The user confirmed existing history remained available in both products after update.
-- In each GUI host, the user completed a two-minute capture, closed Tarkov before saving,
-  then saved successfully with exactly one additional run.
-- The supplied Toolkit Copy results contained one completed run from version `1.1.0`.
-  Its FPS window was 119.989 seconds and telemetry window 119.98912 seconds; all 30
-  sampled metrics passed range/coverage/metadata consistency checks. CPU included all
-  16 logical processors, GPU utilization used NVAPI with whole-adapter scope, and
-  resource coverage was 98.85-99.17%. RAM, dedicated/shared GPU memory, pagefile and
-  commit remained separate; submission was false. No private paths or device/process
-  identifiers were found in this supplied export. Raw data is not versioned.
-- In both standalone Benchmark and Toolkit's Benchmark tab, the user separately
-  cancelled an active capture and closed Tarkov during another incomplete capture.
-  All four scenarios were confirmed successful against the expected discarded result,
-  unchanged run count and absence of a Save dialog.
-- The user reported a successful capture on the AMD tester's computer without group
-  setup or a UAC prompt, and accepted this outcome as successful for now. Record the
-  ordinary capture path as a user-confirmed pass; no new AMD export or diagnostic log
-  was supplied with this confirmation.
-- The native UAC/helper path in both signed hosts was not exercised by these ordinary
-  captures and remains a separate unverified case. The local developer account already
-  has ETW access, including previously observed inheritance through INTERACTIVE;
-  removing only a direct user membership does not establish an access-denied test.
-  No group membership was changed in these checks. These observations do not claim
-  ETW-session inspection or completion of the full permission matrix.

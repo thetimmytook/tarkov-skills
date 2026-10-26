@@ -13,6 +13,11 @@ public static class AppPaths
 
     private static string CurrentDataDirectory()
     {
+#if CAPTURE_DIAGNOSTICS
+        // A separately requested portable diagnostic must not share release benchmark history.
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TarkovSkills", "AMD-Capture-Diagnostics");
+#else
 #if DEBUG
         // Isolated manual first-run checks; never compiled into Store/Release builds.
         var testDirectory = Environment.GetEnvironmentVariable("TARKOV_BENCHMARK_TEST_DATA_DIRECTORY");
@@ -23,6 +28,7 @@ public static class AppPaths
         }
 #endif
         return ResolveDataDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GetPackageFamilyName());
+#endif
     }
     public static string BenchmarkFile => Path.Combine(DataDirectory, "benchmark.json");
     public static string LastCommandResultFile => Path.Combine(DataDirectory, "last-command-result.json");
