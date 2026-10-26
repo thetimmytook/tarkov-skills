@@ -46,13 +46,33 @@ async function walk(directory) {
   }
   return result;
 }
-for (const root of manifest.skill_roots) {
-  for (const p of await walk(path.join(repo, root))) {
-    if (!/\.(md|json|yaml)$/i.test(p)) continue;
-    const relative = path.relative(repo, p).split(path.sep).join('/');
-    const content = await fs.readFile(p, 'utf8');
+let skillSource = { kind: 'checkout' };
+if (options['--skill-snapshot']) {
+  const sourcePath = path.resolve(options['--skill-snapshot']);
+  const sourceBytes = await fs.readFile(sourcePath);
+  const frozen = JSON.parse(sourceBytes.toString('utf8'));
+  if (!frozen || Array.isArray(frozen) || typeof frozen !== 'object') throw new Error('Invalid skill snapshot.');
+  for (const [relative, content] of Object.entries(frozen)) {
+    if (!manifest.skill_roots.some(root => relative.startsWith(root + '/')) ||
+        path.posix.normalize(relative) !== relative || relative.includes('\\') ||
+        !/\.(md|json|yaml)$/i.test(relative) || typeof content !== 'string') {
+      throw new Error('Skill snapshot contains an invalid path or non-text content.');
+    }
     snapshot.set(relative, content); fileHashes[relative] = hash(content);
   }
+  skillSource = { kind: 'frozen_snapshot', file: path.basename(sourcePath), sha256: hash(sourceBytes) };
+} else {
+  for (const root of manifest.skill_roots) {
+    for (const p of await walk(path.join(repo, root))) {
+      if (!/\.(md|json|yaml)$/i.test(p)) continue;
+      const relative = path.relative(repo, p).split(path.sep).join('/');
+      const content = await fs.readFile(p, 'utf8');
+      snapshot.set(relative, content); fileHashes[relative] = hash(content);
+    }
+  }
+}
+for (const root of manifest.skill_roots) {
+  if (!snapshot.has(root + '/SKILL.md')) throw new Error('Skill snapshot is missing an entrypoint.');
 }
 for (const p of await walk(suiteRoot)) fileHashes[path.relative(repo, p).split(path.sep).join('/')] = hash(await fs.readFile(p));
 const entrypoints = manifest.skill_roots.map(root => `File: ${root}/SKILL.md\n${snapshot.get(root + '/SKILL.md')}`).join('\n\n');
@@ -60,6 +80,7 @@ let commit = 'unknown';
 try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(); } catch {}
 const runManifest = { started_at: new Date().toISOString(), mode: 'supplied_skill_dynamic_mock_tools', profiles, repetitions: repeats,
   case_ids: selectedIds, file_hashes: fileHashes, commit, snapshot_hash: hash(JSON.stringify(fileHashes)),
+  skill_source: skillSource,
   native_selection_tested: false, live_toolkit_calls: 0, api_key_used: false, client: execFileSync(codex, ['--version'], { encoding: 'utf8' }).trim(),
   known_cost: null, billing: 'existing ChatGPT login; monetary cost unavailable', status: 'running' };
 await fs.writeFile(path.join(output, 'run-manifest.json'), JSON.stringify(runManifest, null, 2));

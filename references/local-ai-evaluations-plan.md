@@ -24,6 +24,17 @@ goal persistence and some explanatory omissions remain inconsistent. The local
 comparison report records both improvements and newly observed failures; there
 is still no broad model-support certification.
 
+On 2026-10-26 the developer authorized a checkpoint and bounded experimentation.
+Checkpoint `d8e306e` preserves the earlier improvements. Matched three-repeat
+screening compared frozen old instructions (A), a broader candidate (B), and a
+minimal early-goal-persistence candidate (C) through the same adapter. C was kept;
+B's language/next-test/quality additions were removed. The original 36 cases then
+ran on both profiles, with two separately reported goal-only holdouts added in
+suite 0.2. All 112 executions completed; numerical priors and the original 36
+prompts/rubrics/fixtures were unchanged. Goal persistence improved in these
+observations, while unsupported numeric bundle forecasts and some explanation
+omissions remain. Detailed scores, comparisons and traces stay outside Git.
+
 ## Execution boundary
 
 - Run locally on explicit developer invocation only. Do not add these evaluations

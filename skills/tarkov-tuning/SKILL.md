@@ -7,6 +7,14 @@ description: Orchestrate iterative Escape from Tarkov performance tuning and con
 
 Coordinate `tarkov-config` and `tarkov-frametime`; use `tarkov-performance-benchmark` when full run context matters. Never edit EFT settings automatically.
 
+## Apply An Explicit Goal Change
+
+Before forecasting or selecting a test, persist an explicitly changed FPS/quality
+goal with the available Toolkit goal command and check its result. Acknowledging
+it in prose does not save it. Use clear supplied values without asking again;
+the old report's goal must not override them. Without working persistence, keep
+the new goal in the conversation and explain that it was not saved.
+
 ## Choose The Next Action
 
 Follow the user's active FPS, stutter or image-quality goal:

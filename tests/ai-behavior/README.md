@@ -11,14 +11,22 @@ batches had adapter fixes, so before/after results are exploratory rather than
 a randomized causal estimate. Raw records and the comparison report remain
 outside Git. The original scores were not revised.
 
-This repository-only set covers all four performance skills. It is independent of CI, publication gates and application tests. It does not change the production skill instructions or numerical priors.
+On 2026-10-26, checkpoint `d8e306e` preceded a bounded matched A/B/C instruction
+experiment. The minimal early-goal-persistence candidate was retained after
+screening, followed by the original 36 cases on both profiles and the two new
+goal holdouts separately: 112 completed executions in total. The experiment
+improved the observed persistence action; it did not eliminate unsupported
+numeric forecasts or all explanatory omissions. Scores and transcripts remain
+outside Git.
+
+This repository-only set covers all four performance skills. It is independent of CI, publication gates and application tests. Its runner does not write production skill instructions or numerical priors; instruction edits are separate, explicitly authorized development work.
 
 ## Files and separation
 
-- `suite.json`: six case groups, model tiers, tool contracts and execution boundaries.
+- `suite.json`: six original case groups plus goal holdouts, model tiers, tool contracts and execution boundaries.
 - `cases/*.json`: user prompts, attachments, environment and scripted continuation turns.
 - `fixtures.json`: synthetic inputs and mock tool results.
-- `CATALOG.md`: operator-only overview of all 36 scenarios and expected meanings.
+- `CATALOG.md`: operator-only overview of the 36 original scenarios and two goal holdouts, with expected meanings.
 - `rubrics/*.json`: evaluator-only expected meanings, permissible alternatives, prohibited behaviour and objective checks.
 - `run-plan.json`: selected profiles, smoke/full phases and the completed initial execution scope.
 - `scorecard-template.json`: an empty result format, not a measured result.
@@ -52,7 +60,22 @@ Example, from the repository root in PowerShell, after explicit developer author
 node tests/ai-behavior/run.mjs --run --phase=smoke --profiles=gpt-6-luna:low,gpt-6.1-sol:medium --repeats=1 --out=C:/projects/skill-perf-measurements/ai-behavior/runs/NEW-EMPTY-DIRECTORY
 ```
 
-Use `--phase=full` for all 36 cases, or `--cases=opt-01,capture-01` for selected cases. `--repeats=1|2|3` controls repetitions; `--codex=...` can select the installed executable. `--run` and an empty `--out` outside the repository are mandatory. The runner refuses to overwrite existing results. It never launches the real game or Toolkit.
+Use `--phase=full` for all cases (38 since suite 0.2), or `--cases=opt-01,capture-01` for selected cases. `--repeats=1|2|3` controls repetitions; `--codex=...` can select the installed executable. `--run` and an empty `--out` outside the repository are mandatory. The runner refuses to overwrite existing results. It never launches the real game or Toolkit.
+
+For a controlled instruction comparison, `--skill-snapshot=<path>` loads a prior
+run's `skill-snapshot.json` instead of the current checkout's skill text. The
+snapshot must contain text files within the four allowed skill roots and all
+four SKILL.md entrypoints. Invalid paths, traversal and missing entrypoints are
+rejected before inference. The manifest records snapshot provenance and actual
+content hashes. Tool mocks, prompts and rubrics still come from the selected
+suite, so verify their hashes separately when comparing variants.
+
+Suite 0.2 adds two goal-only holdouts: a successful 110-FPS save and a failed
+75-FPS save with no retry. The original 36 prompts, rubrics and fixtures are
+unchanged; report those 36 and the two new cases separately for historical
+comparisons. The 2026-10-26 experiment uses matched three-repeat A/B/C screening
+and a full follow-up of the original 36 on both model profiles. All evaluation
+artifacts remain private and outside Git.
 
 The adapter starts a fresh app-server process and ephemeral conversation for every case/repetition. A temporary child-only `CODEX_HOME` isolates client configuration and capabilities. Existing login credentials are copied there solely for inference authentication and the copied `auth.json` is removed in cleanup; it is never written to result artifacts. Keep normal credential handling and do not commit authentication material. The operator's parent configuration is not rewritten.
 

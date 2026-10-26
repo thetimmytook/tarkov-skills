@@ -7,6 +7,14 @@ description: Analyze Escape from Tarkov graphics configuration and Windows perfo
 
 Analyze settings and system readiness in read-only mode. Never edit EFT files or promise a specific FPS.
 
+## Apply An Explicit Goal Change
+
+Before selecting a test or forecasting, persist an explicitly changed FPS/quality
+goal through the available Toolkit goal command and check its result. Use clear
+user-supplied values without asking again; an older report's goal does not replace
+them. Say "saved" only after success. If persistence is unavailable or fails,
+retain the new goal in the conversation and explain that it was not saved.
+
 ## Choose The Next Action
 
 Follow the user's active FPS, stutter or image-quality goal. Choose the immediate
@@ -58,7 +66,7 @@ The Toolkit is the only automated dependency. If it is missing, direct the user 
 
 ## Goal
 
-Read the active goal from `inspect` or `tarkov-skills.exe goal get`. When the user changes the target or quality tradeoff, confirm the values and save them with:
+Read the active goal from `inspect` or `tarkov-skills.exe goal get`. An explicit new goal takes precedence; persist it before analysis with:
 
 ```text
 tarkov-skills.exe goal set --goal <name> --target-fps <20-360> --quality <text> [--notes <text>]

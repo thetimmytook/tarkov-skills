@@ -1,6 +1,6 @@
 {
-  "suite_version": "0.1.0",
-  "execution_status": "followup_evaluation_completed_2026-10-25",
+  "suite_version": "0.2.0",
+  "execution_status": "bounded_instruction_experiment_completed_2026-10-26",
   "launch_authorized": true,
   "authorization_scope": "Developer explicitly requested this local run; future launches still require explicit invocation and --run.",
   "actual_initial_scope": {
@@ -21,6 +21,19 @@
     "native_skill_selection": "not_run",
     "rubrics_changed": false,
     "production_skill_changes": true
+  },
+  "actual_experiment_scope": {
+    "baseline_checkpoint": "d8e306e",
+    "screening_variants": ["A", "B", "C"],
+    "screening_case_ids": ["memory-03", "opt-04", "quality-05", "input-01"],
+    "screening_repetitions_each_variant": 3,
+    "retained_variant": "C: early explicit goal persistence only",
+    "original_cases_full_repetitions_each_profile": 1,
+    "goal_holdout_case_ids": ["goal-01", "goal-02"],
+    "goal_holdout_repetitions_each_profile": 1,
+    "case_executions": 112,
+    "original_prompts_rubrics_fixtures_changed": false,
+    "native_skill_selection": "not_run"
   },
   "profiles": [
     {
@@ -71,7 +84,7 @@
     },
     {
       "id": "full",
-      "case_ids": "all 36",
+      "case_ids": "all 38 (original 36 plus two goal holdouts)",
       "planned_repetitions": 3,
       "enabled": true
     }
