@@ -1,7 +1,7 @@
 {
   "suite_id": "tarkov-skills-behavior",
   "version": "0.1.0",
-  "status": "initial_evaluation_completed_2026-10-25",
+  "status": "followup_evaluation_completed_2026-10-25",
   "case_count": 36,
   "execution": {
     "local_only": true,

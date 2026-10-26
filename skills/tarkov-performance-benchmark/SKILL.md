@@ -12,9 +12,9 @@ Record a benchmark; do not optimize settings in this skill.
 For a local agent, use the signed Toolkit without opening its GUI:
 
 1. Run `tarkov-skills.exe status` and require an active raid.
-2. Obtain explicit readiness (reuse the user's current ready signal), give the start cue/duration, then run `tarkov-skills.exe capture --duration 120` or `240` when requested. Announce completion immediately before analysis, following `references/measurement-rules.md`.
+2. Reuse the user's current ready signal or obtain readiness. Send visible **START** with the duration immediately before invoking `tarkov-skills.exe capture --duration 120` or `240` when requested. On return, first send **COMPLETE — you can stop** or the failure/cancellation notice, then analyze. Follow `references/measurement-rules.md`.
 3. Use the report's settings, system, map/log context, and performance metrics.
-4. Ask only for missing `BSG servers` versus `Local`, weather, and time of day. Server execution is required; weather/time may be `unknown`.
+4. Ask only for missing `BSG servers` versus `Local`, weather, and time of day. If server execution is missing, ask explicitly **Was this BSG servers or Local?** rather than just list it as unknown. Accept already supplied unknown weather/time without asking again.
 
 Do not open the GUI when the local alias is callable. For a web client, ask the user to open **Tarkov Performance Toolkit**, select **Benchmark**, complete and save the run, press **Copy results**, and paste the JSON into the conversation. `Copy results` copies only the latest complete run and uploads nothing. The Toolkit Store page is `https://apps.microsoft.com/detail/9N3L7DZH0K64`. Without Toolkit, accept manually attached settings plus an existing capture export, but do not provide or execute unsigned scripts.
 

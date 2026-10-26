@@ -7,8 +7,10 @@ These rules guide read-only analysis of Escape from Tarkov FPS/stability setting
 - Default to stable 50-60 FPS minimum when realistic.
 - If the user chooses a different target, save it in local goal memory and follow it until changed again.
 - Valid goal shifts include higher FPS, lower FPS for better quality, fewer stutters, better visibility, or a balanced profile.
-- Reduce obvious stutter causes.
-- Prioritize stability and practical visibility over pretty graphics.
+- Investigate observed stutters using measured symptoms and resource headroom.
+- Follow the active quality/performance goal. For a better-graphics goal, use
+  measured headroom to improve one relevant visual group while preserving the
+  requested FPS/stability floor and visibility preferences.
 - Do not promise perfect frametimes.
 
 ## Local Goal Memory

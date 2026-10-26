@@ -2,6 +2,15 @@
 
 Status: **first local evaluation completed on 2026-10-25**, after the developer's explicit request to run. Both `gpt-6-luna` (`low`) and `gpt-6.1-sol` (`medium`) completed all 36 cases. Six selected simple-model cases received two additional repetitions. Results and transcripts stay outside Git; this is not a model-support certification.
 
+A second explicitly requested evaluation followed the behavior-guidance changes
+above checkpoint `eea2523`: the same 36 cases on both profiles, the same 12
+selected repeats, and four additional probes of newly observed failures. All 88
+executions completed. Prompts, rubrics and fixtures stayed unchanged; the final
+adapter matched the first evaluation's focused-repeat adapter. Earlier full
+batches had adapter fixes, so before/after results are exploratory rather than
+a randomized causal estimate. Raw records and the comparison report remain
+outside Git. The original scores were not revised.
+
 This repository-only set covers all four performance skills. It is independent of CI, publication gates and application tests. It does not change the production skill instructions or numerical priors.
 
 ## Files and separation

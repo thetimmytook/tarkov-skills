@@ -10,6 +10,11 @@ The user creates the issue and attaches files manually. Never submit an issue,
 upload files, send a chat or call a reporting API on the user's behalf in this
 workflow. GitHub issues are public; show the prepared material for user review.
 
+The response should contain the filled issue title/body and the manual submission
+link. Describing how to draft an issue does not supply that deliverable. An inline
+draft is enough when file/archive tools are unavailable; do not claim a ZIP or
+full chat export was created. Use known evidence and `unknown` for missing fields.
+
 ## Identify a useful case
 
 First check the applied setting diff and automatic couplings, effective-cap

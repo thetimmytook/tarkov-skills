@@ -14,6 +14,16 @@ transcripts, criterion reviews and reports remain in the private measurement
 directory outside Git. These results do not establish broad model support.
 This work is not a publication prerequisite or CI/release gate.
 
+After explicit developer approval, checkpoint `eea2523` preserved the original
+state. A second evaluation exercised the revised action-selection, quality-goal,
+reference-reading, capture-signalling and feedback-deliverable guidance: 36 cases
+per profile, 12 selected repeats and four additional probes, all completed. Keep
+the original and follow-up results separate; prompts/rubrics/fixtures and numerical
+priors were unchanged. Selected baseline and signalling checks improved, while
+goal persistence and some explanatory omissions remain inconsistent. The local
+comparison report records both improvements and newly observed failures; there
+is still no broad model-support certification.
+
 ## Execution boundary
 
 - Run locally on explicit developer invocation only. Do not add these evaluations
