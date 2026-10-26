@@ -1,6 +1,6 @@
 {
-  "suite_version": "0.2.0",
-  "execution_status": "bounded_instruction_experiment_completed_2026-10-26",
+  "suite_version": "0.3.0",
+  "execution_status": "retained_numeric_guard_high_evaluation_completed_2026-10-26",
   "launch_authorized": true,
   "authorization_scope": "Developer explicitly requested this local run; future launches still require explicit invocation and --run.",
   "actual_initial_scope": {
@@ -35,6 +35,48 @@
     "original_prompts_rubrics_fixtures_changed": false,
     "native_skill_selection": "not_run"
   },
+  "actual_high_reasoning_control_scope": {
+    "baseline_checkpoint": "f3cadb5",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "case_count": 38,
+    "repetitions_per_case": 1,
+    "case_executions": 38,
+    "production_skill_changes": false,
+    "prompts_rubrics_fixtures_changed": false,
+    "adapter_changed": false,
+    "native_skill_selection": "not_run",
+    "model_support_certification": false
+  },
+  "actual_numeric_forecast_guard_scope": {
+    "baseline_checkpoint": "f3cadb5",
+    "screening_variants": ["A: frozen previous skills", "B: metric-specific forecast eligibility", "C: explicit resource whitelist and complete-path clarification"],
+    "screening_case_ids": ["memory-03", "forecast-01", "forecast-02", "forecast-03", "forecast-04", "forecast-05", "forecast-06"],
+    "simple_screening_repetitions_each_variant": 2,
+    "medium_screening_repetitions_each_variant": 1,
+    "plan_amendment": "After a B resource-eligibility failure, one additional C clarification was declared before its execution. No further instruction candidates were tried.",
+    "retained_variant": "C; eligibility clarification only, not a deterministic forecast engine or a model-support certification",
+    "original_38_regression_repetitions_each_profile": 1,
+    "case_executions": 139,
+    "original_prompts_rubrics_fixtures_changed": false,
+    "numeric_priors_changed": false,
+    "toolkit_changed": false,
+    "native_skill_selection": "not_run"
+  },
+  "actual_numeric_guard_high_scope": {
+    "skill_snapshot": "Retained numeric-guard candidate C, unchanged from both medium batches",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "case_count": 44,
+    "repetitions_per_case": 1,
+    "case_executions": 44,
+    "production_skill_changes": false,
+    "prompts_rubrics_fixtures_changed": false,
+    "adapter_changed": false,
+    "toolkit_changed": false,
+    "native_skill_selection": "not_run",
+    "model_support_certification": false
+  },
   "profiles": [
     {
       "id": "simple",
@@ -56,12 +98,12 @@
     },
     {
       "id": "high",
-      "tier": "strong-control",
-      "provider": null,
-      "model": null,
-      "reasoning_effort": null,
-      "client_version": null,
-      "status": "not_selected"
+      "tier": "same-model-higher-reasoning-control",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "retained_numeric_guard_full_run_completed_not_certified"
     }
   ],
   "phases": [
@@ -84,7 +126,7 @@
     },
     {
       "id": "full",
-      "case_ids": "all 38 (original 36 plus two goal holdouts)",
+      "case_ids": "all 44 (original 36, two goal holdouts and six forecast cases)",
       "planned_repetitions": 3,
       "enabled": true
     }

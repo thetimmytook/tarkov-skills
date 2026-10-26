@@ -10,7 +10,7 @@ Numeric thresholds (noise, diagnostics trigger, repeat-run guidance) are defined
 - preparation state when known; no dedicated warmup required for normal tuning
 - raids/time since restart and memory progression when symptoms or headroom warrant it
 - last manual change recommended
-- frozen forecast with empirical row IDs, center/range, unknowns and couplings
+- frozen forecast with baseline identity, eligible row IDs/local pairs, calculation, supported metric/subset scope, center/range or explicit unknowns, and couplings
 - latest result
 - forecast residuals and context-specific local calibration (private)
 - interesting model-feedback case and whether an optional report was offered/declined
@@ -69,7 +69,7 @@ Repeat close/noisy results only to resolve a useful decision or support an
 impact claim. A miss against a provisional forecast first triggers a model,
 settings and context check, not an unsupported hardware-fault conclusion.
 
-Report the manual diff, predicted range, observed changes, resource scope,
+Report the manual diff, supported prediction or explicit unknowns, observed changes, resource scope,
 lows/symptoms, verdict and next step. Give the start cue/duration immediately
 before capture and announce completion before this analysis, following
 `measurement-rules.md`. Keep raw results and calibration outside the repository/plugin.

@@ -225,6 +225,52 @@ Prefer a candidate likely to close the goal gap with acceptable quality loss;
 break ties using closest workload match, stronger evidence, then lower setup
 effort. Skip changes already applied. Do not require testing every setting.
 
+## Numeric forecast eligibility
+
+Apply this check before publishing any **predicted** FPS/resource value. Historic
+observations, user targets and arithmetic comparisons of completed runs remain
+distinct from forecasts. The check works on supplied artifacts in web/manual
+mode as well as local collection; it adds no runtime dependency or capture.
+
+For each requested metric, establish:
+
+| Basis | Required for a numerical forecast |
+| --- | --- |
+| Baseline | A relevant measured starting value, its run/attachment identity and units/scope. Menu FPS/RAM and a target are not raid baselines. A relative effect can be discussed without inventing an absolute baseline. |
+| Response | Eligible transition row IDs and fields, or actual comparable user-local A/B pairs. Read applicable `graphics-response-priors.json` rows: nonzero FPS seeds require `numeric_fps_seed_eligible`; a resource delta requires that metric in `numeric_resource_seed_fields`. Raw values outside those fields are descriptive observations, including inside a subset. Noise-only FPS rows use only the separately allowed contextual zero-effect hypothesis below. |
+| Applicability | Exact transition or permitted numeric interpolation, workload/load and cap/session context; distinguish matched local response from the declared transfer hypothesis. A baseline alone does not calibrate sensitivity. |
+| Calculation | Trace baseline × ratio or baseline + delta, transfer/combination policy, uncertainty and the settings/metric covered. Briefly show this basis with numerical results; use a compact table only when useful. |
+
+Decide coverage **per metric** before calculating totals:
+
+- A complete path of eligible transitions is sufficient; a directly measured
+  start-to-finish row is not required. Evaluate every edge for the same metric.
+  For High/Off → High/On → Medium/On, both edges permit VRAM, so their propagated
+  VRAM forecast is supported. Only the first edge permits RAM/commit: an
+  intermediate High/On estimate is possible, but final Medium/On totals are unknown.
+- If any changed component has no eligible effect or defensible bounds for that
+  metric, the full-change **center and range are unknown**. Do not invent a floor,
+  ceiling or convenient error bar from the baseline, target or expected direction.
+  "Rough", "conservative", "provisional" and "assuming favorable effects" do
+  not turn missing evidence into numerical bounds.
+- A supported component/subset may have its own conditional point/range, explicitly
+  labelled with its included changes. State that omitted effects are unquantified;
+  do not present the subset as the complete result by assigning missing effects
+  zero. A useful next A/B or qualitative direction can proceed with unknown totals.
+- Coverage in FPS, GPU utilization, dedicated memory, physical RAM and commit is
+  separate. An eligible VRAM path can coexist with unknown full-path RAM/commit.
+  Do not infer future lows or CPU/memory effects from average FPS, or saturated-GPU
+  FPS from utilization percentage points. Follow the metric-specific rules below.
+- When the baseline, response and applicability do support a metric, provide the
+  useful conditional calculation. Prefer matching user-local pairs over seed
+  coefficients. Incomplete coverage elsewhere or unavailable app access is not a
+  reason to refuse every supported number or demand a redundant baseline.
+
+Before sending, remove any predicted number whose baseline, response, calculation
+or declared scope cannot be traced. Replace it with **unknown and the reason**,
+not a wider guessed interval. This is a forecast check, not a requirement to print
+an exhaustive audit or a table of every resource for ordinary qualitative advice.
+
 ## Freeze the forecast before capture
 
 Record the baseline identity, full setting diff including automatic couplings,
@@ -267,8 +313,8 @@ Nominal modes need individual measurements, not arithmetic menu-rank steps.
 This research sweep is not a requirement for ordinary minimum-capture tuning.
 
 Convert the relative forecast to `FPS_after = FPS_baseline * r`.
-When an unknown component is omitted from a conditional working point, state
-that assumption and retain the full-bundle range as unknown. A few close
+When an unknown component is omitted from a conditional working point, label it
+as a supported-subset result and retain the full-bundle center/range as unknown. A few close
 compound checks on one system do not establish a universal accuracy band.
 Mean frame duration may be estimated as `1000 / FPS_after`; this does not
 predict p95/p99 or the low percentiles. Do not numerically forecast 1%/0.1%

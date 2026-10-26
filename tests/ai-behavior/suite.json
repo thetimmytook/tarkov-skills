@@ -1,8 +1,8 @@
 {
   "suite_id": "tarkov-skills-behavior",
-  "version": "0.2.0",
-  "status": "bounded_instruction_experiment_completed_2026-10-26",
-  "case_count": 38,
+  "version": "0.3.0",
+  "status": "retained_numeric_guard_high_evaluation_completed_2026-10-26",
+  "case_count": 44,
   "execution": {
     "local_only": true,
     "automatic_execution": false,
@@ -22,7 +22,8 @@
     "cases/comparisons.json",
     "cases/capture.json",
     "cases/memory-boundaries.json",
-    "cases/goals.json"
+    "cases/goals.json",
+    "cases/forecasts.json"
   ],
   "rubric_files": [
     "rubrics/optimization.json",
@@ -31,7 +32,8 @@
     "rubrics/comparisons.json",
     "rubrics/capture.json",
     "rubrics/memory-boundaries.json",
-    "rubrics/goals.json"
+    "rubrics/goals.json",
+    "rubrics/forecasts.json"
   ],
   "fixture_file": "fixtures.json",
   "reference_policy": "references are read from the selected skill root; scoring rubrics are never model input",
@@ -56,12 +58,12 @@
     },
     {
       "id": "high",
-      "tier": "strong-control",
-      "provider": null,
-      "model": null,
-      "reasoning_effort": null,
-      "client_version": null,
-      "status": "not_selected"
+      "tier": "same-model-higher-reasoning-control",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "retained_numeric_guard_full_run_completed_not_certified"
     }
   ],
   "planned_repetitions_per_case": 3,

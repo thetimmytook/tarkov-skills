@@ -19,6 +19,34 @@ improved the observed persistence action; it did not eliminate unsupported
 numeric forecasts or all explanatory omissions. Scores and transcripts remain
 outside Git.
 
+The developer then requested one unchanged-skill control at `gpt-6.1-sol`
+with `high` reasoning. All 38 cases completed once at checkpoint `f3cadb5`;
+skill, original corpus and adapter hashes matched the preceding medium control.
+The same explanatory omissions remained, together with an unresolved rubric
+ambiguity. No production workflow or numerical priors were changed, and no
+minimum reasoning requirement was inferred from this single run. The private
+report keeps scores, criterion evidence and limitations outside Git. Here
+`high` denotes higher reasoning effort on the same model, not a different model
+family or a support certification.
+
+Suite 0.3 adds six numerical-forecast cases while preserving the original 38.
+Two positive cases require useful calculations from pasted data; negative and
+edge cases cover unknown bundles, per-metric compound paths, GPU saturation and
+missing raid baselines. They were frozen before the first eligibility candidate.
+An observed raw-resource eligibility failure then motivated one bounded
+clarification; these cases remain development tests, not unseen holdouts for that
+clarification. Original-suite regressions are reported separately. Generated
+answers, criterion evidence, plan amendments and scores remain outside Git.
+
+The developer subsequently requested one `gpt-6.1-sol:high` run of all 44 cases
+on the retained C snapshot, with no instruction, corpus or adapter changes.
+All executions completed; one previously incomplete quality answer improved,
+while the Unity-LOD explanation and SSR reflection tradeoff remained omitted.
+This small single run did not establish a numerical-accuracy advantage over
+the same-snapshot medium control or justify a universal minimum reasoning level.
+Its separate report and scores remain outside Git; the earlier 38-case High
+run used the previous skill snapshot and must not be confused with this run.
+
 This repository-only set covers all four performance skills. It is independent of CI, publication gates and application tests. Its runner does not write production skill instructions or numerical priors; instruction edits are separate, explicitly authorized development work.
 
 ## Files and separation
@@ -60,7 +88,7 @@ Example, from the repository root in PowerShell, after explicit developer author
 node tests/ai-behavior/run.mjs --run --phase=smoke --profiles=gpt-6-luna:low,gpt-6.1-sol:medium --repeats=1 --out=C:/projects/skill-perf-measurements/ai-behavior/runs/NEW-EMPTY-DIRECTORY
 ```
 
-Use `--phase=full` for all cases (38 since suite 0.2), or `--cases=opt-01,capture-01` for selected cases. `--repeats=1|2|3` controls repetitions; `--codex=...` can select the installed executable. `--run` and an empty `--out` outside the repository are mandatory. The runner refuses to overwrite existing results. It never launches the real game or Toolkit.
+Use `--phase=full` for all cases (44 since suite 0.3), or `--cases=opt-01,capture-01` for selected cases. `--repeats=1|2|3` controls repetitions; `--codex=...` can select the installed executable. `--run` and an empty `--out` outside the repository are mandatory. The runner refuses to overwrite existing results. It never launches the real game or Toolkit.
 
 For a controlled instruction comparison, `--skill-snapshot=<path>` loads a prior
 run's `skill-snapshot.json` instead of the current checkout's skill text. The

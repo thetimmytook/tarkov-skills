@@ -37,6 +37,21 @@ For a quality goal, spend measured headroom on a relevant visual improvement.
 Disabling an effect removes that feature; describe the tradeoff and the user's
 preference rather than calling its removal an automatic quality upgrade.
 
+## Check A Numeric Forecast
+
+Before giving a predicted FPS/resource number, apply **Numeric forecast
+eligibility** in `references/graphics-response-model.md`. Show the baseline,
+eligible row/local pairs and calculation; check each metric separately. Missing
+effect/bounds for any changed component makes that metric's full-change center
+and range **unknown**. Label any supported-subset estimate as a subset, leaving
+omitted effects unquantified; a rough/conservative label does not create bounds.
+For seed-based numbers, read the applicable `graphics-response-priors.json` rows:
+resource deltas require membership in `numeric_resource_seed_fields`, including
+for subset estimates. A complete eligible path can support a combined forecast
+without a directly measured start-to-finish row.
+Use supported pasted data for useful conditional calculations without requiring
+direct Toolkit access. This check does not block qualitative advice or settings help.
+
 ## Settings Help
 
 For explanations, visual tradeoffs or a requested manual graphics starting route,

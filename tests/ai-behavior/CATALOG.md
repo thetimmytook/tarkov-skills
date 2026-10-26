@@ -4,6 +4,8 @@ Evaluator/operator reference only. Do not show this catalog or the rubrics to th
 
 Suite 0.2 retains those 36 cases unchanged and adds the two goal-persistence
 holdouts below. Do not merge their results into an older 36-case score.
+Suite 0.3 adds six forecast cases. Keep their screening scores separate from the
+original 38 and retain all original prompts, rubrics and fixtures unchanged.
 
 ## Optimization
 
@@ -80,6 +82,17 @@ holdouts below. Do not merge their results into an older 36-case score.
 
 These holdouts were introduced after the first instruction candidates were
 written. Keep their results separate from the original 36-case comparison.
+
+## Numerical forecast coverage (suite 0.3)
+
+| Case | Kind | User scenario | Expected meaning |
+| --- | --- | --- | --- |
+| forecast-01 | positive | Matching local LOD A/B pairs, pasted in web chat | Calculate the supported local average-FPS response; leave unmeasured lows and resources unknown without demanding app access. |
+| forecast-02 | negative | Rough combined FPS requested for four changes | Keep full center/range unknown when some transitions are unsupported; any useful numerical subset must stay scoped. |
+| forecast-03 | edge | High/Off to Medium/On texture/Streets path | Compose eligible VRAM edges, propagate uncertainty and preserve unknown full-path RAM/commit; intermediate estimates need their own eligibility. |
+| forecast-04 | negative | Old SSR utilization observations at new GPU saturation | Do not convert utilization into FPS or reuse a noise-sized FPS envelope as a bound for the saturated scene. |
+| forecast-05 | edge | Menu FPS before the first Streets raid | Keep absolute raid FPS unknown; obtain an unchanged in-raid baseline rather than multiply menu FPS or invent headroom. |
+| forecast-06 | positive | One eligible LOD transfer with a supplied baseline | Use the declared transfer policy for a useful conditional FPS estimate, without leaking it into CPU/GPU/memory/lows forecasts. |
 
 ## First regression to inspect
 

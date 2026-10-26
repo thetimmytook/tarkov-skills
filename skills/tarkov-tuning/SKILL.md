@@ -35,6 +35,22 @@ For better graphics, spend measured headroom on one visual improvement while
 preserving the FPS/stability target. Removing a visual effect is a tradeoff,
 not an automatic quality upgrade.
 
+## Check A Numeric Forecast
+
+Before giving a predicted FPS/resource number, apply the **Numeric forecast
+eligibility** check in `references/graphics-response-model.md`. Show its baseline,
+eligible row/local pairs and calculation; check each metric separately. If any
+changed component has no supported effect/bounds for that metric, leave the
+full-change center and range **unknown**. A useful supported-subset calculation
+must be labelled as that subset, with omitted effects unquantified. Calling a
+range rough, conservative or provisional does not supply missing coefficients.
+For seed-based numbers, read the applicable `graphics-response-priors.json` rows:
+resource deltas are usable only for metrics in `numeric_resource_seed_fields`.
+This applies to subsets too. A complete eligible path can support a combined
+forecast even without a directly measured start-to-finish row.
+When evidence does support a forecast, calculate it from the supplied data;
+web/manual mode does not require direct Toolkit access for this reasoning.
+
 ## Explain Before Measuring When Requested
 
 Read `references/settings-help.md` before giving setting explanations or published
@@ -60,7 +76,7 @@ setup and do not repeat it during the loop unless the user asks to revisit it.
 2. If the user changes the target or quality tradeoff, save it through `tarkov-skills.exe goal set ...`; in web/manual mode, retain it in the conversation.
 3. Reuse a recent comparable baseline when available; otherwise measure one with Toolkit after explicit readiness. Normal tuning needs no dedicated warmup or preparation raids; use ordinary gameplay and qualify preparation differences under `references/measurement-rules.md`. In a web client, guide the user through **Benchmark → Start collection → Save benchmark → Copy results** and read the pasted latest-run JSON.
 4. Use `references/graphics-response-model.md` and its declarative priors to select one useful manual setting group that is not already applied. Condition on the goal, workload, cap uncertainty and resource headroom; preserve unknowns. For crashes, worsening later-raid stutters or little initial memory headroom, use `references/session-stability.md` before accepting the profile as stable. For a full review or an unmeasured option, consult `references/settings-evidence-guide.md`; do not substitute universal On defaults or preferences for measurements.
-5. Freeze a conditional FPS/resource forecast before capture, including its range, assumptions and applicable evidence. On a new system this is a starting hypothesis; its baseline does not establish setting sensitivity. Apply the model's transfer policy and refine from that user's measured response rather than reuse the seed system's local calibration. The user applies the change; verify the saved diff and any coupled values. A requested multi-setting validation is a bundle with separate attribution limits.
+5. Freeze the forecast before capture using the numeric eligibility check: supported values/ranges or explicit unknowns, with scope, assumptions and evidence. On a new system this is a starting hypothesis; its baseline does not establish setting sensitivity. Apply the model's transfer policy and refine from that user's measured response rather than reuse the seed system's local calibration. The user applies the change; verify the saved diff and any coupled values. A requested multi-setting validation is a bundle with separate attribution limits.
 6. After a fresh ready signal: send a visible **START** message with duration immediately before invoking capture; on return send **COMPLETE — you can stop** before analysis or questions. Use the same duration and similar scenario, following `references/measurement-rules.md`. Follow a requested first-raid policy with a new game launch before each condition; keep across-raid memory studies separate.
 7. Compare the result with the frozen forecast and goal, retaining residuals privately. Keep, revert, selectively repeat, or switch to diagnostics using `references/measurement-rules.md`. For an interesting deviation or coverage gap, read `references/model-feedback.md` and present the filled, redacted issue title/body plus `https://github.com/thetimmytook/tarkov-skills/issues/new` in the same response. Leave submission to the user; do not delay tuning or repeat a declined offer. A first transfer miss alone is not atypical. Stop when the goal is met with acceptable quality/stability; do not sweep every setting or fit individual effects from one bundle.
 
