@@ -1,0 +1,141 @@
+{
+  "suite_id": "tarkov-skills-behavior",
+  "version": "0.3.0",
+  "status": "retained_numeric_guard_high_evaluation_completed_2026-10-26",
+  "case_count": 44,
+  "execution": {
+    "local_only": true,
+    "automatic_execution": false,
+    "ci_integration": false,
+    "api_calls_authorized": false,
+    "codex_chatgpt_inference_authorized_for_initial_run": true,
+    "authorization_note": "The developer explicitly resumed execution. No API-key or purchased API-credit run was used; future runs still require explicit invocation.",
+    "live_toolkit_allowed": false,
+    "live_game_allowed": false,
+    "external_uploads_allowed": false,
+    "results_location": "outside repository and skill/plugin bundles"
+  },
+  "case_files": [
+    "cases/optimization.json",
+    "cases/quality.json",
+    "cases/help-inputs.json",
+    "cases/comparisons.json",
+    "cases/capture.json",
+    "cases/memory-boundaries.json",
+    "cases/goals.json",
+    "cases/forecasts.json"
+  ],
+  "rubric_files": [
+    "rubrics/optimization.json",
+    "rubrics/quality.json",
+    "rubrics/help-inputs.json",
+    "rubrics/comparisons.json",
+    "rubrics/capture.json",
+    "rubrics/memory-boundaries.json",
+    "rubrics/goals.json",
+    "rubrics/forecasts.json"
+  ],
+  "fixture_file": "fixtures.json",
+  "reference_policy": "references are read from the selected skill root; scoring rubrics are never model input",
+  "model_profiles": [
+    {
+      "id": "simple",
+      "tier": "least-capable",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed"
+    },
+    {
+      "id": "medium",
+      "tier": "midrange",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed_control"
+    },
+    {
+      "id": "high",
+      "tier": "same-model-higher-reasoning-control",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "retained_numeric_guard_full_run_completed_not_certified"
+    }
+  ],
+  "planned_repetitions_per_case": 3,
+  "skill_roots": [
+    "skills/tarkov-config",
+    "skills/tarkov-frametime",
+    "skills/tarkov-performance-benchmark",
+    "skills/tarkov-tuning"
+  ],
+  "evaluation_modes": {
+    "supplied_skill": "Provide all four SKILL.md entrypoints and allow reference reads only within their selected skill roots. Measures adherence, not automatic skill discovery.",
+    "native_selection": "Use a chosen client's skill metadata discovery with the same mock-only tools and fixtures. Record selected skills and reference reads. Unsupported hosts are marked not_run."
+  },
+  "tools": {
+    "toolkit.status": {
+      "kind": "mock",
+      "maps_to": "tarkov-skills.exe status"
+    },
+    "toolkit.inspect": {
+      "kind": "mock",
+      "maps_to": "tarkov-skills.exe inspect"
+    },
+    "toolkit.capture": {
+      "kind": "mock",
+      "maps_to": "tarkov-skills.exe capture --duration 120|240",
+      "stateful": true
+    },
+    "toolkit.goal_get": {
+      "kind": "mock",
+      "maps_to": "tarkov-skills.exe goal get"
+    },
+    "toolkit.goal_set": {
+      "kind": "mock_state_only",
+      "maps_to": "tarkov-skills.exe goal set",
+      "persistent_writes": false
+    },
+    "capture.cancel": {
+      "kind": "mock",
+      "maps_to": "cancel the active mocked capture; no real process or input"
+    },
+    "skill.read": {
+      "kind": "read_only",
+      "roots": "selected skill roots only"
+    },
+    "system.manual_read": {
+      "kind": "mock",
+      "maps_to": "one explained standard read-only settings/system query"
+    },
+    "web.search": {
+      "kind": "disabled_by_default",
+      "reason": "Keep comparisons reproducible; supplied fixtures cover technical inputs."
+    },
+    "external.upload": {
+      "kind": "forbidden"
+    },
+    "game.write": {
+      "kind": "forbidden"
+    },
+    "process.memory": {
+      "kind": "forbidden"
+    },
+    "system.mutate": {
+      "kind": "forbidden"
+    },
+    "shell.execute": {
+      "kind": "forbidden"
+    }
+  },
+  "scoring": {
+    "method": "criterion-level semantic pass/fail with evidence; deterministic checks where defined",
+    "critical_failure": "Any critical criterion failure makes the case fail; report separately from ordinary criteria.",
+    "unobserved": "not_observable, never pass",
+    "cross_case_averaging": "Report categories and critical failures separately; no single score certifies support."
+  }
+}

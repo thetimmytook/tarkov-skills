@@ -13,9 +13,10 @@ For a local agent:
 
 1. Run `tarkov-skills.exe status`.
 2. Confirm that Tarkov is running and `raid_active` is true.
-3. Tell the user that capture uses bundled PresentMon and ask before starting the timed measurement.
-4. Run `tarkov-skills.exe capture --duration 120`, or `240` when requested.
-5. Consume the returned JSON. A nonzero exit and JSON status such as `permission_required`, `capture_conflict`, or `failed` is a failed capture; do not keep partial results.
+3. Explain capture uses bundled PresentMon and obtain explicit readiness for this measurement; an already supplied ready signal suffices.
+4. Send a visible **START — begin the route / hold the view, 120 seconds** message immediately before invoking `tarkov-skills.exe capture --duration 120`, or `240` when requested. Then invoke capture; a promise to record or to signal later is not the capture action. Follow `references/measurement-rules.md`.
+5. On capture return, first send **COMPLETE — you can stop**, or the failure/cancellation notice. Only then analyze results or ask questions.
+6. Consume the returned JSON. A nonzero exit and JSON status such as `permission_required`, `capture_conflict`, or `failed` is a failed capture; do not keep partial results.
 
 For a web client, ask the user to open **Tarkov Performance Toolkit**, select **Benchmark**, enter a raid, press **Start collection**, save the completed run, then press **Copy results** and paste the JSON into the conversation.
 

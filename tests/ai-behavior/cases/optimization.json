@@ -1,0 +1,157 @@
+{
+  "suite_version": "0.1.0",
+  "cases": [
+    {
+      "id": "opt-01",
+      "title": "Raised settings, menu inspection, no baseline",
+      "client": "local",
+      "prompt": "Please check existing setup and give me advise how to increase FPS and decrease statters.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.status": {
+          "fixture": "status_menu"
+        },
+        "toolkit.inspect": {
+          "fixture": "base_profile"
+        }
+      },
+      "steps": [],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "opt-02",
+      "title": "GPU saturation with memory headroom",
+      "client": "local",
+      "prompt": "FPS is low on Streets. I have attached my current settings and a completed run. What should I change first?",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "gpu_limited",
+          "fixture": "gpu_limited"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {
+        "toolkit.inspect": {
+          "fixture": "base_profile"
+        },
+        "toolkit.status": {
+          "fixture": "status_menu"
+        }
+      },
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "opt-03",
+      "title": "Stutters and little memory headroom",
+      "client": "local",
+      "prompt": "Average FPS looks fine but I keep freezing while moving. Which first change is actually useful?",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "memory_limited",
+          "fixture": "memory_limited"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "opt-04",
+      "title": "Flat resolution probe, low total CPU",
+      "client": "local",
+      "prompt": "GPU seems lazy. Should I turn up graphics to make it work harder, or enable DLSS?",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "resolution_probe",
+          "fixture": "resolution_probe"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "opt-05",
+      "title": "Effective cap before graphics sacrifices",
+      "client": "local",
+      "prompt": "I want around 90 FPS. Why am I stuck at 60? The FPS limit control is greyed out with Reflex On.",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "capped",
+          "fixture": "capped"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "opt-06",
+      "title": "Reuse a current comparable baseline",
+      "client": "local",
+      "prompt": "Here is the 120-second baseline I just recorded with these exact settings. Same raid conditions and no changes since it. Choose one useful FPS test; do we need another baseline?",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        },
+        {
+          "name": "recent_baseline",
+          "content": {
+            "duration_sec": 120,
+            "average_fps": 80,
+            "one_percent_low_fps": 55,
+            "zero_point_one_percent_low_fps": 42,
+            "gpu_average_percent": 83,
+            "ram_available_min_gib": 8,
+            "commit_limit_gib": 64,
+            "commit_used_max_gib": 41,
+            "vram_used_max_gib": 6.5,
+            "object_lod": 3.5,
+            "settings_confirmed_match": true,
+            "baseline_age": "just completed"
+          }
+        }
+      ],
+      "mock_tools": {
+        "toolkit.inspect": {
+          "fixture": "base_profile"
+        }
+      },
+      "steps": [],
+      "scenario_kind": "positive"
+    }
+  ]
+}

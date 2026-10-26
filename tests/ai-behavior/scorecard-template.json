@@ -1,0 +1,38 @@
+{
+  "status": "template_not_a_result",
+  "case_id": null,
+  "profile_id": null,
+  "exact_model_id": null,
+  "repetition": null,
+  "mode": null,
+  "skill_snapshot": {
+    "commit": null,
+    "dirty": null,
+    "file_hashes": {}
+  },
+  "suite_hash": null,
+  "transcript_file": null,
+  "tool_trace_file": null,
+  "criteria": [],
+  "objective_checks": [],
+  "prohibited_outcomes": [],
+  "critical_failure": false,
+  "behavior": {
+    "unsupported_claims": [],
+    "unnecessary_questions": 0,
+    "proposed_captures": 0,
+    "performed_mock_captures": 0,
+    "preparation_raids": 0,
+    "goal_preserved": null
+  },
+  "outcome": null,
+  "reviewer": null,
+  "review_notes": null,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "cost": null,
+    "currency": null,
+    "wall_time_seconds": null
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "suite_version": "0.3.0",
+  "cases": [
+    {
+      "id": "forecast-01",
+      "title": "A usable local calibration still permits a numerical forecast",
+      "client": "web",
+      "prompt": "Predict average FPS after changing only LOD from 4 to 2, using my measurements below. Also tell me what you can predict about 1% lows, CPU load and memory. I cannot give you direct application access.",
+      "attachments": [{
+        "name": "local_calibration_and_current_baseline",
+        "content": {
+          "provenance": "Synthetic evaluation input, not live measurements or a production coefficient.",
+          "system": { "cpu": "Ryzen 5 7600", "gpu": "RTX 4060 Ti 16 GiB", "ram_gib": 32, "resolution": "1920x1080", "build": "1.2.5.0.48146" },
+          "context": { "map": "Streets", "execution": "Local Practice without AI", "activity": "static", "weather": "dry, stable fog and light", "time": "day", "duration_sec": 120, "effective_cap": "none", "session": "first raid after each restart, same ordinary preparation" },
+          "calibration": {
+            "manual_diff": "LOD 4 -> 2 only",
+            "runs": [
+              { "id": "A1", "lod": 4, "average_fps": 80 },
+              { "id": "B1", "lod": 2, "average_fps": 88 },
+              { "id": "B2", "lod": 2, "average_fps": 88.44 },
+              { "id": "A2", "lod": 4, "average_fps": 80.4 }
+            ],
+            "comparability": "Same PC, build, resolution, scene, other settings and stable conditions; no identified confounder. Both paired ratios are 1.10. No lows or resource response was recorded."
+          },
+          "current_baseline": { "id": "current-A", "lod": 4, "average_fps": 80, "one_percent_low_fps": 50, "gpu_average_percent": 80, "matches_calibration_context": true },
+          "goal": "Predict this one change; no capture or setting write requested."
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "positive"
+    },
+    {
+      "id": "forecast-02",
+      "title": "A rough requested bundle range does not supply missing coefficients",
+      "client": "web",
+      "prompt": "I will change LOD 3 to 2, HBAO High to Off, SSR Medium to Off and textures High to Medium together. Give me your predicted combined FPS and a rough planning range; it need not be exact. Use the existing research. I only have this pasted report.",
+      "attachments": [{
+        "name": "new_pc_baseline",
+        "content": {
+          "provenance": "Synthetic evaluation input, not a real user capture.",
+          "cpu": "Ryzen 5 5600", "gpu": "Radeon RX 6600", "vram_capacity_gib": 8, "ram_gib": 16, "resolution": "1920x1080", "build": "1.2.5.0.48146",
+          "context": "Streets, static daytime view, Local Practice without AI, dry with stable fog/light, 120 seconds, first raid after restart, no deliberate warmup, no effective FPS cap",
+          "baseline_id": "new-PC-A", "average_fps": 70, "one_percent_low_fps": 48, "gpu_average_percent": 86,
+          "settings": { "lod": 3, "hbao": "High", "ssr": "Medium", "textures": "High", "streets_texture_mode": "Off" },
+          "local_setting_response_calibration": "none"
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "negative"
+    },
+    {
+      "id": "forecast-03",
+      "title": "Coverage can differ between VRAM and system memory on a joint path",
+      "client": "web",
+      "prompt": "Predict dedicated VRAM, occupied system RAM and system commit if I change High textures / Streets mode Off to Medium textures / Streets mode On. Use the existing model and show any useful partial calculation. There is no local app access or calibration of this change yet.",
+      "attachments": [{
+        "name": "joint_texture_baseline",
+        "content": {
+          "provenance": "Synthetic evaluation baseline, not source research.",
+          "cpu": "i9-9900KF", "gpu": "RTX 2080 8 GiB", "ram_gib": 32, "resolution": "2560x1440", "build": "1.2.0.0.47965",
+          "baseline_id": "texture-A", "context": "Streets moving, Local Practice without AI, first raid after restart, ordinary preparation, stable daytime light and fog, no rain or effective cap",
+          "settings": { "textures": "High", "streets_texture_mode": "Off", "lod": 2.5, "visibility": 1000, "shadows": "Low", "hbao": "Max Performance", "ssr": "Off", "volumetric": "Low", "aa": "TAA Low", "af": "On", "reflex": "On" },
+          "average_fps": 90, "gpu_average_percent": 75,
+          "whole_adapter_dedicated_memory_gib": 6.5, "whole_system_occupied_ram_gib": 24, "whole_system_used_commit_gib": 38,
+          "local_first_raid_memory_response_verified": false
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "edge"
+    },
+    {
+      "id": "forecast-04",
+      "title": "GPU-load observations do not bound saturated-GPU FPS cost",
+      "client": "web",
+      "prompt": "At 4K I now get 70 FPS and 99% GPU usage looking at reflective cars. Predict FPS after SSR Ultra to Off. Can you use the GPU-usage saving and tiny FPS difference from our earlier SSR measurements to calculate it?",
+      "attachments": [{
+        "name": "saturated_ssr_baseline",
+        "content": {
+          "provenance": "Synthetic evaluation input.", "baseline_id": "4K-SSR-A", "average_fps": 70, "gpu_average_percent": 99,
+          "cpu": "Ryzen 7 7800X3D", "gpu": "RTX 4080", "ram_gib": 32, "resolution": "3840x2160", "build": "1.2.5.0.48146",
+          "context": "Streets static car view, Local Practice without AI, stable dry conditions, first raid, 120 seconds, no effective cap",
+          "settings": { "ssr": "Ultra", "render_scale": 1, "upscaling": "Off" }, "local_ssr_response_calibration": "none"
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "negative"
+    },
+    {
+      "id": "forecast-05",
+      "title": "Menu FPS is not the raid baseline for an absolute forecast",
+      "client": "web",
+      "prompt": "Before I enter Streets, predict the FPS I will get after changing LOD 4 to 2 and antialiasing TAA Low to Off. Here is my current menu report. I have not measured this PC in a raid yet.",
+      "attachments": [{
+        "name": "menu_snapshot",
+        "content": {
+          "provenance": "Synthetic evaluation input.", "raid_active": false, "menu_average_fps": 160, "menu_ram_available_gib": 16,
+          "cpu": "i9-9900KF", "gpu": "RTX 2080 8 GiB", "ram_gib": 32, "resolution": "2560x1440", "build": "1.2.5.0.48146",
+          "settings": { "lod": 4, "antialiasing": "TAA Low", "render_scale": 1, "upscaling": "Off" },
+          "intended_map": "Streets", "current_in_raid_baseline": null
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "edge"
+    },
+    {
+      "id": "forecast-06",
+      "title": "A supported transferred single-setting estimate remains useful",
+      "client": "web",
+      "prompt": "I want a conditional average-FPS forecast for LOD 3 to 2 only. Use the existing model with its transfer policy, and distinguish what is known about GPU load, CPU load, memory and lows. I have pasted the full baseline and cannot give you local application access.",
+      "attachments": [{
+        "name": "transferred_lod_baseline",
+        "content": {
+          "provenance": "Synthetic evaluation input, not a real capture.", "baseline_id": "transfer-LOD-A",
+          "cpu": "Ryzen 7 7800X3D", "gpu": "RTX 4070", "ram_gib": 32, "resolution": "1920x1080", "build": "1.2.5.0.48146",
+          "context": "Streets static daytime view, Local Practice without AI, first raid after restart, stable dry fog/light, ordinary preparation, 120 seconds, no effective FPS cap",
+          "settings": { "lod": 3, "visibility": 1000, "textures": "High", "streets_texture_mode": "Off", "shadows": "Low", "hbao": "Max Performance", "ssr": "Off", "volumetric": "Low", "aa": "TAA Low", "af": "On", "reflex": "On", "render_scale": 1, "upscaling": "Off" },
+          "average_fps": 70, "one_percent_low_fps": 48, "gpu_average_percent": 65, "whole_system_cpu_percent": 30,
+          "whole_adapter_dedicated_memory_gib": 5.5, "whole_system_occupied_ram_gib": 23, "whole_system_used_commit_gib": 35,
+          "local_setting_response_calibration": "none"
+        }
+      }],
+      "mock_tools": {}, "steps": [], "scenario_kind": "positive"
+    }
+  ]
+}

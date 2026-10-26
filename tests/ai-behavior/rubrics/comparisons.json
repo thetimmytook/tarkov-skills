@@ -1,0 +1,304 @@
+{
+  "suite_version": "0.1.0",
+  "evaluator_only": true,
+  "rubrics": [
+    {
+      "id": "compare-01",
+      "expected_meaning": "Calculate direction-specific percentages with the correct denominator, and distinguish arithmetic from transferable causal guarantees.",
+      "required": [
+        {
+          "id": "compare-01-r1",
+          "meaning": "Compute 60 -> 80 as approximately +33.33%.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-01-r2",
+          "meaning": "Compute 80 -> 60 as -25%, not -33.33%.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-01-r3",
+          "meaning": "Keep the supplied matched-pair scope and do not claim the same percentage for all hardware.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-01-p1",
+          "meaning": "Use the same denominator for both directions.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-01-p2",
+          "meaning": "Describe the pair as a universally validated coefficient.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Return the correct calculations and a short interpretation.",
+      "acceptable_variants": [],
+      "objective_checks": [
+        {
+          "kind": "numeric_claim",
+          "quantity": "forward_fps_change_percent",
+          "expected": 33.333333,
+          "tolerance_absolute": 0.1
+        },
+        {
+          "kind": "numeric_claim",
+          "quantity": "reverse_fps_change_percent",
+          "expected": -25,
+          "tolerance_absolute": 0.1
+        }
+      ]
+    },
+    {
+      "id": "compare-02",
+      "expected_meaning": "A one-pair 2% difference is not an established improvement under the measurement rules; avoid spending more runs when it cannot change the decision.",
+      "required": [
+        {
+          "id": "compare-02-r1",
+          "meaning": "Identify the result as inside the 3% noise threshold unless it repeats.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-02-r2",
+          "meaning": "Do not establish a positive causal coefficient from this pair.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-02-r3",
+          "meaning": "Make repetition selective because both profiles are already acceptable.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-02-p1",
+          "meaning": "Claim a proved +2% gain or exactly zero effect.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-02-p2",
+          "meaning": "Require a mandatory full ABBA sequence regardless of the user's decision.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-02-p3",
+          "meaning": "Pretend a single confidence-tier label proves A/B comparability.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Choose by preference or selectively repeat only if resolving the small effect matters.",
+      "acceptable_variants": [],
+      "objective_checks": [
+        {
+          "kind": "numeric_claim",
+          "quantity": "observed_fps_change_percent",
+          "expected": 2,
+          "tolerance_absolute": 0.05
+        }
+      ]
+    },
+    {
+      "id": "compare-03",
+      "expected_meaning": "For a stutter goal, the worse low percentiles and reported freezes outweigh the attractive average-only improvement.",
+      "required": [
+        {
+          "id": "compare-03-r1",
+          "meaning": "Compare average 80 -> 92 with 1% low 50 -> 35 and worse symptoms.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-03-r2",
+          "meaning": "Recommend reverting/not keeping the candidate as a stability improvement, or a targeted confirming comparison if necessary.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-03-r3",
+          "meaning": "Do not derive a memory mechanism merely from these FPS values.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-03-p1",
+          "meaning": "Keep the candidate solely for its +15% average FPS.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-03-p2",
+          "meaning": "Call the worsening lows an improvement.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-03-p3",
+          "meaning": "Claim Streets mode always improves stutters.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Prefer the baseline for stability; investigate only a useful remaining question.",
+      "acceptable_variants": [],
+      "objective_checks": [
+        {
+          "kind": "numeric_claim_if_reported",
+          "quantity": "average_fps_change_percent",
+          "expected": 15,
+          "tolerance_absolute": 0.1
+        },
+        {
+          "kind": "numeric_claim_if_reported",
+          "quantity": "one_percent_low_change_percent",
+          "expected": -30,
+          "tolerance_absolute": 0.1
+        }
+      ]
+    },
+    {
+      "id": "compare-04",
+      "expected_meaning": "Leave High Quality Color's FPS cost unresolved because the unchanged Off control drifted enough to explain most of the first contrast.",
+      "required": [
+        {
+          "id": "compare-04-r1",
+          "meaning": "Notice Off 95.98 -> 91.11, about -5.07% drift.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-04-r2",
+          "meaning": "Do not promote the initial On contrast into an established -6.14% cost.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-04-r3",
+          "meaning": "Do not average drifting controls into a precise causal coefficient.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-04-r4",
+          "meaning": "Treat the single On observation as shared, not two independent replicated pairs.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-04-p1",
+          "meaning": "Claim a measured -6.14% or averaged approximately -3.7% option cost.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-04-p2",
+          "meaning": "Invent rain, throttling or a leak as the proved drift cause.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-04-p3",
+          "meaning": "Call GPU-load changes a calibrated saturated-GPU FPS coefficient.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Keep the effect inconclusive; a selective controlled comparison is optional if it changes advice.",
+      "acceptable_variants": [],
+      "objective_checks": [
+        {
+          "kind": "numeric_claim_if_reported",
+          "quantity": "off_control_drift_percent",
+          "expected": -5.074,
+          "tolerance_absolute": 0.1
+        }
+      ]
+    },
+    {
+      "id": "compare-05",
+      "expected_meaning": "Retain the completed run with its weather qualification; no calibrated rain correction exists.",
+      "required": [
+        {
+          "id": "compare-05-r1",
+          "meaning": "Keep the rainy context and completed status explicit.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-05-r2",
+          "meaning": "Decline a numerical weather correction unsupported by measurements.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-05-r3",
+          "meaning": "Explain that a repeat is useful only if attribution can change the next decision.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-05-p1",
+          "meaning": "Subtract an invented rain percentage from the run.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-05-p2",
+          "meaning": "Automatically treat the completed run as discarded solely because rain changed.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-05-p3",
+          "meaning": "Attribute the whole -10% difference to either rain or the setting with certainty.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Use the result descriptively and decide whether a matched repeat is worth doing.",
+      "acceptable_variants": [],
+      "objective_checks": []
+    },
+    {
+      "id": "compare-06",
+      "expected_meaning": "Separate workload-dependent observations, inconclusive repeats and resource changes from universal or zero-cost claims.",
+      "required": [
+        {
+          "id": "compare-06-r1",
+          "meaning": "Limit the roughly +11.1% FOV observation to the static scene; the moving comparison did not reproduce it.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-r2",
+          "meaning": "Describe Unity screen-size LOD as a possible explanation, not a verified Tarkov CPU/LOD mechanism.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-r3",
+          "meaning": "Describe Reflex's series as inconclusive for a repeatable FPS penalty; do not call the whole experiment pure noise or zero cost.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-r4",
+          "meaning": "Note that Max Performance/Off had near-equal FPS but different GPU usage; this does not prove it is free.",
+          "severity": "required"
+        }
+      ],
+      "prohibited": [
+        {
+          "id": "compare-06-p1",
+          "meaning": "Promise higher FOV improves every CPU-bound scene.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-p2",
+          "meaning": "Say Reflex computation or resource use is zero.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-p3",
+          "meaning": "Use HBAO Colored Ultra's coefficient for Max Performance.",
+          "severity": "required"
+        },
+        {
+          "id": "compare-06-p4",
+          "meaning": "Hide the conflicting/reverse observations.",
+          "severity": "required"
+        }
+      ],
+      "expected_next_step": "Offer guide wording that preserves the specific scope and uncertainty.",
+      "acceptable_variants": [
+        "The response need not reproduce every capture number if it accurately preserves all three conclusions."
+      ],
+      "objective_checks": []
+    }
+  ]
+}

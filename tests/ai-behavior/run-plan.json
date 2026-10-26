@@ -1,0 +1,175 @@
+{
+  "suite_version": "0.3.0",
+  "execution_status": "retained_numeric_guard_high_evaluation_completed_2026-10-26",
+  "launch_authorized": true,
+  "authorization_scope": "Developer explicitly requested this local run; future launches still require explicit invocation and --run.",
+  "actual_initial_scope": {
+    "full_repetitions_per_profile": 1,
+    "additional_simple_repetitions": 2,
+    "additional_simple_case_ids": ["opt-01", "quality-05", "input-01", "capture-01", "capture-02", "memory-06"],
+    "native_skill_selection": "not_run",
+    "production_skill_changes": false
+  },
+  "actual_followup_scope": {
+    "baseline_checkpoint": "eea2523",
+    "full_repetitions_per_profile": 1,
+    "additional_simple_repetitions": 2,
+    "additional_simple_case_ids": ["opt-01", "quality-05", "input-01", "capture-01", "capture-02", "memory-06"],
+    "additional_regression_probe_repetitions": 2,
+    "additional_regression_probe_case_ids": ["opt-04", "memory-03"],
+    "case_executions": 88,
+    "native_skill_selection": "not_run",
+    "rubrics_changed": false,
+    "production_skill_changes": true
+  },
+  "actual_experiment_scope": {
+    "baseline_checkpoint": "d8e306e",
+    "screening_variants": ["A", "B", "C"],
+    "screening_case_ids": ["memory-03", "opt-04", "quality-05", "input-01"],
+    "screening_repetitions_each_variant": 3,
+    "retained_variant": "C: early explicit goal persistence only",
+    "original_cases_full_repetitions_each_profile": 1,
+    "goal_holdout_case_ids": ["goal-01", "goal-02"],
+    "goal_holdout_repetitions_each_profile": 1,
+    "case_executions": 112,
+    "original_prompts_rubrics_fixtures_changed": false,
+    "native_skill_selection": "not_run"
+  },
+  "actual_high_reasoning_control_scope": {
+    "baseline_checkpoint": "f3cadb5",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "case_count": 38,
+    "repetitions_per_case": 1,
+    "case_executions": 38,
+    "production_skill_changes": false,
+    "prompts_rubrics_fixtures_changed": false,
+    "adapter_changed": false,
+    "native_skill_selection": "not_run",
+    "model_support_certification": false
+  },
+  "actual_numeric_forecast_guard_scope": {
+    "baseline_checkpoint": "f3cadb5",
+    "screening_variants": ["A: frozen previous skills", "B: metric-specific forecast eligibility", "C: explicit resource whitelist and complete-path clarification"],
+    "screening_case_ids": ["memory-03", "forecast-01", "forecast-02", "forecast-03", "forecast-04", "forecast-05", "forecast-06"],
+    "simple_screening_repetitions_each_variant": 2,
+    "medium_screening_repetitions_each_variant": 1,
+    "plan_amendment": "After a B resource-eligibility failure, one additional C clarification was declared before its execution. No further instruction candidates were tried.",
+    "retained_variant": "C; eligibility clarification only, not a deterministic forecast engine or a model-support certification",
+    "original_38_regression_repetitions_each_profile": 1,
+    "case_executions": 139,
+    "original_prompts_rubrics_fixtures_changed": false,
+    "numeric_priors_changed": false,
+    "toolkit_changed": false,
+    "native_skill_selection": "not_run"
+  },
+  "actual_numeric_guard_high_scope": {
+    "skill_snapshot": "Retained numeric-guard candidate C, unchanged from both medium batches",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "case_count": 44,
+    "repetitions_per_case": 1,
+    "case_executions": 44,
+    "production_skill_changes": false,
+    "prompts_rubrics_fixtures_changed": false,
+    "adapter_changed": false,
+    "toolkit_changed": false,
+    "native_skill_selection": "not_run",
+    "model_support_certification": false
+  },
+  "profiles": [
+    {
+      "id": "simple",
+      "tier": "least-capable",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed"
+    },
+    {
+      "id": "medium",
+      "tier": "midrange",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "initial_full_run_completed_control"
+    },
+    {
+      "id": "high",
+      "tier": "same-model-higher-reasoning-control",
+      "provider": "Codex with existing ChatGPT login",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "client_version": "codex-cli 0.164.0-alpha.11.1",
+      "status": "retained_numeric_guard_full_run_completed_not_certified"
+    }
+  ],
+  "phases": [
+    {
+      "id": "smoke",
+      "case_ids": [
+        "opt-01",
+        "opt-02",
+        "opt-03",
+        "quality-01",
+        "quality-02",
+        "input-01",
+        "capture-01",
+        "capture-02",
+        "memory-03",
+        "memory-06"
+      ],
+      "planned_repetitions": 1,
+      "enabled": true
+    },
+    {
+      "id": "full",
+      "case_ids": "all 44 (original 36, two goal holdouts and six forecast cases)",
+      "planned_repetitions": 3,
+      "enabled": true
+    }
+  ],
+  "adapter": {
+    "implementation": "run.mjs and rpc-client.mjs; local Codex app-server dynamic mock tools",
+    "tools": "mock_only",
+    "network_tools_for_tested_model": false,
+    "inference_requires_online_service": true,
+    "native_resource_discovery": "Built-in empty read-only discovery may appear; configured MCP server inventory must be empty.",
+    "native_selection_tested": false,
+    "fresh_process_per_case": true
+  },
+  "record": [
+    "exact_model_identifier",
+    "provider",
+    "client_and_adapter_version",
+    "skill_file_hashes",
+    "suite_hash",
+    "reasoning_and_generation_settings",
+    "evaluation_mode",
+    "repetition",
+    "user_visible_transcript",
+    "public_tool_events",
+    "loaded_references",
+    "criterion_scores",
+    "unnecessary_questions",
+    "proposed_captures",
+    "performed_mock_captures",
+    "preparation_raids",
+    "input_output_tokens",
+    "known_cost",
+    "wall_time"
+  ],
+  "report_dimensions": [
+    "optimization",
+    "quality",
+    "help-inputs",
+    "comparisons",
+    "capture",
+    "memory-boundaries",
+    "critical_failures",
+    "not_observable_checks"
+  ],
+  "no_support_claim_before_measurement": true
+}

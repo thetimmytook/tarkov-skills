@@ -4,10 +4,12 @@ Use this guide for the evidence limits in a full settings review or an individua
 recommendation. For plain descriptions, visual comparisons and the optional manual
 starting route, use `settings-help.md`. It complements `graphics-response-model.md`;
 that file and its JSON hold numerical observations and forecasting rules.
-Reviewed 2026-10-20; numerical observations unchanged.
-Measured effects refer to EFT **1.2.0.0.47965**, one hardware configuration,
-mostly Practice without AI. They are starting evidence, not a validated FPS
-database for arbitrary hardware, maps or live raids.
+Reviewed 2026-10-24. The predictive seeds remain from EFT **1.2.0.0.47965**;
+separate **1.2.5.0.48146** follow-up observations are recorded in
+`graphics-response-model.md` without adding forecasting coefficients. Both
+studies use one hardware configuration, mostly Practice without AI. They are
+starting evidence, not a validated FPS database for arbitrary hardware, maps
+or live raids. Do not pool the builds or treat a static result as a route result.
 
 ## How to describe a recommendation
 
@@ -27,6 +29,9 @@ database for arbitrary hardware, maps or live raids.
   qualify preparation and weather under `measurement-rules.md`.
 - A personal starting value is allowed when labelled as a preference. It does
   not become a universal default or an established performance improvement.
+- Equal slider steps or adjacent menu labels do not establish equal FPS,
+  frametime or memory increments. Intermediate levels need their own evidence;
+  any interpolation remains a stated hypothesis, not a measured response curve.
 
 ## Graphics and performance-related Game options
 
@@ -44,18 +49,20 @@ database for arbitrary hardware, maps or live raids.
 | Anti-Aliasing | Only TAA Low/Off was measured. Preserve the player's preference; judge softness, thin details and shimmering in motion. | No ranking of all AA modes. A static FPS comparison does not establish motion image quality. |
 | Volumetric Lighting | Off/Low/Ultra observations include changed GPU use without a reliable average-FPS gain; the performance scene's visible source response was unconfirmed. | No free-cost conclusion, universal Low rule or grenade-smoke visibility mechanism established by those captures. Keep separate visual comparisons with their build/context; do not discard them or treat them as an FPS test. |
 | DLSS / FSR | A candidate when GPU work is limiting; reconstruction may allow other quality settings to remain higher. Compare moving detail at the target resolution. | No measured mode coefficient here. Lowering all other options first is unnecessary. Blur, ghosting and shimmering can matter; CPU/cap limits constrain gains. |
-| HBAO | Expensive Colored Ultra/Off evidence supports a high-priority GPU-load test when applicable. | Do not assign its effect to Max Performance, High Performance, High or Ultra; those levels were not measured. |
+| HBAO | Expensive Colored Ultra/Off seed evidence supports a relevant GPU-load test. A separate 1.2.5 moving Max Performance/Off pair gave 95.92/95.98 FPS and GPU use 73.64%/69.86%. Use actual menu labels; there is no generic Low level in the tested menu. | The new pair supplies no repeatable FPS coefficient or saturated-GPU cost bound. Do not assign the Colored Ultra effect to other levels or call Max Performance free. High Performance, High and neutral Ultra remain unmeasured. |
 | SSR | Off/Ultra changed GPU use in the car scene; no repeatable average-FPS gain established there. | Cost and image value can depend on reflective surfaces, weather and GPU limits. Other levels unmeasured. |
 | Anisotropic Filtering | Small repeated On/Off effect in Factory; weigh the player's texture clarity preference. | Small is not zero; no universal free-quality claim. |
 | NVIDIA Reflex Low Latency | Its purpose is latency. On/Off was tested; no repeatable FPS penalty was established. The full series was inconclusive because the Off repeats diverged and limiter flags changed. | The first contrast near -3% does not establish that the whole series was within noise. Distinguish from driver Low Latency Mode; FPS/resource capture does not measure input latency or establish zero cost, RAM savings or a stability defect. |
 | Sharpness | Choose for image clarity/halos; useful FPS savings were not established. | Do not infer zero computation or equate its purpose with Reflex. |
 | Area Light Instancing | BSG describes moving part of the lighting calculations from CPU to GPU and a moderate performance increase (user-supplied game description). Measured +3.75% average FPS in a static daytime Streets first-raid scene, with two On runs sharing one dry Off control. | Single-pair uncertainty includes zero; no demonstrated lows or resource-saving benefit. Build-specific implementation details, hardware-family rule and interaction with other settings remain unverified. The stated purpose does not establish a numerical CPU saving or a universal On rule. |
 | Grass Shadows | Preserve preference or test separately if relevant. | No measured coefficient; visual subtlety does not establish small performance cost. |
-| High Quality Color / Z-Blur / Noise / Chromatic Aberrations / other effects | Preserve image/comfort preferences; record the actual reported value. | No measured coefficients here. Do not assign a common minor cost to remaining checkboxes. |
+| High Quality Color | Separate 1.2.5 moving Off/On/Off observations were 95.98/90.09/91.11 FPS. The return did not recover the original baseline; GPU use was higher in the single On run. | FPS cost remains inconclusive: Off controls drifted about 5.07%. Do not promote the first -6.14% contrast or an average of drifting controls to a coefficient. No saturated-GPU cost or memory-saving effect established. |
+| Z-Blur / Noise / Chromatic Aberrations / other effects | Preserve image/comfort preferences; record the actual reported value. | No measured coefficients here. Do not assign High Quality Color's observations or a common minor cost to other checkboxes. |
 | PostFX | Preserve visibility/color preferences; a neutral or Off profile can be a troubleshooting choice. Inspect the specific effect in the scene of interest. | No aggregate FPS coefficient or universal smoke/bright-zone visibility conclusion from these captures. |
 | Only Use Physical Cores | CPU-dependent On/Off candidate with matched map, mode and workload. | No measured coefficient or universal On rule for Intel/AMD. Low overall CPU use alone does not exclude a main-thread limit. |
 | Automatic RAM Cleaner | Consult `automatic-ram-cleaner.md`: retail native trim path exists; the measured long-session series is separate context. | Checkbox/event/timer linkage and repeated FPS/stutter benefit remain unestablished in retail. No RAM-capacity-based On rule or first-raid seed. |
-| FOV | Explain peripheral view versus apparent target size; use the published 50/65/75 examples, including optics, in `settings-help.md`. Hold fixed during other graphics comparisons. | No measured FPS coefficient or universal map-specific value. A personal 60–65 starting preference is not an optimum. |
+| FOV | Explain peripheral view versus apparent target size; hold fixed during other comparisons. In 1.2.5, a specific static Streets view showed about +11.1% at 75 versus 50 with a close 50 return; the moving 50/75 pair was -1.55%, inside noise. See the model's follow-up qualifications. | No transferable FPS coefficient, universal map-specific value or CPU-bottleneck/LOD mechanism established. A personal 60–65 preference is not an optimum; the static gain does not predict the route. |
+| Main Menu Background | A 1.2.5 Woods/Server Room moving pair gave 94.97/95.92 FPS, about +1%, with similar GPU use. The user described all available backgrounds as animated. Record the actual selected label and saved value. | No FPS recommendation, independent memory effect or proof of background rendering/decoding during a raid. This is not animation On/Off and does not test unavailable backgrounds. |
 | Head bobbing / Hideout preload / other relevant Game values | Record when present and hold them fixed during a graphics comparison. Offer usability preferences separately. | No measured coefficients here; do not invent UI labels or interpret absent enums. |
 
 Controls and Sound remain outside these performance skills. The optional

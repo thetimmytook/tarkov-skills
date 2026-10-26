@@ -33,6 +33,7 @@
   ],
   "references/measurement-rules.md": [
     "skills/tarkov-config/references/measurement-rules.md",
+    "skills/tarkov-frametime/references/measurement-rules.md",
     "skills/tarkov-performance-benchmark/references/measurement-rules.md",
     "skills/tarkov-tuning/references/measurement-rules.md"
   ]

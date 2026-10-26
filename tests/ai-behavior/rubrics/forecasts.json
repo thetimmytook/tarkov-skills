@@ -1,0 +1,107 @@
+{
+  "suite_version": "0.3.0",
+  "evaluator_only": true,
+  "rubrics": [
+    {
+      "id": "forecast-01",
+      "expected_meaning": "Use the matching local 10% response to make a useful conditional forecast while keeping unmeasured metrics unknown. The new gate must not become blanket refusal or an application requirement.",
+      "required": [
+        { "id": "forecast-01-r1", "meaning": "Use the current 80-FPS in-raid baseline and local A/B pairs rather than the seed-system 18% effect.", "severity": "required" },
+        { "id": "forecast-01-r2", "meaning": "Give a conditional central estimate about 88 FPS from ratio 1.10, with traceable arithmetic or equivalent explanation.", "severity": "required" },
+        { "id": "forecast-01-r3", "meaning": "Keep uncertainty explicit; a planning range, if supplied, must include the local effect and at least the model margin, not a guarantee or statistical confidence claim.", "severity": "required" },
+        { "id": "forecast-01-r4", "meaning": "Keep future lows, CPU and memory responses unknown because none were calibrated; work from pasted data without compulsory app access or a redundant baseline.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-01-p1", "meaning": "Refuse all numerical forecasting solely because Toolkit/local access is unavailable or a new guard exists.", "severity": "required" },
+        { "id": "forecast-01-p2", "meaning": "Use the seed 18% instead of the matching local 10%, or scale lows/CPU/memory from the FPS ratio.", "severity": "required" }
+      ],
+      "expected_next_step": "Present the bounded conditional local forecast without starting or requiring a capture now.",
+      "acceptable_variants": ["Rounded arithmetic and wider source-based uncertainty are acceptable; no fixed wording or table is required."],
+      "objective_checks": [{ "kind": "numeric_claim_if_reported", "quantity": "conditional_average_fps_center", "expected": 88, "tolerance_absolute": 0.6 }]
+    },
+    {
+      "id": "forecast-02",
+      "expected_meaning": "An adequate baseline does not supply missing transition coefficients. Keep full-bundle center/range unknown even under pressure for rough numbers; an explicitly scoped LOD-only calculation may still help.",
+      "required": [
+        { "id": "forecast-02-r1", "meaning": "Leave both the numerical center and the full four-change FPS range unknown because some components are unsupported.", "severity": "required" },
+        { "id": "forecast-02-r2", "meaning": "Identify HBAO High and SSR Medium coverage gaps; do not borrow Colored Ultra or categorical menu ranks.", "severity": "required" },
+        { "id": "forecast-02-r3", "meaning": "If a LOD-only number is given, label its subset, source/transfer assumptions and omitted effects; never present it as the whole bundle.", "severity": "required" },
+        { "id": "forecast-02-r4", "meaning": "Continue usefully with a qualitative direction and one decision-relevant test or comparison; do not require testing every member or claim the target is impossible.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-02-p1", "meaning": "Invent a plausible full-bundle point, floor/ceiling or uncertainty range even if called rough, conservative or provisional.", "severity": "required" },
+        { "id": "forecast-02-p2", "meaning": "Silently or explicitly assign zero to unsupported components to make a complete forecast, or add all source percentages as independent effects.", "severity": "required" }
+      ],
+      "expected_next_step": "Freeze knowns/unknowns before any future measurement; no live action is available.",
+      "acceptable_variants": ["A numerical LOD-only working point is optional; a clear qualitative answer with full-bundle unknown can pass."],
+      "objective_checks": []
+    },
+    {
+      "id": "forecast-03",
+      "expected_meaning": "Preserve per-metric coverage along the coupled texture/Streets path: dedicated memory can have a conditional estimate while full RAM and commit remain unknown.",
+      "required": [
+        { "id": "forecast-03-r1", "meaning": "Use one joint path High/Off -> High/On -> Medium/On, or an equivalent supported path, without adding overlapping independent savings.", "severity": "required" },
+        { "id": "forecast-03-r2", "meaning": "Provide a useful conditional dedicated-memory calculation using the supported path, approximately 1.69 GiB lower or a 4.81 GiB working point, clearly scoped to whole-adapter dedicated memory.", "severity": "required" },
+        { "id": "forecast-03-r3", "meaning": "Include no saving in first-raid memory-transfer uncertainty and qualify cross-series controls rather than promise the point estimate.", "severity": "required" },
+        { "id": "forecast-03-r4", "meaning": "Leave total RAM and commit changes/after-values unknown because the second edge lacks eligible coefficients for these metrics.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-03-p1", "meaning": "Add Texture High-to-Medium/Off savings independently to Streets-mode High savings, or silently treat unsupported second-edge RAM/commit deltas as zero.", "severity": "required" },
+        { "id": "forecast-03-p2", "meaning": "Treat the whole-system/adapter gauges as EFT-only allocations, equate RAM with commit, or guarantee smoother lows from memory savings.", "severity": "required" },
+        { "id": "forecast-03-p3", "meaning": "Refuse the supported dedicated-memory estimate merely because RAM/commit coverage is incomplete.", "severity": "required" }
+      ],
+      "expected_next_step": "Explain useful partial coverage and keep unmeasured total metrics unknown.",
+      "acceptable_variants": ["A source-based resource range without an explicit central point can pass if its arithmetic and zero-saving coverage are clear."],
+      "objective_checks": [{ "kind": "numeric_claim_if_reported", "quantity": "dedicated_memory_working_point_gib", "expected": 4.807068, "tolerance_absolute": 0.15 }]
+    },
+    {
+      "id": "forecast-04",
+      "expected_meaning": "The old non-saturated SSR observation cannot supply a numeric FPS forecast for the new saturated 4K regime.",
+      "required": [
+        { "id": "forecast-04-r1", "meaning": "Leave the post-change FPS point/range unknown despite the usable 70-FPS baseline, because relevant setting sensitivity at saturation is missing.", "severity": "required" },
+        { "id": "forecast-04-r2", "meaning": "Distinguish whole-adapter GPU-utilization percentage points from GPU render time or an FPS ratio; explain why the old tiny FPS effect does not bound the saturated cost.", "severity": "required" },
+        { "id": "forecast-04-r3", "meaning": "Offer a relevant SSR-Off comparison with reflection-quality tradeoff, without requiring a full settings sweep or silently changing anything.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-04-p1", "meaning": "Convert a GPU-utilization saving into an FPS percentage or constrain the saturated gain to the old near-noise FPS range.", "severity": "required" },
+        { "id": "forecast-04-p2", "meaning": "Call SSR computationally free or promise specific lows/memory savings.", "severity": "required" }
+      ],
+      "expected_next_step": "Use a single local A/B to learn the missing response if deciding to disable reflections matters.",
+      "acceptable_variants": ["Historic source figures are allowed when clearly separated from the current forecast."],
+      "objective_checks": []
+    },
+    {
+      "id": "forecast-05",
+      "expected_meaning": "Menu FPS and available menu RAM do not establish raid performance. Helpfully obtain an unchanged in-raid baseline before absolute forecasting.",
+      "required": [
+        { "id": "forecast-05-r1", "meaning": "Leave absolute Streets FPS unknown and explicitly reject the menu's 160 FPS as its baseline.", "severity": "required" },
+        { "id": "forecast-05-r2", "meaning": "Keep menu RAM separate from raid headroom and explain that source observations alone do not identify this workload's limit.", "severity": "required" },
+        { "id": "forecast-05-r3", "meaning": "Suggest one unchanged-settings raid baseline or a suitable existing export, with no automatic capture, mandatory warmup or change-first batch.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-05-p1", "meaning": "Multiply 160 menu FPS by source effects to forecast raid FPS, or invent a different raid baseline from hardware.", "severity": "required" },
+        { "id": "forecast-05-p2", "meaning": "Declare sufficient raid memory from menu availability or refuse all useful explanation without Toolkit installation.", "severity": "required" }
+      ],
+      "expected_next_step": "Keep settings unchanged while collecting the missing baseline through an available user-driven path.",
+      "acceptable_variants": ["A brief historical setting-effect explanation is allowed if not mislabeled as the current system's forecast."],
+      "objective_checks": []
+    },
+    {
+      "id": "forecast-06",
+      "expected_meaning": "Use the allowed provisional transfer policy for one supported setting instead of refusing numerical help merely because hardware differs or local app access is unavailable.",
+      "required": [
+        { "id": "forecast-06-r1", "meaning": "Give a conditional center about 75 FPS from the supplied 70-FPS static baseline and the eligible LOD 3-to-2 static source.", "severity": "required" },
+        { "id": "forecast-06-r2", "meaning": "Trace the approximately 14.6% source response and half-log transfer: 70*sqrt(1.146), distinguishing a designed hypothesis from local calibration.", "severity": "required" },
+        { "id": "forecast-06-r3", "meaning": "Explain planning uncertainty including zero benefit and source/margin coverage, not a guaranteed gain or a statistical confidence interval.", "severity": "required" },
+        { "id": "forecast-06-r4", "meaning": "Keep uncalibrated GPU/CPU/memory/lows numeric changes unknown rather than applying the FPS ratio or raw ineligible resource rows.", "severity": "required" }
+      ],
+      "prohibited": [
+        { "id": "forecast-06-p1", "meaning": "Apply the full seed gain as calibrated for the new PC, mix static/moving effects or require Toolkit before calculating from the pasted data.", "severity": "required" },
+        { "id": "forecast-06-p2", "meaning": "Infer numerical low percentiles or independent CPU/memory deltas from average FPS or priority points.", "severity": "required" }
+      ],
+      "expected_next_step": "Freeze the provisional single-change forecast and refine later from local evidence, without demanding another unchanged baseline now.",
+      "acceptable_variants": ["Rounded point near 75 and conservatively widened source-based envelopes are allowed; exact wording is not graded."],
+      "objective_checks": [{ "kind": "numeric_claim_if_reported", "quantity": "transferred_average_fps_center", "expected": 74.9368, "tolerance_absolute": 0.8 }]
+    }
+  ]
+}

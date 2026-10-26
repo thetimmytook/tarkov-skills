@@ -1,0 +1,31 @@
+{
+  "suite_version": "0.2.0",
+  "cases": [
+    {
+      "id": "goal-01",
+      "title": "Explicit goal update without a tuning or capture request",
+      "client": "local",
+      "prompt": "Save my performance goal as 110 FPS, accepting reduced image quality. Just update the goal; don't change graphics or record a benchmark.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.goal_get": { "fixture": "goal_default" },
+        "toolkit.goal_set": { "fixture": "goal_90", "state": "mock_memory_only" }
+      },
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "goal-02",
+      "title": "Goal persistence failure with an explicit no-retry instruction",
+      "client": "local",
+      "prompt": "Save a target of 75 FPS with better image quality. If saving fails, keep using that goal in this conversation and tell me; don't retry or record anything.",
+      "attachments": [],
+      "mock_tools": {
+        "toolkit.goal_get": { "fixture": "goal_default" },
+        "toolkit.goal_set": { "denied": "The mocked goal store is unavailable. No goal was persisted." }
+      },
+      "steps": [],
+      "scenario_kind": "negative"
+    }
+  ]
+}

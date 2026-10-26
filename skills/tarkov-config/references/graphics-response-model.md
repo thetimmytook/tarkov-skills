@@ -39,6 +39,10 @@ private compound validation outcomes do not refit individual setting effects.
 Use `session-stability.md` for crashes or limited first-raid headroom. Normal
 user tuning requires no separate warmup or completed preparation raids.
 
+The 2026-10-24 follow-up below is a separate build 1.2.5.0.48146 screening
+series, not an extension or refit of the 85-report, 18-transition seed dataset.
+The JSON predictive seeds and their numerical policy parameters are unchanged.
+
 Memory gauges cover the whole system or adapter, not EFT-only allocations.
 Pagefile occupancy is not paging I/O; adapter capacity is not the application's
 VRAM budget. Resource changes can reflect background activity, residency and
@@ -56,7 +60,7 @@ The JSON records pair effects, eligibility, priority, units and limitations.
 
 | Manual transition | Workload | Average FPS change | Interpretation |
 | --- | --- | ---: | --- |
-| HBAO Colored Ultra → Off | Streets, static, GPU near saturation | +34.58% | One dry pair; expensive-level repeat agrees. Rainy Off return qualified separately. Other HBAO levels unmeasured. |
+| HBAO Colored Ultra → Off | Streets, static, GPU near saturation | +34.58% | One dry pair; expensive-level repeat agrees. Rainy Off return qualified separately. Other HBAO levels unmeasured in this seed profile; separate Max Performance screening below is not its interpolation. |
 | LOD 4 → 2 | Streets, static | +18.00% | Repeated dry direction; BTR and rainy return excluded. |
 | LOD 3 → 2 | Streets, static | +14.60% | Measured node; do not assume equally spaced costs. |
 | LOD 4 → 2 | Streets, moving | +8.54% | Repeated direction; keep separate from static. |
@@ -141,6 +145,59 @@ Additional evidence that must not become ordinary first-raid coefficients:
 - Cloud Quality, Grass Shadows, PostFX, upscaling, render scale, physical-core
   affinity and untested levels have no measured numeric coefficient here.
 
+## Separate follow-up screening: 2026-10-24
+
+Ten unique completed 120-second Toolkit captures on EFT **1.2.5.0.48146**, the
+same i9-9900KF / RTX 2080 8 GiB / 32 GiB system at 2560x1440 native, supplied
+the observations below. The intended scenario was daytime Streets Practice
+without AI. Most run context was user-confirmed; qualifications remain explicit.
+Some completed runs serve as baselines for more than one transition. Reusing
+them avoids redundant captures but does not create independent replicate pairs.
+Resources cover the whole system/adapter. These are descriptive observations,
+not new forecasting coefficients or bounds for GPU-saturated workloads.
+
+| Comparison | Average FPS observation | Interpretation |
+| --- | --- | --- |
+| FOV 50 / 75 / 50, static | 82.63 / 91.78 / 82.56; dry 75 about +11.1% versus either 50 | A close 50 return supports a local view-specific response. Only one dry 75 run, taken later in the same first raid as a rain-qualified 75 capture; not two independent dry pairs. |
+| FOV 50 → 75, moving | 96.46 → 94.97, -1.55% | One matched route pair, inside noise; no gain, penalty or zero cost established. The static response did not transfer to this route. |
+| Woods → Server Room background, moving | 94.97 → 95.92, +1.00% | One pair; similar GPU use (73.02% / 73.64%). No FPS recommendation or independent memory effect. |
+| HBAO Max Performance → Off, moving | 95.92 → 95.98, +0.06% | GPU use 73.64% → 69.86%, -3.78 percentage points. No repeatable FPS gain or saturated-GPU cost established. |
+| High Quality Color Off / On / Off, moving | 95.98 / 90.09 / 91.11 | Off controls drifted -5.07%. The first -6.14% contrast is not an established option cost; On versus the return Off differs by only -1.12%. |
+
+FOV static: an earlier 75 capture at 92.33 FPS had rain start during recording,
+with onset time unknown, and is retained separately. The final 50 return was
+confirmed dry with the same viewpoint, and its restart/settings were verified;
+separate post-run mode/first-raid and daytime/fog/illumination answers were not
+supplied. Other FOV runs had their recorded context confirmed. Do not infer a
+CPU-thread bottleneck, altered AI simulation or a particular LOD implementation.
+
+Background: the user reported all available choices animated; /CyberTark/ and
+Hotline Tarkov were unavailable. Woods saved `WoodEnvironmentUiType`; Server
+Room saved `SeasonalBDEnvironmentUiType` after the user selected that UI label.
+This is a two-background comparison, not animation On/Off, a test of unavailable
+backgrounds or proof that menu rendering/decoding continues in raid. A single
+0.1% low contrast is not a repeatable stutter effect; neither run had user-noticed
+stutters. Lower physical RAM with nearly equal commit is not a memory-saving
+coefficient.
+
+HBAO Max Performance saved `FastestPerformance`. Its current-profile moving pair
+must stay separate from the old Colored Ultra/Off static coefficient. GPU load
+was not saturated on average; a noise-level FPS effect cannot bound the cost at
+saturation. Nor does a GPU-use difference establish an exact per-frame GPU time.
+
+High Quality Color: GPU use was higher in the single On capture (72.06%) than
+in either Off (69.86% / 68.09%). These contrasts share one On run. Do not average
+drifting Off controls into an asserted -3.7% setting coefficient, claim memory
+savings or assign the FPS drift to weather, hardware, preparation or another
+unmeasured cause. The cause remains unknown despite confirmed approximate
+weather/route matching and no user-noticed stutters.
+
+Across the moving runs, time since loading and preparation were not identical;
+preserve that qualification. These findings establish neither a linear response
+curve nor a general nonlinear curve for every setting. Intermediate-level and
+cross-setting interactions remain unmeasured. No later-build observation here
+silently replaces a seed coefficient or becomes a universal percentage.
+
 ## Select the next useful change
 
 Use 0–3 priority points separately for FPS and memory; they are ordinal, cannot
@@ -168,6 +225,52 @@ Prefer a candidate likely to close the goal gap with acceptable quality loss;
 break ties using closest workload match, stronger evidence, then lower setup
 effort. Skip changes already applied. Do not require testing every setting.
 
+## Numeric forecast eligibility
+
+Apply this check before publishing any **predicted** FPS/resource value. Historic
+observations, user targets and arithmetic comparisons of completed runs remain
+distinct from forecasts. The check works on supplied artifacts in web/manual
+mode as well as local collection; it adds no runtime dependency or capture.
+
+For each requested metric, establish:
+
+| Basis | Required for a numerical forecast |
+| --- | --- |
+| Baseline | A relevant measured starting value, its run/attachment identity and units/scope. Menu FPS/RAM and a target are not raid baselines. A relative effect can be discussed without inventing an absolute baseline. |
+| Response | Eligible transition row IDs and fields, or actual comparable user-local A/B pairs. Read applicable `graphics-response-priors.json` rows: nonzero FPS seeds require `numeric_fps_seed_eligible`; a resource delta requires that metric in `numeric_resource_seed_fields`. Raw values outside those fields are descriptive observations, including inside a subset. Noise-only FPS rows use only the separately allowed contextual zero-effect hypothesis below. |
+| Applicability | Exact transition or permitted numeric interpolation, workload/load and cap/session context; distinguish matched local response from the declared transfer hypothesis. A baseline alone does not calibrate sensitivity. |
+| Calculation | Trace baseline × ratio or baseline + delta, transfer/combination policy, uncertainty and the settings/metric covered. Briefly show this basis with numerical results; use a compact table only when useful. |
+
+Decide coverage **per metric** before calculating totals:
+
+- A complete path of eligible transitions is sufficient; a directly measured
+  start-to-finish row is not required. Evaluate every edge for the same metric.
+  For High/Off → High/On → Medium/On, both edges permit VRAM, so their propagated
+  VRAM forecast is supported. Only the first edge permits RAM/commit: an
+  intermediate High/On estimate is possible, but final Medium/On totals are unknown.
+- If any changed component has no eligible effect or defensible bounds for that
+  metric, the full-change **center and range are unknown**. Do not invent a floor,
+  ceiling or convenient error bar from the baseline, target or expected direction.
+  "Rough", "conservative", "provisional" and "assuming favorable effects" do
+  not turn missing evidence into numerical bounds.
+- A supported component/subset may have its own conditional point/range, explicitly
+  labelled with its included changes. State that omitted effects are unquantified;
+  do not present the subset as the complete result by assigning missing effects
+  zero. A useful next A/B or qualitative direction can proceed with unknown totals.
+- Coverage in FPS, GPU utilization, dedicated memory, physical RAM and commit is
+  separate. An eligible VRAM path can coexist with unknown full-path RAM/commit.
+  Do not infer future lows or CPU/memory effects from average FPS, or saturated-GPU
+  FPS from utilization percentage points. Follow the metric-specific rules below.
+- When the baseline, response and applicability do support a metric, provide the
+  useful conditional calculation. Prefer matching user-local pairs over seed
+  coefficients. Incomplete coverage elsewhere or unavailable app access is not a
+  reason to refuse every supported number or demand a redundant baseline.
+
+Before sending, remove any predicted number whose baseline, response, calculation
+or declared scope cannot be traced. Replace it with **unknown and the reason**,
+not a wider guessed interval. This is a forecast check, not a requirement to print
+an exhaustive audit or a table of every resource for ordinary qualitative advice.
+
 ## Freeze the forecast before capture
 
 Record the baseline identity, full setting diff including automatic couplings,
@@ -194,14 +297,24 @@ For each eligible measured endpoint transition:
   or in a different lighting/reflection workload. Keep that transferred cost
   unknown rather than reuse a small noise interval as its maximum effect.
 - For unmeasured numeric levels, optional interpolation in log FPS ratios
-  between measured neighbors is explicitly a hypothesis; bound it by the
-  full neighbor effects plus uncertainty. Never assign equal spacing to
-  HBAO/AA/menu labels. If neither direction nor bounds are supported, use
-  unknown and choose a measured endpoint when practical.
+  between measured neighbors is explicitly a hypothesis, not a measured response
+  curve; bound it by the full neighbor effects plus uncertainty. Equal slider
+  steps do not imply equal FPS, frametime, GPU-load or memory increments. Never
+  assign equal spacing to HBAO/AA/menu labels. If neither direction nor bounds
+  are supported, use unknown and choose a measured endpoint when practical.
+
+When a stepped research profile is requested, start with the endpoints and an
+available middle level, then add actual UI steps where they could resolve a
+useful threshold or curvature question. Keep each curve's build, profile,
+static/moving activity and limiting-work regime separate. Record the absolute
+FPS/frametime/resources at each level and a useful return control, rather than
+fitting a straight line through two endpoints or pooling drifting controls.
+Nominal modes need individual measurements, not arithmetic menu-rank steps.
+This research sweep is not a requirement for ordinary minimum-capture tuning.
 
 Convert the relative forecast to `FPS_after = FPS_baseline * r`.
-When an unknown component is omitted from a conditional working point, state
-that assumption and retain the full-bundle range as unknown. A few close
+When an unknown component is omitted from a conditional working point, label it
+as a supported-subset result and retain the full-bundle center/range as unknown. A few close
 compound checks on one system do not establish a universal accuracy band.
 Mean frame duration may be estimated as `1000 / FPS_after`; this does not
 predict p95/p99 or the low percentiles. Do not numerically forecast 1%/0.1%
@@ -273,8 +386,10 @@ increase the independent baseline count.
 2. Forecast one promising change, or the requested validation bundle; let the
    user apply it and check the saved diff. If UI and snapshot disagree, retain
    both, obtain the actual applied value and lower confidence.
-3. Capture once after a fresh ready signal. Announce completion immediately,
-   before analysis; ask missing context together, accepting unknown.
+3. Capture once after a fresh ready signal. Give a clear start cue with duration
+   immediately before invoking capture, then announce completion immediately
+   before analysis, per `measurement-rules.md`. Ask missing context together,
+   accepting unknown.
 4. Compare to the frozen forecast and goal. Record observed/predicted ratio,
    resource residuals, in/out of envelope, lows/symptoms, then keep/revert.
 5. If the target is comfortably satisfied with acceptable quality and no

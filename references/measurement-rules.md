@@ -9,6 +9,23 @@ Measurement thresholds shared by the Tarkov skills and the standalone benchmark 
 - Use the same map, similar route, and similar activity when comparing runs.
 - Prefer the user's problem map. If the user wants a worst-case stress test and has no specific problem map, use Streets.
 
+## Capture signals
+
+- An explicit ready signal for the current measurement authorizes its start;
+  do not ask for the same permission again. Preparing, waiting or asking to
+  inspect settings is not readiness.
+- After checking the required state/settings, send a clear **START — begin the
+  route** message (or **hold the view** for static captures) with the duration
+  immediately before invoking capture. A preparation update is not the start cue.
+- Announce **COMPLETE — you can stop** immediately when capture ends, before
+  reading results or asking context questions. Follow a user stop/cancellation
+  request promptly; require new readiness for a retry.
+- A supported audible cue can supplement the visible message when useful or
+  requested; it is optional. Do not require extra software, script files or
+  audio access, or promise a sound in a client where it cannot be produced.
+- Record a reported delayed/missed start or interruption when it affects route
+  comparability. Do not silently treat a delayed start as a matched full route.
+
 ## Practical Comparability
 
 - Normal user tuning requires no dedicated warmup, repeated preparation route,
@@ -47,6 +64,11 @@ Priorities by goal:
 
 - Differences under 3% are noise unless they repeat across runs.
 - Recommend 2-3 repeated runs per profile when results are close.
+- When an impact claim matters to the decision, a return to the original setting
+  can distinguish a setting response from baseline drift. If unchanged controls
+  differ enough to explain the contrast, leave attribution unresolved; do not
+  average them into a precise coefficient. A return control is selective, not a
+  mandatory extra raid or full A/B/B/A sequence for every user.
 - If measured performance is at least 15% worse than expected for similar hardware and settings, stop normal graphics tuning and switch to diagnostics (power plan, drivers, storage, pagefile, XMP/EXPO, background apps, thermal throttling checked manually with external tools).
 - Establish that expectation from a comparable baseline: check build, map, AI/server execution context, resolution/render scale, caps, weather/activity and session history. A transferred provisional prediction alone is not an established hardware expectation; first review its assumptions and context.
 - Do not over-trust a single Tarkov run; server load and raid randomness are real factors.

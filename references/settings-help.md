@@ -29,6 +29,22 @@ Read the displayed labels; do not invent an intermediate setting or mode.
 Stills help compare detail, edges and reflections. Judge shimmering, ghosting,
 pop-in and temporal stability in motion. Neither format measures FPS by itself.
 
+## Find the limiting work in the tested scene
+
+The limiting work can change with the view, route, AI, settings and build; a CPU
+model does not classify a whole computer as permanently CPU- or GPU-bound.
+Low total CPU use cannot exclude a main/render-thread limit. Sustained high GPU
+use is a clue after checking caps, VSync, Reflex and clock/power uncertainty.
+If the diagnosis matters, a temporary lower-internal-resolution comparison in
+the same view can test GPU sensitivity: a clear FPS increase supports GPU work
+being relevant; a flat result does not prove a CPU bottleneck.
+
+Compare average FPS, lows and frametimes alongside resource headroom. Lower GPU
+use with unchanged FPS can still be useful; it does not establish zero cost.
+Assess memory-related stutters separately from average FPS. Normal user tuning
+needs no dedicated preparation raids. Use `measurement-rules.md` for capture
+comparability and `graphics-response-model.md` for workload-specific observations.
+
 ## Display resolution, Resampling and upscaling
 
 **Resolution** sets the selected output dimensions. **Resampling** changes the
@@ -156,6 +172,9 @@ smoke, or a conclusion about AI, thermals or the current build's mechanics.
 and nearby objects, giving depth to the scene. Inspect where objects meet walls
 or floors. Turning it down can reduce GPU work; the strong measured Colored
 Ultra/Off response does not establish the cost of the intermediate levels.
+In a separate build 1.2.5.0.48146 moving comparison, Max Performance and Off
+gave almost the same average FPS while GPU use was lower at Off. That single
+pair does not bound FPS cost under GPU saturation or make Max Performance free.
 
 [HBAO: Factory 1, Off / Colored Ultra](https://thetimmytook.github.io/media/?pres=./presets/settings/hbao.json&view=factory-1),
 [Factory 2, Off / Colored Ultra](https://thetimmytook.github.io/media/?pres=./presets/settings/hbao.json&view=factory-2),
@@ -222,6 +241,12 @@ Noise adds grain, and Grass Shadows concern grass shading. Color quality and
 effect behavior can vary by version. The player can start with unwanted effects
 Off; neither the grouping nor subtle appearance establishes equal or small cost.
 
+High Quality Color was separately screened on build 1.2.5.0.48146. Off/On/Off
+gave 95.98/90.09/91.11 FPS: the original Off baseline did not return. Its FPS
+cost remains inconclusive; do not quote the initial -6.14% as an established
+penalty. Keep this result separate from the other checkboxes and from a
+GPU-saturated scene; details are in `graphics-response-model.md`.
+
 **FOV (Field of View)** trades the amount of peripheral scene shown against the
 apparent size of objects at a fixed distance. Higher values show more at the
 edges; lower values make central targets appear larger. Compare comfort, sight
@@ -229,9 +254,35 @@ picture and peripheral awareness, including through optics. A preference around
 60–65 is an optional starting point, not a required map-specific setting or a
 measured FPS optimization. Hold FOV fixed during other graphics comparisons.
 
+FOV can also affect performance in a particular view. On build 1.2.5.0.48146,
+75 versus 50 showed about +11.1% average FPS in one static Streets scene,
+with the qualifications recorded in `graphics-response-model.md`. The moving
+comparison did not reproduce that gain (-1.55%, inside noise). Choose FOV for
+comfort and visibility; do not promise higher FOV improves every CPU-limited
+scene, or infer intermediate values or an internal LOD mechanism from this test.
+
+One possible explanation is screen-size-based LOD selection. Unity's standard
+LOD Group selects detail levels using an object's height relative to the screen
+height. At the same distance, increasing FOV makes the object occupy less of
+the screen, so a simpler model can become active sooner. This may reduce
+rendering work. A wider view can also bring more objects into view, so the net
+performance effect depends on the scene.
+[Unity 2022.3: LOD Group](https://docs.unity3d.com/2022.3/Documentation/Manual/class-LODGroup.html).
+
+Present this as a possible explanation, not a confirmed Tarkov implementation
+or proof of CPU savings. The captures above establish the observed FPS
+response; they do not identify its internal cause.
+
 [FOV: Factory, 50 / 65 / 75](https://thetimmytook.github.io/media/?pres=./presets/settings/fov.json&view=factory),
 [Customs](https://thetimmytook.github.io/media/?pres=./presets/settings/fov.json&view=customs),
 [Customs through optics](https://thetimmytook.github.io/media/?pres=./presets/settings/fov.json&view=customs-zoom).
+
+**Main Menu Background** chooses the menu scene. A build 1.2.5.0.48146 moving
+Woods/Server Room pair showed about +1% average FPS, inside noise, with similar
+GPU use. It supplies no reason to recommend changing between these backgrounds
+for FPS. All available backgrounds were animated according to the user; the
+comparison neither disables animation nor proves a hidden renderer stays active
+in raid. Other backgrounds, builds and GPU-saturated workloads remain untested.
 
 **Only Use Physical Cores** is a CPU-dependent On/Off candidate, not a universal
 Intel/AMD recommendation. **Automatic RAM Cleaner** needs the implementation and

@@ -1,0 +1,135 @@
+{
+  "suite_version": "0.1.0",
+  "cases": [
+    {
+      "id": "quality-01",
+      "title": "Spend spare FPS on clearer graphics",
+      "client": "local",
+      "prompt": "FPS is already above what I need. I want clearer textures and edges while keeping stable 60. What should I improve first?",
+      "attachments": [
+        {
+          "name": "quality_headroom",
+          "fixture": "quality_headroom"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "quality-02",
+      "title": "Quality upgrade with an unmet FPS target",
+      "client": "local",
+      "prompt": "I want Ultra textures and better graphics, but stable 60 FPS is still a requirement. Here is my run. Can we just turn things up?",
+      "attachments": [
+        {
+          "name": "quality_under_target",
+          "fixture": "quality_under_target"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    },
+    {
+      "id": "quality-03",
+      "title": "Reverse upscaling for image quality",
+      "client": "local",
+      "prompt": "DLSS Performance looks too blurry to me. I prefer a clearer picture and only need 60 FPS. What should I test?",
+      "attachments": [
+        {
+          "name": "blurry_upscaling",
+          "fixture": "blurry_upscaling"
+        },
+        {
+          "name": "run_context",
+          "fixture": "run_context"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "quality-04",
+      "title": "Stop once the goal is met",
+      "client": "local",
+      "prompt": "I now get around 75 average and 65 FPS for 1% low, no noticeable stutters, and I like the picture. My target is stable 60. What else must I change?",
+      "attachments": [
+        {
+          "name": "satisfied_result",
+          "content": {
+            "duration_sec": 120,
+            "average_fps": 75,
+            "one_percent_low_fps": 65,
+            "zero_point_one_percent_low_fps": 60,
+            "reported_stutters": false,
+            "quality_accepted": true,
+            "ram_available_min_gib": 8,
+            "commit_used_max_gib": 38,
+            "commit_limit_gib": 64,
+            "session": "a later ordinary raid also remained acceptable"
+          }
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "positive"
+    },
+    {
+      "id": "quality-05",
+      "title": "Quality tuning without a measured budget",
+      "client": "local",
+      "prompt": "I set most graphics options to Low a long time ago. The picture is ugly now. Help me improve it while keeping 60 FPS; I haven't measured anything yet.",
+      "attachments": [
+        {
+          "name": "base_profile",
+          "fixture": "base_profile"
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "edge"
+    },
+    {
+      "id": "quality-06",
+      "title": "Rollback a prettier but stuttery profile",
+      "client": "local",
+      "prompt": "After raising visual quality the average is still over 60, but moving feels worse. Should I keep it?",
+      "attachments": [
+        {
+          "name": "quality_pair",
+          "content": {
+            "context_match": true,
+            "manual_diff": "Texture Quality High -> Ultra; Streets mode fixed Off",
+            "goal": "stable 60, balanced visibility",
+            "baseline": {
+              "average_fps": 98,
+              "one_percent_low_fps": 76,
+              "zero_point_one_percent_low_fps": 59,
+              "symptoms": "no noticeable freezes"
+            },
+            "candidate": {
+              "average_fps": 65,
+              "one_percent_low_fps": 42,
+              "zero_point_one_percent_low_fps": 23,
+              "symptoms": "repeated noticeable freezes"
+            },
+            "duration_sec": 120
+          }
+        }
+      ],
+      "mock_tools": {},
+      "steps": [],
+      "scenario_kind": "negative"
+    }
+  ]
+}
